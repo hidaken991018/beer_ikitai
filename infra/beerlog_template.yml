@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: My Beer Log - MVP用AWS CloudFormationテンプレート
+Description: My Beer Log - 改善版MVP用AWS CloudFormationテンプレート
 
 Parameters:
   DBUser:
@@ -8,7 +8,7 @@ Parameters:
     Default: beerloguser
   DBPassword:
     Type: String
-    Description: RDS DBパスワード
+    Description: RDS DBパスワード（本番はSecrets Manager推奨）
     NoEcho: true
   DBName:
     Type: String
@@ -16,6 +16,7 @@ Parameters:
     Default: beerlogdb
 
 Resources:
+  # VPC
   BeerLogVPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -26,37 +27,148 @@ Resources:
         - Key: Name
           Value: BeerLogVPC
 
-  # パブリックサブネット（例：ALBやNAT Gateway用）
-  BeerLogPublicSubnet:
+  # インターネットゲートウェイ
+  BeerLogInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: BeerLogIGW
+
+  BeerLogVPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref BeerLogVPC
+      InternetGatewayId: !Ref BeerLogInternetGateway
+
+  # パブリックサブネット（2AZ）
+  BeerLogPublicSubnetA:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref BeerLogVPC
       CidrBlock: 10.0.1.0/24
-      MapPublicIpOnLaunch: true
       AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: BeerLogPublicSubnet
+          Value: BeerLogPublicSubnetA
 
-  # プライベートサブネット（DB配置用）
-  BeerLogPrivateSubnet:
+  BeerLogPublicSubnetB:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref BeerLogVPC
       CidrBlock: 10.0.2.0/24
-      MapPublicIpOnLaunch: false
-      AvailabilityZone: !Select [0, !GetAZs '']
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: BeerLogPrivateSubnet
+          Value: BeerLogPublicSubnetB
 
+  # プライベートサブネット（2AZ）
+  BeerLogPrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref BeerLogVPC
+      CidrBlock: 10.0.11.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: BeerLogPrivateSubnetA
+
+  BeerLogPrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref BeerLogVPC
+      CidrBlock: 10.0.12.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: BeerLogPrivateSubnetB
+
+  # ルートテーブル（パブリック）
+  BeerLogPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref BeerLogVPC
+      Tags:
+        - Key: Name
+          Value: BeerLogPublicRouteTable
+
+  BeerLogPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: BeerLogVPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref BeerLogPublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref BeerLogInternetGateway
+
+  BeerLogPublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref BeerLogPublicSubnetA
+      RouteTableId: !Ref BeerLogPublicRouteTable
+
+  BeerLogPublicSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref BeerLogPublicSubnetB
+      RouteTableId: !Ref BeerLogPublicRouteTable
+
+  # ルートテーブル（プライベート/NAT用）
+  BeerLogPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref BeerLogVPC
+      Tags:
+        - Key: Name
+          Value: BeerLogPrivateRouteTable
+
+  BeerLogPrivateSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref BeerLogPrivateSubnetA
+      RouteTableId: !Ref BeerLogPrivateRouteTable
+
+  BeerLogPrivateSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref BeerLogPrivateSubnetB
+      RouteTableId: !Ref BeerLogPrivateRouteTable
+
+  # NAT Gateway（1つ/AZ1のみ設置例）
+  BeerLogEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  BeerLogNATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt BeerLogEIP.AllocationId
+      SubnetId: !Ref BeerLogPublicSubnetA
+      Tags:
+        - Key: Name
+          Value: BeerLogNATGateway
+
+  BeerLogPrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref BeerLogPrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref BeerLogNATGateway
+
+  # DB Subnet Group（2AZ）
   BeerLogDBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: 'BeerLog DB subnet group'
       SubnetIds:
-        - !Ref BeerLogPrivateSubnet
+        - !Ref BeerLogPrivateSubnetA
+        - !Ref BeerLogPrivateSubnetB
 
+  # セキュリティグループ（DB/Lambda用、VPC内通信のみ許可）
   BeerLogSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -66,8 +178,12 @@ Resources:
         - IpProtocol: tcp
           FromPort: 5432
           ToPort: 5432
-          CidrIp: 0.0.0.0/0 # 必要に応じてアクセス元を制限してください
+          CidrIp: 10.0.0.0/16 # VPC内のみ許可
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
 
+  # RDS（Multi-AZ例）
   BeerLogDB:
     Type: AWS::RDS::DBInstance
     Properties:
@@ -80,48 +196,11 @@ Resources:
       VPCSecurityGroups:
         - !Ref BeerLogSecurityGroup
       DBSubnetGroupName: !Ref BeerLogDBSubnetGroup
-      PubliclyAccessible: false # プライベートサブネットなのでfalse
+      MultiAZ: true
+      PubliclyAccessible: false
       BackupRetentionPeriod: 7
 
-  BeerLogCognitoUserPool:
-    Type: AWS::Cognito::UserPool
-    Properties:
-      UserPoolName: BeerLogUserPool
-      AutoVerifiedAttributes:
-        - email
-
-  BeerLogCognitoUserPoolClient:
-    Type: AWS::Cognito::UserPoolClient
-    Properties:
-      ClientName: BeerLogUserPoolClient
-      UserPoolId: !Ref BeerLogCognitoUserPool
-      GenerateSecret: false
-
-  BeerLogS3Bucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub beerlog-app-${AWS::AccountId}-${AWS::Region}
-
-  BeerLogCloudFrontDistribution:
-    Type: AWS::CloudFront::Distribution
-    Properties:
-      DistributionConfig:
-        Enabled: true
-        Origins:
-          - DomainName: !GetAtt BeerLogS3Bucket.DomainName
-            Id: BeerLogS3Origin
-            S3OriginConfig: {}
-        DefaultCacheBehavior:
-          TargetOriginId: BeerLogS3Origin
-          ViewerProtocolPolicy: redirect-to-https
-          AllowedMethods:
-            - GET
-            - HEAD
-          CachedMethods:
-            - GET
-            - HEAD
-        DefaultRootObject: index.html
-
+  # Lambda実行ロール
   BeerLogLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -144,19 +223,18 @@ Resources:
                   - logs:PutLogEvents
                 Resource: arn:aws:logs:*:*:*
 
+  # Lambda関数（プライベートサブネットに配置）
   BeerLogLambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: BeerLogApiHandler
       Handler: index.handler
       Role: !GetAtt BeerLogLambdaExecutionRole.Arn
-      Runtime: nodejs22.x
-      Code:
-        S3Bucket: your-lambda-code-bucket
-        S3Key: your-lambda-code.zip
+      Runtime: nodejs20.x
       VpcConfig:
         SubnetIds:
-          - !Ref BeerLogPrivateSubnet
+          - !Ref BeerLogPrivateSubnetA
+          - !Ref BeerLogPrivateSubnetB
         SecurityGroupIds:
           - !Ref BeerLogSecurityGroup
       Environment:
@@ -166,6 +244,7 @@ Resources:
           DB_PASS: !Ref DBPassword
           DB_NAME: !Ref DBName
 
+  # API Gateway
   BeerLogApiGateway:
     Type: AWS::ApiGateway::RestApi
     Properties:
@@ -200,6 +279,53 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${BeerLogApiGateway}/*
 
+  # S3バケット（CloudFront OAC対応）
+  BeerLogS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub beerlog-app-${AWS::AccountId}-${AWS::Region}
+
+  # CloudFront OAC
+  BeerLogCloudFrontOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: BeerLogOAC
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+        Description: OAC for BeerLog S3
+
+  # CloudFrontディストリビューション
+  BeerLogCloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Origins:
+          - DomainName: !GetAtt BeerLogS3Bucket.DomainName
+            Id: BeerLogS3Origin
+            S3OriginConfig: {}
+            OriginAccessControlId: !Ref BeerLogCloudFrontOAC
+        DefaultCacheBehavior:
+          TargetOriginId: BeerLogS3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          ForwardedValues:
+            QueryString: false
+        DefaultRootObject: index.html
+        CustomErrorResponses:
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+
+  # S3バケットポリシー（CloudFront OACのみ許可）
   BeerLogS3BucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -232,3 +358,4 @@ Outputs:
     Value: !Ref BeerLogS3Bucket
   CloudFrontDomain:
     Description: CloudFrontドメイン名
+    Value: !GetAtt BeerLogCloudFrontDistribution.DomainName
