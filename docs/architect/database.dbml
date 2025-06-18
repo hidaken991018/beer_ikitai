@@ -1,0 +1,35 @@
+Project MyBeerLog {
+  database_type: 'PostgreSQL'
+  Note: '''
+    My Beer Log クラフトビール記録アプリ用DB設計
+    アカウント管理・認証はAWS Cognitoを利用（ユーザーIDはCognitoのsubを利用）
+    features.md（MVP Step1）に準拠
+  '''
+}
+
+Table Brewery {
+  id serial [pk]
+  name varchar [not null]
+  address varchar
+  description text
+  latitude decimal(10,7) // 緯度
+  longitude decimal(10,7) // 経度
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+}
+
+Table UserProfile {
+  id serial [pk]
+  cognito_sub varchar [unique, not null] // CognitoユーザーID
+  display_name varchar
+  icon_url varchar
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+}
+
+Table Visit {
+  id serial [pk]
+  user_profile_id int [ref: > UserProfile.id, not null]
+  brewery_id int [ref: > Brewery.id, not null]
+  visited_at timestamp [not null, default: `now()`]
+}

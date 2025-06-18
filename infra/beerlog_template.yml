@@ -1,0 +1,234 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: My Beer Log - MVP用AWS CloudFormationテンプレート
+
+Parameters:
+  DBUser:
+    Type: String
+    Description: RDS DBユーザー名
+    Default: beerloguser
+  DBPassword:
+    Type: String
+    Description: RDS DBパスワード
+    NoEcho: true
+  DBName:
+    Type: String
+    Description: RDS DB名
+    Default: beerlogdb
+
+Resources:
+  BeerLogVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: BeerLogVPC
+
+  # パブリックサブネット（例：ALBやNAT Gateway用）
+  BeerLogPublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref BeerLogVPC
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: BeerLogPublicSubnet
+
+  # プライベートサブネット（DB配置用）
+  BeerLogPrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref BeerLogVPC
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: false
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: BeerLogPrivateSubnet
+
+  BeerLogDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: 'BeerLog DB subnet group'
+      SubnetIds:
+        - !Ref BeerLogPrivateSubnet
+
+  BeerLogSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: BeerLog Security Group
+      VpcId: !Ref BeerLogVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0 # 必要に応じてアクセス元を制限してください
+
+  BeerLogDB:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: !Ref DBName
+      AllocatedStorage: 20
+      DBInstanceClass: db.t3.micro
+      Engine: postgres
+      MasterUsername: !Ref DBUser
+      MasterUserPassword: !Ref DBPassword
+      VPCSecurityGroups:
+        - !Ref BeerLogSecurityGroup
+      DBSubnetGroupName: !Ref BeerLogDBSubnetGroup
+      PubliclyAccessible: false # プライベートサブネットなのでfalse
+      BackupRetentionPeriod: 7
+
+  BeerLogCognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: BeerLogUserPool
+      AutoVerifiedAttributes:
+        - email
+
+  BeerLogCognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: BeerLogUserPoolClient
+      UserPoolId: !Ref BeerLogCognitoUserPool
+      GenerateSecret: false
+
+  BeerLogS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub beerlog-app-${AWS::AccountId}-${AWS::Region}
+
+  BeerLogCloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Origins:
+          - DomainName: !GetAtt BeerLogS3Bucket.DomainName
+            Id: BeerLogS3Origin
+            S3OriginConfig: {}
+        DefaultCacheBehavior:
+          TargetOriginId: BeerLogS3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+        DefaultRootObject: index.html
+
+  BeerLogLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BeerLogLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+
+  BeerLogLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: BeerLogApiHandler
+      Handler: index.handler
+      Role: !GetAtt BeerLogLambdaExecutionRole.Arn
+      Runtime: nodejs22.x
+      Code:
+        S3Bucket: your-lambda-code-bucket
+        S3Key: your-lambda-code.zip
+      VpcConfig:
+        SubnetIds:
+          - !Ref BeerLogPrivateSubnet
+        SecurityGroupIds:
+          - !Ref BeerLogSecurityGroup
+      Environment:
+        Variables:
+          DB_HOST: !GetAtt BeerLogDB.Endpoint.Address
+          DB_USER: !Ref DBUser
+          DB_PASS: !Ref DBPassword
+          DB_NAME: !Ref DBName
+
+  BeerLogApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: BeerLogApi
+      Description: My Beer Log用API Gateway
+
+  BeerLogApiResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref BeerLogApiGateway
+      ParentId: !GetAtt BeerLogApiGateway.RootResourceId
+      PathPart: v1
+
+  BeerLogApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref BeerLogApiGateway
+      ResourceId: !Ref BeerLogApiResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BeerLogLambdaFunction.Arn}/invocations
+
+  BeerLogLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt BeerLogLambdaFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${BeerLogApiGateway}/*
+
+  BeerLogS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BeerLogS3Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontServicePrincipalRead
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: 's3:GetObject'
+            Resource: !Sub '${BeerLogS3Bucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${BeerLogCloudFrontDistribution}'
+
+Outputs:
+  DBEndpoint:
+    Description: RDSエンドポイント
+    Value: !GetAtt BeerLogDB.Endpoint.Address
+  CognitoUserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref BeerLogCognitoUserPool
+  CognitoUserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value: !Ref BeerLogCognitoUserPoolClient
+  S3BucketName:
+    Description: 静的ホスティング用S3バケット名
+    Value: !Ref BeerLogS3Bucket
+  CloudFrontDomain:
+    Description: CloudFrontドメイン名
