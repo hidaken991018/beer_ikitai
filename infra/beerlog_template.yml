@@ -306,7 +306,7 @@ Resources:
       DistributionConfig:
         Enabled: true
         Origins:
-          - DomainName: !GetAtt BeerLogS3Bucket.DomainName
+          - DomainName: !GetAtt BeerLogS3FrontBucket.DomainName
             Id: BeerLogS3Origin
             S3OriginConfig: {}
             OriginAccessControlId: !Ref BeerLogCloudFrontOAC
@@ -329,10 +329,10 @@ Resources:
             ResponsePagePath: /index.html
 
   # S3バケットポリシー（CloudFront OACのみ許可）
-  BeerLogS3BucketPolicy:
+  BeerLogS3FrontBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Ref BeerLogS3Bucket
+      Bucket: !Ref BeerLogS3FrontBucket
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -341,7 +341,7 @@ Resources:
             Principal:
               Service: cloudfront.amazonaws.com
             Action: 's3:GetObject'
-            Resource: !Sub '${BeerLogS3Bucket.Arn}/*'
+            Resource: !Sub '${BeerLogS3FrontBucket.Arn}/*'
             Condition:
               StringEquals:
                 AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${BeerLogCloudFrontDistribution}'
@@ -374,7 +374,7 @@ Outputs:
     Value: !Ref BeerLogCognitoUserPoolClient
   S3BucketName:
     Description: 静的ホスティング用S3バケット名
-    Value: !Ref BeerLogS3Bucket
+    Value: !Ref BeerLogS3FrontBucket
   CloudFrontDomain:
     Description: CloudFrontドメイン名
     Value: !GetAtt BeerLogCloudFrontDistribution.DomainName
