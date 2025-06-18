@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: 2010-09-09
 Description: My Beer Log - 改善版MVP用AWS CloudFormationテンプレート
 
 Parameters:
@@ -6,10 +6,7 @@ Parameters:
     Type: String
     Description: RDS DBユーザー名
     Default: beerloguser
-  DBPassword:
-    Type: String
-    Description: RDS DBパスワード（本番はSecrets Manager推奨）
-    NoEcho: true
+  # DBPassword パラメータ削除
   DBName:
     Type: String
     Description: RDS DB名
@@ -186,19 +183,37 @@ Resources:
   # RDS（Multi-AZ例）
   BeerLogDB:
     Type: AWS::RDS::DBInstance
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Retain
     Properties:
       DBName: !Ref DBName
       AllocatedStorage: 20
       DBInstanceClass: db.t3.micro
       Engine: postgres
-      MasterUsername: !Ref DBUser
-      MasterUserPassword: !Ref DBPassword
+      MasterUsername:
+        Fn::Sub: '{{resolve:secretsmanager:${BeerLogDBSecret}:SecretString:username}}'
+      MasterUserPassword:
+        Fn::Sub: '{{resolve:secretsmanager:${BeerLogDBSecret}:SecretString:password}}'
       VPCSecurityGroups:
         - !Ref BeerLogSecurityGroup
       DBSubnetGroupName: !Ref BeerLogDBSubnetGroup
       MultiAZ: true
       PubliclyAccessible: false
       BackupRetentionPeriod: 7
+
+  # Secrets Manager シークレット
+  BeerLogDBSecret:
+    Type: AWS::SecretsManager::Secret
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Retain
+    Properties:
+      Name: beerlog-db-secret
+      Description: RDS用DBユーザーとパスワード
+      GenerateSecretString:
+        SecretStringTemplate: !Sub '{"username": "${DBUser}"}'
+        GenerateStringKey: password
+        ExcludeCharacters: '"@/\'
+        PasswordLength: 16
 
   # Lambda実行ロール
   BeerLogLambdaExecutionRole:
@@ -243,8 +258,10 @@ Resources:
       Environment:
         Variables:
           DB_HOST: !GetAtt BeerLogDB.Endpoint.Address
-          DB_USER: !Ref DBUser
-          DB_PASS: !Ref DBPassword
+          DB_USER:
+            Fn::Sub: '{{resolve:secretsmanager:${BeerLogDBSecret}:SecretString:username}}'
+          DB_PASS:
+            Fn::Sub: '{{resolve:secretsmanager:${BeerLogDBSecret}:SecretString:password}}'
           DB_NAME: !Ref DBName
 
   # API Gateway
@@ -271,8 +288,7 @@ Resources:
       Integration:
         IntegrationHttpMethod: POST
         Type: AWS_PROXY
-        Uri:
-          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BeerLogLambdaFunction.Arn}/invocations
+        Uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BeerLogLambdaFunction.Arn}/invocations
 
   BeerLogLambdaInvokePermission:
     Type: AWS::Lambda::Permission
@@ -280,13 +296,13 @@ Resources:
       FunctionName: !GetAtt BeerLogLambdaFunction.Arn
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${BeerLogApiGateway}/*
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BeerLogApiGateway}/*
 
   # S3バケット（CloudFront OAC対応）
   BeerLogS3FrontBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub beerlog-app-front
+      BucketName: beerlog-app-front
 
   # CloudFront OAC
   BeerLogCloudFrontOAC:
@@ -344,11 +360,13 @@ Resources:
             Resource: !Sub '${BeerLogS3FrontBucket.Arn}/*'
             Condition:
               StringEquals:
-                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${BeerLogCloudFrontDistribution}'
+                AWS:SourceArn: !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${BeerLogCloudFrontDistribution}'
 
   # Cognito User Pool
   BeerLogCognitoUserPool:
     Type: AWS::Cognito::UserPool
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Retain
     Properties:
       UserPoolName: BeerLogUserPool
       AutoVerifiedAttributes:
