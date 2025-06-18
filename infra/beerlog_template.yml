@@ -231,6 +231,9 @@ Resources:
       Handler: index.handler
       Role: !GetAtt BeerLogLambdaExecutionRole.Arn
       Runtime: nodejs20.x
+      Code:
+        S3Bucket: beerlog-app-back
+        S3Key: sample.zip
       VpcConfig:
         SubnetIds:
           - !Ref BeerLogPrivateSubnetA
@@ -280,10 +283,10 @@ Resources:
       SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${BeerLogApiGateway}/*
 
   # S3バケット（CloudFront OAC対応）
-  BeerLogS3Bucket:
+  BeerLogS3FrontBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub beerlog-app-${AWS::AccountId}-${AWS::Region}
+      BucketName: !Sub beerlog-app-front
 
   # CloudFront OAC
   BeerLogCloudFrontOAC:
@@ -342,6 +345,22 @@ Resources:
             Condition:
               StringEquals:
                 AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${BeerLogCloudFrontDistribution}'
+
+  # Cognito User Pool
+  BeerLogCognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: BeerLogUserPool
+      AutoVerifiedAttributes:
+        - email
+
+  # Cognito User Pool Client
+  BeerLogCognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: BeerLogUserPoolClient
+      UserPoolId: !Ref BeerLogCognitoUserPool
+      GenerateSecret: false
 
 Outputs:
   DBEndpoint:
