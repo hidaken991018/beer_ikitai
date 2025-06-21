@@ -3,19 +3,21 @@ package controllers
 import (
 	"encoding/json"
 	"mybeerlog/domain/entity"
+	"mybeerlog/domain/repository"
 	"mybeerlog/domain/usecase"
-	"mybeerlog/infrastructure/persistence"
 	"mybeerlog/interfaces/dto"
 	"mybeerlog/interfaces/mapper"
 )
 
+// BreweryController 醸造所関連のHTTPリクエストを処理するコントローラー
 type BreweryController struct {
 	BaseController
 	breweryUsecase usecase.BreweryUsecase
 }
 
+// NewBreweryController 新しい醸造所コントローラーを作成する
 func NewBreweryController() *BreweryController {
-	breweryRepo := persistence.NewBeegoBreweryRepository()
+	breweryRepo := repository.NewBreweryRepository()
 	breweryUsecase := usecase.NewBreweryUsecase(breweryRepo)
 
 	return &BreweryController{
@@ -23,6 +25,7 @@ func NewBreweryController() *BreweryController {
 	}
 }
 
+// GetBreweries 醸造所の一覧を取得する
 // @Title Get Breweries
 // @Description Get list of breweries
 // @Param lat query float64 false "Latitude for location search"
@@ -82,6 +85,7 @@ func (c *BreweryController) GetBreweries() {
 	c.JSONResponse(response)
 }
 
+// CreateBrewery 新しい醸造所を作成する（管理者のみ）
 // @Title Create Brewery
 // @Description Create new brewery (admin only)
 // @Param body body dto.BreweryRequest true "Brewery data"
@@ -126,6 +130,7 @@ func (c *BreweryController) CreateBrewery() {
 	c.JSONResponse(response)
 }
 
+// GetBrewery IDで醸造所を取得する
 // @Title Get Brewery
 // @Description Get brewery by ID
 // @Param brewery_id path int true "Brewery ID"
@@ -134,7 +139,7 @@ func (c *BreweryController) CreateBrewery() {
 // @router /breweries/:brewery_id [get]
 func (c *BreweryController) GetBrewery() {
 	breweryID := c.GetIntQuery("brewery_id", 0)
-	if breweryID > 0 {
+	if breweryID <= 0 {
 		c.ErrorResponse(400, "Brewery ID is required", "INVALID_BREWERY_ID")
 		return
 	}

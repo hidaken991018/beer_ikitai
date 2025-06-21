@@ -2,19 +2,21 @@ package controllers
 
 import (
 	"encoding/json"
+	"mybeerlog/domain/repository"
 	"mybeerlog/domain/usecase"
-	"mybeerlog/infrastructure/persistence"
 	"mybeerlog/interfaces/dto"
 	"mybeerlog/interfaces/mapper"
 )
 
+// UserController ユーザー関連のHTTPリクエストを処理するコントローラー
 type UserController struct {
 	BaseController
 	userProfileUsecase usecase.UserProfileUsecase
 }
 
+// NewUserController 新しいユーザーコントローラーを作成する
 func NewUserController() *UserController {
-	userProfileRepo := persistence.NewBeegoUserProfileRepository()
+	userProfileRepo := repository.NewUserProfileRepository()
 	userProfileUsecase := usecase.NewUserProfileUsecase(userProfileRepo)
 	
 	return &UserController{
@@ -22,6 +24,7 @@ func NewUserController() *UserController {
 	}
 }
 
+// GetProfile 認証されたユーザーのプロファイルを取得する
 // @Title Get User Profile
 // @Description Get authenticated user profile
 // @Success 200 {object} dto.UserProfileResponse
@@ -45,6 +48,7 @@ func (c *UserController) GetProfile() {
 	c.JSONResponse(response)
 }
 
+// CreateProfile 新しいユーザープロファイルを作成する
 // @Title Create User Profile
 // @Description Create new user profile
 // @Param body body dto.UserProfileRequest true "User profile data"
@@ -81,6 +85,7 @@ func (c *UserController) CreateProfile() {
 	c.JSONResponse(response)
 }
 
+// UpdateProfile 認証されたユーザーのプロファイルを更新する
 // @Title Update User Profile
 // @Description Update authenticated user profile
 // @Param body body dto.UserProfileRequest true "User profile data"

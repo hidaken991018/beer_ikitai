@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"encoding/json"
+	"mybeerlog/domain/repository"
 	"mybeerlog/domain/usecase"
-	"mybeerlog/infrastructure/persistence"
 	"mybeerlog/interfaces/dto"
 	"mybeerlog/interfaces/mapper"
 	"strconv"
@@ -11,16 +11,18 @@ import (
 	"github.com/astaxie/beego"
 )
 
+// VisitController 訪問関連のHTTPリクエストを処理するコントローラー
 type VisitController struct {
 	BaseController
 	visitUsecase       usecase.VisitUsecase
 	userProfileUsecase usecase.UserProfileUsecase
 }
 
+// NewVisitController 新しい訪問コントローラーを作成する
 func NewVisitController() *VisitController {
-	visitRepo := persistence.NewBeegoVisitRepository()
-	breweryRepo := persistence.NewBeegoBreweryRepository()
-	userProfileRepo := persistence.NewBeegoUserProfileRepository()
+	visitRepo := repository.NewVisitRepository()
+	breweryRepo := repository.NewBreweryRepository()
+	userProfileRepo := repository.NewUserProfileRepository()
 
 	visitUsecase := usecase.NewVisitUsecase(visitRepo, breweryRepo)
 	userProfileUsecase := usecase.NewUserProfileUsecase(userProfileRepo)
@@ -31,6 +33,7 @@ func NewVisitController() *VisitController {
 	}
 }
 
+// CheckIn GPSを使用して醸造所にチェックインする
 // @Title Check In
 // @Description Check in to brewery using GPS
 // @Param body body dto.CheckinRequest true "Check-in data"
@@ -66,7 +69,7 @@ func (c *VisitController) CheckIn() {
 	}
 
 	visit, err := c.visitUsecase.CheckIn(
-		userProfile.ID,
+		userProfile.ID(),
 		request.BreweryID,
 		request.Latitude,
 		request.Longitude,
@@ -95,6 +98,7 @@ func (c *VisitController) CheckIn() {
 	c.JSONResponse(response)
 }
 
+// GetVisits 認証されたユーザーの訪問履歴を取得する
 // @Title Get Visit History
 // @Description Get authenticated user's visit history
 // @Param brewery_id query int false "Filter by brewery ID"
@@ -122,7 +126,7 @@ func (c *VisitController) GetVisits() {
 	limit := c.GetIntQuery("limit", 20)
 	offset := c.GetIntQuery("offset", 0)
 
-	visits, total, err := c.visitUsecase.GetVisitHistory(userProfile.ID, &breweryID, limit, offset)
+	visits, total, err := c.visitUsecase.GetVisitHistory(userProfile.ID(), &breweryID, limit, offset)
 	if err != nil {
 		c.ErrorResponse(400, err.Error(), "FETCH_FAILED")
 		return
@@ -136,6 +140,7 @@ func (c *VisitController) GetVisits() {
 	c.JSONResponse(response)
 }
 
+// GetVisit IDで訪問の詳細を取得する
 // @Title Get Visit Details
 // @Description Get visit details by ID
 // @Param visit_id path int true "Visit ID"
@@ -165,7 +170,7 @@ func (c *VisitController) GetVisit() {
 		return
 	}
 
-	visit, err := c.visitUsecase.GetVisit(visitID, userProfile.ID)
+	visit, err := c.visitUsecase.GetVisit(visitID, (userProfile.ID()))
 	if err != nil {
 		switch err.Error() {
 		case "access denied":

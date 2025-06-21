@@ -45,9 +45,7 @@ func init() {
 	//ログ出設定
 
 	if beego.AppConfig.String("run.mode") == "dev" {
-		log.Println("run.mode:", "dev")
 		err = orm.RunSyncdb("default", false, true)
-		log.Println("orm.RunSyncdb:", "err:", err)
 		if err != nil {
 			log.Fatal("テーブル作成エラー:", err)
 		}
@@ -58,9 +56,11 @@ func init() {
 
 	// テスト用エンドポイント（開発環境のみ）
 	if beego.BConfig.RunMode == "dev" {
-		testController := &controllers.TestController{}
+		testController := controllers.NewTestController()
 		beego.Router("/test/generate-token", testController, "get:GenerateToken")
 		beego.Router("/test/auth", testController, "get:TestAuth")
+		beego.Router("/test/revoke-token", testController, "post:RevokeToken")
+		beego.Router("/test/token-info", testController, "get:GetTokenInfo")
 	}
 
 	// ユーザープロファイル管理

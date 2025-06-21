@@ -12,14 +12,3 @@ type UserProfile struct {
 	CreatedAt   time.Time `orm:"auto_now_add;type(datetime)" json:"created_at"`
 	UpdatedAt   time.Time `orm:"auto_now;type(datetime)" json:"updated_at"`
 }
-
-func (u *UserProfile) TableName() string {
-	return "user_profile"
-}
-
-// NewUserProfile creates a new UserProfile
-func NewUserProfile(cognitoSub string) *UserProfile {
-	return &UserProfile{
-		CognitoSub: cognitoSub,
-	}
-}

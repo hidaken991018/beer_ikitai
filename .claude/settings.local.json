@@ -10,7 +10,11 @@
       "Bash(go:*)",
       "Bash(docker-compose up:*)",
       "Bash(docker compose:*)",
-      "WebFetch(domain:golangci-lint.run)"
+      "WebFetch(domain:golangci-lint.run)",
+      "Bash(rm:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(ls)"
     ],
     "deny": []
   }

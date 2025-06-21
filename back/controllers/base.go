@@ -10,17 +10,18 @@ import (
 	"github.com/astaxie/beego"
 )
 
+// BaseController 全てのコントローラーの基底クラス
 type BaseController struct {
 	beego.Controller
 }
 
-// JSON レスポンス
+// JSONResponse JSONレスポンスを送信する
 func (c *BaseController) JSONResponse(data interface{}) {
 	c.Data["json"] = data
 	c.ServeJSON()
 }
 
-// エラーレスポンス
+// ErrorResponse エラーレスポンスを送信する
 func (c *BaseController) ErrorResponse(code int, message, errorCode string) {
 	c.Ctx.ResponseWriter.WriteHeader(code)
 	c.Data["json"] = dto.ErrorResponse{
@@ -30,7 +31,7 @@ func (c *BaseController) ErrorResponse(code int, message, errorCode string) {
 	c.ServeJSON()
 }
 
-// Cognito JWT からユーザー情報を取得
+// GetCognitoSub Cognito JWTからユーザー情報を取得する
 func (c *BaseController) GetCognitoSub() (string, error) {
 	// Authorization ヘッダーから JWT を取得
 	authHeader := c.Ctx.Request.Header.Get("Authorization")
@@ -48,7 +49,8 @@ func (c *BaseController) GetCognitoSub() (string, error) {
 
 	// 開発環境ではテストトークンも受け入れる
 	if beego.BConfig.RunMode == "dev" {
-		if cognitoSub, err := utils.ValidateTestToken(token); err == nil {
+		authManager := utils.GetTestAuthTokenManager()
+		if cognitoSub, err := authManager.ValidateToken(token); err == nil {
 			return cognitoSub, nil
 		}
 	}
@@ -71,14 +73,14 @@ func (c *BaseController) GetCognitoSub() (string, error) {
 	return sub, nil
 }
 
-// 管理者権限チェック
+// IsAdmin 管理者権限をチェックする
 func (c *BaseController) IsAdmin() bool {
 	// JWT から権限情報を取得
 	// TODO: AWS Cognito のグループ情報から管理者権限をチェック
 	return false // デモ用
 }
 
-// クエリパラメータの取得
+// GetIntQuery 整数型のクエリパラメータを取得する
 func (c *BaseController) GetIntQuery(key string, defaultValue int) int {
 	value := c.GetString(key)
 	if value == "" {
@@ -93,6 +95,7 @@ func (c *BaseController) GetIntQuery(key string, defaultValue int) int {
 	return intValue
 }
 
+// GetFloatQuery 浮動小数点型のクエリパラメータを取得する
 func (c *BaseController) GetFloatQuery(key string, defaultValue float64) float64 {
 	value := c.GetString(key)
 	if value == "" {
@@ -107,6 +110,7 @@ func (c *BaseController) GetFloatQuery(key string, defaultValue float64) float64
 	return floatValue
 }
 
+// GetStringQuery 文字列型のクエリパラメータを取得する
 func (c *BaseController) GetStringQuery(key string, defaultValue string) string {
 	value := c.GetString(key)
 	if value == "" {
@@ -116,7 +120,7 @@ func (c *BaseController) GetStringQuery(key string, defaultValue string) string 
 	return value
 }
 
-// 簡易 JWT パーサー（デモ用）
+// parseJWT 簡易JWTパーサー（デモ用）
 func (c *BaseController) parseJWT(token string) (map[string]interface{}, error) {
 	// 実際の実装では proper JWT validation が必要
 	// この実装はデモ用の簡易版です

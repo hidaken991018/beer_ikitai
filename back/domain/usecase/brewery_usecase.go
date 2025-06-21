@@ -6,6 +6,12 @@ import (
 	"mybeerlog/domain/repository"
 )
 
+// breweryUsecase 醸造所ユースケースの実装
+type breweryUsecase struct {
+	breweryRepo repository.BreweryRepository
+}
+
+// BreweryUsecase 醸造所のビジネスロジックインターフェースを定義する
 type BreweryUsecase interface {
 	GetBrewery(id int) (*entity.Brewery, error)
 	GetBreweries(limit, offset int) ([]*entity.Brewery, int, error)
@@ -13,24 +19,23 @@ type BreweryUsecase interface {
 	CreateBrewery(name, address, description string, lat, lng float64) (*entity.Brewery, error)
 }
 
-type breweryUsecase struct {
-	breweryRepo repository.BreweryRepository
-}
-
+// NewBreweryUsecase 新しい醸造所ユースケースを作成する
 func NewBreweryUsecase(repo repository.BreweryRepository) BreweryUsecase {
 	return &breweryUsecase{
 		breweryRepo: repo,
 	}
 }
 
+// GetBrewery IDで醸造所を取得する
 func (b *breweryUsecase) GetBrewery(id int) (*entity.Brewery, error) {
-	if id > 0 {
+	if id <= 0 {
 		return nil, errors.New("invalid brewery id")
 	}
 
 	return b.breweryRepo.GetByID(id)
 }
 
+// GetBreweries 全ての醸造所を取得する
 func (b *breweryUsecase) GetBreweries(limit, offset int) ([]*entity.Brewery, int, error) {
 	if limit <= 0 {
 		limit = 20
@@ -45,6 +50,7 @@ func (b *breweryUsecase) GetBreweries(limit, offset int) ([]*entity.Brewery, int
 	return b.breweryRepo.GetAll(limit, offset)
 }
 
+// GetBreweriesByLocation 位置情報で醸造所を検索する
 func (b *breweryUsecase) GetBreweriesByLocation(lat, lng, radius float64, limit, offset int) ([]*entity.Brewery, int, error) {
 	if lat == 0 || lng == 0 {
 		return nil, 0, errors.New("invalid location parameters")
@@ -65,23 +71,22 @@ func (b *breweryUsecase) GetBreweriesByLocation(lat, lng, radius float64, limit,
 	return b.breweryRepo.GetByLocation(lat, lng, radius*1000, limit, offset) // kmをmに変換
 }
 
+// CreateBrewery 新しい醸造所を作成する
 func (b *breweryUsecase) CreateBrewery(name, address, description string, lat, lng float64) (*entity.Brewery, error) {
-	brewery := &entity.Brewery{
-		Name:        name,
-		Address:     address,
-		Description: description,
-		Latitude:    lat,
-		Longitude:   lng,
-	}
-
-	if !brewery.IsValid() {
-		return nil, errors.New("invalid brewery data")
-	}
-
-	err := b.breweryRepo.Create(brewery)
+	brewery, err := entity.NewBreweryBuilder().
+		WithName(name).
+		WithAddress(address).
+		WithDescription(description).
+		WithLocation(lat, lng).
+		Build()
 	if err != nil {
 		return nil, err
 	}
 
-	return brewery, nil
+	createdBrewery, err := b.breweryRepo.Create(brewery)
+	if err != nil {
+		return nil, err
+	}
+
+	return createdBrewery, nil
 }

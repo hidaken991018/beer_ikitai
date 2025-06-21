@@ -14,16 +14,3 @@ type Brewery struct {
 	CreatedAt   time.Time `orm:"auto_now_add;type(datetime)" json:"created_at"`
 	UpdatedAt   time.Time `orm:"auto_now;type(datetime)" json:"updated_at"`
 }
-
-func (b *Brewery) TableName() string {
-	return "brewery"
-}
-
-// NewBrewery creates a new Brewery
-func NewBrewery(name string, latitude, longitude float64) *Brewery {
-	return &Brewery{
-		Name:      name,
-		Latitude:  latitude,
-		Longitude: longitude,
-	}
-}
