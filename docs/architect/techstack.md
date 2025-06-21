@@ -2,18 +2,12 @@
 
 ## フロントエンド
 
-- Next.js
-- React
-- TypeScript
-- Tailwind
-- shadcn/ui
--
-
-## バックエンド/API
-
-- Hono
-- TypeScript
-- REST API（OpenAPI 仕様）
+- フレームワーク：Next.js × React
+- 言語：TypeScript
+- CSS フレームワーク：Tailwind
+- データフェッチ：useSWR
+- 状態管理：Redux
+- UI コンポーネント：shadcn/ui
 
 ## 認証・認可
 

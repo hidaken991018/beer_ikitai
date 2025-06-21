@@ -1,0 +1,22 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Development
+.env
+.env.local
+
+# Logs
+*.log
+
+# Go
+vendor/

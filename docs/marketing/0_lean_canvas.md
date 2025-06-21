@@ -82,3 +82,8 @@
 - クラフトビール × ファンマーケ領域での特化知見（sauna-ikitai のような縦展開）
 
 #### 競合
+
+- https://beermaps.jp/
+- https://www.beermap.org/
+- https://beergirl.net/tsunagarutap_n/
+- https://www.pintap.jp/

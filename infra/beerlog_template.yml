@@ -236,7 +236,6 @@ Resources:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
-                  -
                 Resource: arn:aws:logs:*:*:*
         - PolicyName: BeerLogLambdaEC2NetworkInterfacePolicy
           PolicyDocument:
@@ -282,6 +281,21 @@ Resources:
       Name: BeerLogApi
       Description: My Beer Log用API Gateway
 
+  BeerLogApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: BeerLogApiMethod
+    Properties:
+      RestApiId: !Ref BeerLogApiGateway
+      StageName: v1 # ダミー（ステージリソースで上書き）
+
+  BeerLogApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      StageName: v1
+      Description: v1ステージ
+      RestApiId: !Ref BeerLogApiGateway
+      DeploymentId: !Ref BeerLogApiDeployment
+
   BeerLogApiResource:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -294,7 +308,7 @@ Resources:
     Properties:
       RestApiId: !Ref BeerLogApiGateway
       ResourceId: !Ref BeerLogApiResource
-      HttpMethod: POST
+      HttpMethod: ANY
       AuthorizationType: NONE
       Integration:
         IntegrationHttpMethod: POST
@@ -313,7 +327,7 @@ Resources:
   BeerLogS3FrontBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: beerlog-app-front
+      BucketName: !Sub beerlog-app-front-${AWS::AccountId}
 
   # CloudFront OAC
   BeerLogCloudFrontOAC:
@@ -339,7 +353,7 @@ Resources:
             OriginAccessControlId: !Ref BeerLogCloudFrontOAC
         DefaultCacheBehavior:
           TargetOriginId: BeerLogS3Origin
-          ViewerProtocolPolicy: HTTPS only
+          ViewerProtocolPolicy: https-only
           AllowedMethods:
             - GET
             - HEAD

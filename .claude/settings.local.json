@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go mod:*)",
+      "Bash(curl:*)",
+      "Bash(mkdir:*)",
+      "Bash(tar:*)",
+      "Bash(export PATH=$HOME/go_local/go/bin:$PATH)",
+      "Bash(export GOPATH=$HOME/go)",
+      "Bash(go:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker compose:*)",
+      "WebFetch(domain:golangci-lint.run)"
+    ],
+    "deny": []
+  }
+}

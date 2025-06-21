@@ -1,0 +1,603 @@
+openapi: 3.0.3
+info:
+  title: My Beer Log API
+  description: |
+    My Beer LogはGPSベースの醸造所チェックイン機能を持つクラフトビール記録アプリケーション用のREST APIです。
+
+    このAPIは以下の主要機能を提供します：
+    - アカウント管理（AWS Cognito認証）
+    - 醸造所情報の管理
+    - GPS位置情報を使用した醸造所への訪問チェックイン
+    - 訪問履歴の管理と可視化
+
+    現在はMVPフェーズ1として、基本的なアカウント管理と位置情報ベースの醸造所訪問機能に焦点を当てています。
+  version: 1.0.0
+  contact:
+    name: My Beer Log API Support
+servers:
+  - url: https://api.mybeerlog.com/v1
+    description: Production server
+  - url: https://api-dev.mybeerlog.com/v1
+    description: Development server
+  - url: http://localhost:8080
+    description: Local development server
+
+security:
+  - CognitoAuth: []
+
+components:
+  securitySchemes:
+    CognitoAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: AWS Cognito JWT token
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: エラーメッセージ
+        code:
+          type: string
+          description: エラーコード
+      required:
+        - error
+        - code
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ユーザープロファイルID
+        cognito_sub:
+          type: string
+          description: CognitoユーザーID
+        display_name:
+          type: string
+          description: 表示名
+        icon_url:
+          type: string
+          format: uri
+          description: アイコン画像URL
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+      required:
+        - id
+        - cognito_sub
+        - created_at
+        - updated_at
+
+    UserProfileInput:
+      type: object
+      properties:
+        display_name:
+          type: string
+          description: 表示名
+        icon_url:
+          type: string
+          format: uri
+          description: アイコン画像URL
+
+    Brewery:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 醸造所ID
+        name:
+          type: string
+          description: 醸造所名
+        address:
+          type: string
+          description: 住所
+        description:
+          type: string
+          description: 説明
+        latitude:
+          type: number
+          format: double
+          description: 緯度
+        longitude:
+          type: number
+          format: double
+          description: 経度
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+      required:
+        - id
+        - name
+        - latitude
+        - longitude
+        - created_at
+        - updated_at
+
+    BreweryInput:
+      type: object
+      properties:
+        name:
+          type: string
+          description: 醸造所名
+        address:
+          type: string
+          description: 住所
+        description:
+          type: string
+          description: 説明
+        latitude:
+          type: number
+          format: double
+          description: 緯度
+        longitude:
+          type: number
+          format: double
+          description: 経度
+      required:
+        - name
+        - latitude
+        - longitude
+
+    Visit:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 訪問ID
+        user_profile_id:
+          type: integer
+          description: ユーザープロファイルID
+        brewery_id:
+          type: integer
+          description: 醸造所ID
+        brewery:
+          $ref: '#/components/schemas/Brewery'
+        visited_at:
+          type: string
+          format: date-time
+          description: 訪問日時
+      required:
+        - id
+        - user_profile_id
+        - brewery_id
+        - visited_at
+
+    CheckinInput:
+      type: object
+      properties:
+        brewery_id:
+          type: integer
+          description: 醸造所ID
+        latitude:
+          type: number
+          format: double
+          description: チェックイン時の緯度
+        longitude:
+          type: number
+          format: double
+          description: チェックイン時の経度
+      required:
+        - brewery_id
+        - latitude
+        - longitude
+
+    CheckinResponse:
+      type: object
+      properties:
+        visit:
+          $ref: '#/components/schemas/Visit'
+        message:
+          type: string
+          description: チェックイン結果メッセージ
+      required:
+        - visit
+        - message
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: ヘルスチェック
+      description: APIの稼働状況を確認します
+      security: []
+      responses:
+        '200':
+          description: API正常動作中
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: 'ok'
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /users/profile:
+    get:
+      tags:
+        - User Profile
+      summary: ユーザープロファイル取得
+      description: 認証済みユーザーのプロファイル情報を取得します
+      responses:
+        '200':
+          description: ユーザープロファイル情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '404':
+          description: ユーザープロファイルが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 認証が必要です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - User Profile
+      summary: ユーザープロファイル作成
+      description: 新規ユーザーのプロファイルを作成します
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileInput'
+      responses:
+        '201':
+          description: ユーザープロファイル作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: 不正なリクエスト
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 認証が必要です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: ユーザープロファイルが既に存在します
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - User Profile
+      summary: ユーザープロファイル更新
+      description: 認証済みユーザーのプロファイル情報を更新します
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileInput'
+      responses:
+        '200':
+          description: ユーザープロファイル更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: 不正なリクエスト
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 認証が必要です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: ユーザープロファイルが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /breweries:
+    get:
+      tags:
+        - Brewery
+      summary: 醸造所一覧取得
+      description: 醸造所の一覧を取得します。位置情報でのフィルタリングが可能です。
+      parameters:
+        - name: lat
+          in: query
+          description: 中心点の緯度（radiusと組み合わせて使用）
+          schema:
+            type: number
+            format: double
+        - name: lng
+          in: query
+          description: 中心点の経度（radiusと組み合わせて使用）
+          schema:
+            type: number
+            format: double
+        - name: radius
+          in: query
+          description: 検索半径（km）
+          schema:
+            type: number
+            format: double
+            default: 10
+        - name: limit
+          in: query
+          description: 取得件数上限
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          description: 取得開始位置
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: 醸造所一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  breweries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Brewery'
+                  total:
+                    type: integer
+                    description: 総件数
+                required:
+                  - breweries
+                  - total
+        '400':
+          description: 不正なリクエストパラメータ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Brewery
+      summary: 醸造所登録
+      description: 新しい醸造所を登録します（管理者のみ）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BreweryInput'
+      responses:
+        '201':
+          description: 醸造所登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Brewery'
+        '400':
+          description: 不正なリクエスト
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 認証が必要です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: 管理者権限が必要です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /breweries/{brewery_id}:
+    get:
+      tags:
+        - Brewery
+      summary: 醸造所詳細取得
+      description: 指定された醸造所の詳細情報を取得します
+      parameters:
+        - name: brewery_id
+          in: path
+          required: true
+          description: 醸造所ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 醸造所詳細情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Brewery'
+        '404':
+          description: 醸造所が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /checkin:
+    post:
+      tags:
+        - Visit
+      summary: 醸造所チェックイン
+      description: GPS位置情報を使用して醸造所にチェックインします
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckinInput'
+      responses:
+        '201':
+          description: チェックイン成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckinResponse'
+        '400':
+          description: 不正なリクエスト（位置情報が醸造所から離れすぎているなど）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 認証が必要です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 醸造所が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /visits:
+    get:
+      tags:
+        - Visit
+      summary: 訪問履歴取得
+      description: 認証済みユーザーの訪問履歴を取得します
+      parameters:
+        - name: brewery_id
+          in: query
+          description: 特定の醸造所の訪問履歴のみ取得
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          description: 取得件数上限
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          description: 取得開始位置
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: ソート順
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: 訪問履歴一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  visits:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Visit'
+                  total:
+                    type: integer
+                    description: 総件数
+                required:
+                  - visits
+                  - total
+        '401':
+          description: 認証が必要です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /visits/{visit_id}:
+    get:
+      tags:
+        - Visit
+      summary: 訪問履歴詳細取得
+      description: 指定された訪問履歴の詳細情報を取得します
+      parameters:
+        - name: visit_id
+          in: path
+          required: true
+          description: 訪問ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 訪問履歴詳細情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visit'
+        '401':
+          description: 認証が必要です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: 他のユーザーの訪問履歴にはアクセスできません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 訪問履歴が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Health
+    description: APIヘルスチェック
+  - name: User Profile
+    description: ユーザープロファイル管理
+  - name: Brewery
+    description: 醸造所情報管理
+  - name: Visit
+    description: 醸造所訪問・チェックイン機能
