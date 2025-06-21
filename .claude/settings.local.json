@@ -14,7 +14,9 @@
       "Bash(rm:*)",
       "Bash(grep:*)",
       "Bash(find:*)",
-      "Bash(ls)"
+      "Bash(ls)",
+      "Bash(mv:*)",
+      "WebFetch(domain:pkg.go.dev)"
     ],
     "deny": []
   }

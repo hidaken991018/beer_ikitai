@@ -38,10 +38,39 @@ AWS ベースのサーバーレスアプリケーションで、以下の構成�
 ### 現在の実装状況
 
 - **バックエンド**: Go + Beego による REST API 実装（完全なクリーンアーキテクチャ構成、Docker 環境対応）
+  - Controllers: brewery, user, visit, health, test の各エンドポイント実装済み
+  - Domain Layer: Entity, Repository, UseCase の分離実装済み
+  - Infrastructure Layer: DTO, Mapper による API インターフェース実装済み
+  - データベース初期化スクリプトとサンプルデータ準備済み
 - **フロントエンド**: 基本的な HTML テンプレート（`front/index.html`）
-- **ドキュメント**: 日本語での包括的な計画書
+- **ツール**: 位置情報取得ツール（`tool/get_target_geo/`）
+- **ドキュメント**: 日本語での包括的な計画書（API仕様、権限マトリックス含む）
 
 ## 開発コマンド
+
+### バックエンド（Go）
+
+```bash
+# 開発環境のセットアップ
+cd back && make setup
+
+# アプリケーションのビルドと実行
+cd back && make run
+
+# テスト実行
+cd back && make test
+
+# コードフォーマットとLint
+cd back && make fmt
+cd back && make lint
+
+# すべてのチェック実行
+cd back && make check
+
+# Docker環境での実行
+cd back && make docker-run
+cd back && make docker-stop
+```
 
 ### インフラ
 
@@ -60,6 +89,7 @@ cd back && zip -r ../lambda-deployment.zip . && cd ..
 1. **docs/marketing/**: ビジネス計画（リーンキャンバス、顧客分析）
 2. **docs/product/**: 機能仕様とユーザーフロー
 3. **docs/architect/**: 技術アーキテクチャとデータベース設計
+4. **docs/api/**: OpenAPI仕様と権限マトリックス
 
 ## 開発ノート
 
@@ -77,6 +107,7 @@ cd back && zip -r ../lambda-deployment.zip . && cd ..
 
 ### 環境設定
 
+#### 本番環境（Lambda）
 Lambda 関数は以下の環境変数を期待：
 
 - `DB_HOST`: RDS エンドポイント
@@ -84,11 +115,38 @@ Lambda 関数は以下の環境変数を期待：
 - `DB_PASS`: データベースパスワード（Secrets Manager から）
 - `DB_NAME`: データベース名
 
+#### 開発環境（Docker）
+Docker環境では `back/docker-compose.yml` で PostgreSQL コンテナが自動構成されます。
+設定は `back/conf/app.conf` で管理されています。
+
 ### 重要なファイル依存関係
 
 - CloudFormation テンプレートは Lambda デプロイ用の S3 バケット`beerlog-app-back`を参照
-- データベーススキーマは特定のテーブル構造を持つ PostgreSQL を想定
+- データベーススキーマは `back/init-db/01_create_tables.sql` で定義
+- サンプルデータは `back/init-db/02_sample_data.sql` で提供
+- API仕様は `docs/api/openapi.yml` で定義
 - フロントエンドデプロイは CloudFront ディストリビューションを持つ S3 バケットを対象
+
+### プロジェクト構造
+
+```
+├── back/                     # Go バックエンドアプリケーション
+│   ├── controllers/          # HTTP ハンドラー
+│   ├── domain/              # ドメインロジック
+│   │   ├── entity/          # エンティティ定義
+│   │   ├── repository/      # リポジトリインターフェース
+│   │   └── usecase/         # ビジネスロジック
+│   ├── interfaces/          # 外部インターフェース
+│   │   ├── dto/             # データ転送オブジェクト
+│   │   └── mapper/          # DTO/Entity マッピング
+│   ├── models/              # Beego ORM モデル
+│   ├── init-db/             # データベース初期化スクリプト
+│   └── utils/               # ユーティリティ
+├── front/                   # フロントエンド（HTML/CSS/JS）
+├── docs/                    # プロジェクトドキュメント
+├── infra/                   # AWS CloudFormation テンプレート
+└── tool/                    # 開発支援ツール
+```
 
 ## 対話のプロセス
 
