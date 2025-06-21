@@ -255,7 +255,7 @@ Resources:
       FunctionName: BeerLogApiHandler
       Handler: index.handler
       Role: !GetAtt BeerLogLambdaExecutionRole.Arn
-      Runtime: nodejs20.x
+      Runtime: provided.al2023
       Code:
         S3Bucket: beerlog-app-back
         S3Key: sample.zip

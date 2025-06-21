@@ -33,7 +33,18 @@ func (c *BaseController) ErrorResponse(code int, message, errorCode string) {
 
 // GetCognitoSub Cognito JWTからユーザー情報を取得する
 func (c *BaseController) GetCognitoSub() (string, error) {
-	// Authorization ヘッダーから JWT を取得
+	// API Gateway Lambda プロキシ統合では、Cognito の認証情報が requestContext に含まれる
+	if c.Ctx.Request.Header.Get("X-Amzn-Requestid") != "" {
+		// Lambda 環境での認証情報取得
+		if cognitoSub := c.Ctx.Request.Header.Get("X-Amzn-Trace-Id"); cognitoSub != "" {
+			// API Gateway が設定した Cognito sub を取得
+			if sub := c.Ctx.Request.Header.Get("X-Cognito-Sub"); sub != "" {
+				return sub, nil
+			}
+		}
+	}
+
+	// Authorization ヘッダーから JWT を取得（フォールバック）
 	authHeader := c.Ctx.Request.Header.Get("Authorization")
 	if authHeader == "" {
 		return "", errors.New("authorization header required")

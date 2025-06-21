@@ -18,6 +18,18 @@ build:
 build-linux:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_UNIX) -v ./...
 
+# Build for Lambda
+build-lambda:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o bootstrap -v ./...
+
+# Package for Lambda deployment
+package-lambda: build-lambda
+	zip lambda-deployment.zip bootstrap
+
+# Deploy to Lambda (requires AWS CLI)
+deploy-lambda: package-lambda
+	aws lambda update-function-code --function-name mybeerlog-backend --zip-file fileb://lambda-deployment.zip
+
 # Run the application
 run:
 	$(GOBUILD) -o $(BINARY_NAME) -v ./...
