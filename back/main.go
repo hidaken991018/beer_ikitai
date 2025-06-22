@@ -13,6 +13,8 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
+
+	_ "github.com/lib/pq"
 )
 
 var beegoLambda *httpadapter.HandlerAdapter
@@ -24,9 +26,12 @@ func init() {
 	dbPass := getEnvOrDefault("DB_PASS", "password")
 	dbName := getEnvOrDefault("DB_NAME", "mybeerlog")
 	dbPort := getEnvOrDefault("DB_PORT", "5432")
+	dbSSLMode := getEnvOrDefault("DB_SSLMODE", "disable")
 
 	// データベース接続設定
-	dataSource := "user=" + dbUser + " password=" + dbPass + " dbname=" + dbName + " host=" + dbHost + " port=" + dbPort + " sslmode=require"
+	// sslmodeを環境変数で指定可能に
+	// 例: DB_SSLMODE=disable もしくは require など
+	dataSource := "user=" + dbUser + " password=" + dbPass + " dbname=" + dbName + " host=" + dbHost + " port=" + dbPort + " sslmode=" + dbSSLMode
 
 	err := orm.RegisterDataBase("default", "postgres", dataSource)
 	if err != nil {

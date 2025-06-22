@@ -10,12 +10,12 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,7 +27,7 @@ services:
     container_name: mybeerlog-api
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - '8080:8080'
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,6 +37,7 @@ services:
       - DB_PASS=password
       - DB_NAME=mybeerlog
       - DB_PORT=5432
+      - DB_SSLMODE=disable
       - COGNITO_REGION=us-east-1
       - COGNITO_USER_POOL_ID=
       - COGNITO_CLIENT_ID=

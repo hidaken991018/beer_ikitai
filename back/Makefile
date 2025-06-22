@@ -20,7 +20,7 @@ build-linux:
 
 # Build for Lambda
 build-lambda:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o bootstrap -v ./...
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o bootstrap -v ./
 
 # Package for Lambda deployment
 package-lambda: build-lambda

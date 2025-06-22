@@ -253,7 +253,8 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: BeerLogApiHandler
-      Handler: index.handler
+      Handler: bootstrap
+      Description: My Beer Log API Lambda Function
       Role: !GetAtt BeerLogLambdaExecutionRole.Arn
       Runtime: provided.al2023
       Code:
