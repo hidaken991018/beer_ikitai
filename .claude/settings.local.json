@@ -16,8 +16,21 @@
       "Bash(find:*)",
       "Bash(ls)",
       "Bash(mv:*)",
-      "WebFetch(domain:pkg.go.dev)"
+      "WebFetch(domain:pkg.go.dev)",
+      "Bash(git checkout:*)",
+      "Bash(npx create-next-app:*)",
+      "Bash(npm install:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(npx:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run type-check:*)"
     ],
-    "deny": []
+    "deny": [],
+    "env": {
+      "GOPATH": "$HOME/go",
+      "PATH": "$HOME/go_local/go/bin:$PATH",
+      "BASH_DEFAULT_TIMEOUT_MS": "600000",
+      "BASH_MAX_TIMEOUT_MS": "1200000"
+    }
   }
 }

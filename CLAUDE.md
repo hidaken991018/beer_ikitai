@@ -42,6 +42,13 @@ AWS ベースのサーバーレスアプリケーションで、以下の構成�
   - Domain Layer: Entity, Repository, UseCase の分離実装済み
   - Infrastructure Layer: DTO, Mapper による API インターフェース実装済み
   - データベース初期化スクリプトとサンプルデータ準備済み
+  - **商用リリース対応（2025年1月追加）**:
+    - 構造化ログ（logrus）による JSON/テキスト出力対応
+    - リクエストID追跡とパニック復旧ミドルウェア
+    - 統一エラーレスポンス構造とエラーハンドリング
+    - API Gateway Cognito Authorizer 連携強化
+    - セキュリティヘッダーと環境別CORS設定
+    - 拡張ヘルスチェック（DB接続・環境変数チェック）
 - **フロントエンド**: 基本的な HTML テンプレート（`front/index.html`）
 - **ツール**: 位置情報取得ツール（`tool/get_target_geo/`）
 - **ドキュメント**: 日本語での包括的な計画書（API仕様、権限マトリックス含む）
@@ -54,8 +61,11 @@ AWS ベースのサーバーレスアプリケーションで、以下の構成�
 # 開発環境のセットアップ
 cd back && make setup
 
-# アプリケーションのビルドと実行
+# アプリケーションのビルドと実行（開発モード）
 cd back && make run
+
+# 本番ライクなログ設定での実行
+cd back && make run-prod
 
 # テスト実行
 cd back && make test
@@ -74,12 +84,71 @@ cd back && make docker-stop
 
 ### インフラ
 
-```bash
-# CloudFormationスタックのデプロイ
-aws cloudformation deploy --template-file infra/beerlog_template.yml --stack-name beerlog-stack --capabilities CAPABILITY_IAM
+#### 環境別デプロイ
 
+```bash
+# 開発環境のデプロイ
+aws cloudformation deploy \
+  --template-file infra/beerlog_template.yml \
+  --stack-name beerlog-dev-stack \
+  --parameter-overrides Environment=dev \
+  --capabilities CAPABILITY_NAMED_IAM
+
+# ステージング環境のデプロイ
+aws cloudformation deploy \
+  --template-file infra/beerlog_template.yml \
+  --stack-name beerlog-staging-stack \
+  --parameter-overrides Environment=staging DBInstanceClass=db.t3.small \
+  --capabilities CAPABILITY_NAMED_IAM
+
+# 本番環境のデプロイ
+aws cloudformation deploy \
+  --template-file infra/beerlog_template.yml \
+  --stack-name beerlog-prod-stack \
+  --parameter-overrides Environment=prod DBInstanceClass=db.t3.medium \
+  --capabilities CAPABILITY_NAMED_IAM
+
+# カスタムパラメータでのデプロイ例
+aws cloudformation deploy \
+  --template-file infra/beerlog_template.yml \
+  --stack-name beerlog-custom-stack \
+  --parameter-overrides \
+    Environment=staging \
+    DBInstanceClass=db.t3.small \
+    LambdaDeploymentBucket=my-custom-bucket \
+    LambdaCodeKey=my-lambda-code.zip \
+  --capabilities CAPABILITY_NAMED_IAM
+```
+
+#### Lambdaコードのデプロイ準備
+
+```bash
 # デプロイ用のLambdaコードパッケージ化
 cd back && zip -r ../lambda-deployment.zip . && cd ..
+
+# S3バケットにアップロード（環境別）
+aws s3 cp lambda-deployment.zip s3://beerlog-app-back/lambda-deployment.zip
+
+# 特定環境用のコードアップロード
+aws s3 cp lambda-deployment.zip s3://my-custom-bucket/my-lambda-code.zip
+```
+
+#### スタック管理
+
+```bash
+# スタック一覧表示
+aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE
+
+# 特定スタックの詳細表示
+aws cloudformation describe-stacks --stack-name beerlog-dev-stack
+
+# スタックの出力値取得
+aws cloudformation describe-stacks \
+  --stack-name beerlog-dev-stack \
+  --query 'Stacks[0].Outputs'
+
+# スタック削除
+aws cloudformation delete-stack --stack-name beerlog-dev-stack
 ```
 
 ### プロジェクト構造管理
@@ -110,14 +179,38 @@ cd back && zip -r ../lambda-deployment.zip . && cd ..
 #### 本番環境（Lambda）
 Lambda 関数は以下の環境変数を期待：
 
+**データベース設定:**
 - `DB_HOST`: RDS エンドポイント
 - `DB_USER`: データベースユーザー名（Secrets Manager から）
 - `DB_PASS`: データベースパスワード（Secrets Manager から）
 - `DB_NAME`: データベース名
+- `DB_PORT`: データベースポート（デフォルト: 5432）
+- `DB_SSLMODE`: SSL モード（本番: require, 開発: disable）
+
+**ログ設定:**
+- `LOG_LEVEL`: ログレベル（debug, info, warn, error, fatal）
+- `LOG_FORMAT`: ログフォーマット（json, text）
+
+**アプリケーション設定:**
+- `APP_VERSION`: アプリケーションバージョン
+- `ALLOWED_ORIGINS`: 許可するオリジンのカンマ区切りリスト
 
 #### 開発環境（Docker）
 Docker環境では `back/docker-compose.yml` で PostgreSQL コンテナが自動構成されます。
 設定は `back/conf/app.conf` で管理されています。
+
+**開発用環境変数例:**
+```bash
+# ログ設定
+export LOG_LEVEL=debug
+export LOG_FORMAT=text
+
+# CORS設定（開発環境）
+export ALLOWED_ORIGINS="http://localhost:3000,http://localhost:8080"
+
+# アプリケーション情報
+export APP_VERSION=development
+```
 
 ### 重要なファイル依存関係
 
