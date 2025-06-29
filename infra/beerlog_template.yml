@@ -2,15 +2,66 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: My Beer Log - 改善版MVP用AWS CloudFormationテンプレート
 
 Parameters:
+  Environment:
+    Type: String
+    Description: 環境名（dev, staging, prod）
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+  
+  DBInstanceClass:
+    Type: String
+    Description: RDS インスタンスクラス
+    Default: db.t3.micro
+    AllowedValues:
+      - db.t3.micro
+      - db.t3.small
+      - db.t3.medium
+      - db.r5.large
+      - db.r5.xlarge
+  
+  LambdaDeploymentBucket:
+    Type: String
+    Description: Lambda デプロイ用 S3 バケット名
+    Default: beerlog-app-back
+  
+  LambdaCodeKey:
+    Type: String
+    Description: Lambda コードの S3 キー
+    Default: sample.zip
+  
   DBUser:
     Type: String
     Description: RDS DBユーザー名
     Default: beerloguser
-  # DBPassword パラメータ削除
+  
   DBName:
     Type: String
     Description: RDS DB名
     Default: beerlogdb
+
+Mappings:
+  EnvironmentConfig:
+    dev:
+      DBInstanceClass: db.t3.micro
+      DBMultiAZ: false
+      DBBackupRetentionPeriod: 1
+      ApiStageName: dev
+      CloudFrontPriceClass: PriceClass_100
+    staging:
+      DBInstanceClass: db.t3.small
+      DBMultiAZ: false
+      DBBackupRetentionPeriod: 3
+      ApiStageName: staging
+      CloudFrontPriceClass: PriceClass_100
+    prod:
+      DBInstanceClass: db.t3.medium
+      DBMultiAZ: true
+      DBBackupRetentionPeriod: 7
+      ApiStageName: prod
+      CloudFrontPriceClass: PriceClass_All
 
 Resources:
   # VPC
@@ -22,7 +73,9 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: BeerLogVPC
+          Value: !Sub BeerLog-${Environment}-VPC
+        - Key: Environment
+          Value: !Ref Environment
 
   # インターネットゲートウェイ
   BeerLogInternetGateway:
@@ -30,7 +83,9 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: BeerLogIGW
+          Value: !Sub BeerLog-${Environment}-IGW
+        - Key: Environment
+          Value: !Ref Environment
 
   BeerLogVPCGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -48,7 +103,9 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: BeerLogPublicSubnetA
+          Value: !Sub BeerLog-${Environment}-PublicSubnetA
+        - Key: Environment
+          Value: !Ref Environment
 
   BeerLogPublicSubnetB:
     Type: AWS::EC2::Subnet
@@ -59,7 +116,9 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: BeerLogPublicSubnetB
+          Value: !Sub BeerLog-${Environment}-PublicSubnetB
+        - Key: Environment
+          Value: !Ref Environment
 
   # プライベートサブネット（2AZ）
   BeerLogPrivateSubnetA:
@@ -71,7 +130,9 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: BeerLogPrivateSubnetA
+          Value: !Sub BeerLog-${Environment}-PrivateSubnetA
+        - Key: Environment
+          Value: !Ref Environment
 
   BeerLogPrivateSubnetB:
     Type: AWS::EC2::Subnet
@@ -82,7 +143,9 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: BeerLogPrivateSubnetB
+          Value: !Sub BeerLog-${Environment}-PrivateSubnetB
+        - Key: Environment
+          Value: !Ref Environment
 
   # ルートテーブル（パブリック）
   BeerLogPublicRouteTable:
@@ -91,7 +154,9 @@ Resources:
       VpcId: !Ref BeerLogVPC
       Tags:
         - Key: Name
-          Value: BeerLogPublicRouteTable
+          Value: !Sub BeerLog-${Environment}-PublicRouteTable
+        - Key: Environment
+          Value: !Ref Environment
 
   BeerLogPublicRoute:
     Type: AWS::EC2::Route
@@ -120,7 +185,9 @@ Resources:
       VpcId: !Ref BeerLogVPC
       Tags:
         - Key: Name
-          Value: BeerLogPrivateRouteTable
+          Value: !Sub BeerLog-${Environment}-PrivateRouteTable
+        - Key: Environment
+          Value: !Ref Environment
 
   BeerLogPrivateSubnetARouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -147,7 +214,9 @@ Resources:
       SubnetId: !Ref BeerLogPublicSubnetA
       Tags:
         - Key: Name
-          Value: BeerLogNATGateway
+          Value: !Sub BeerLog-${Environment}-NATGateway
+        - Key: Environment
+          Value: !Ref Environment
 
   BeerLogPrivateRoute:
     Type: AWS::EC2::Route
@@ -160,16 +229,23 @@ Resources:
   BeerLogDBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
-      DBSubnetGroupDescription: 'BeerLog DB subnet group'
+      DBSubnetGroupDescription: !Sub 'BeerLog ${Environment} DB subnet group'
+      DBSubnetGroupName: !Sub beerlog-${Environment}-db-subnet-group
       SubnetIds:
         - !Ref BeerLogPrivateSubnetA
         - !Ref BeerLogPrivateSubnetB
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-DBSubnetGroup
+        - Key: Environment
+          Value: !Ref Environment
 
   # セキュリティグループ（DB/Lambda用、VPC内通信のみ許可）
   BeerLogSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: BeerLog Security Group
+      GroupDescription: !Sub BeerLog ${Environment} Security Group
+      GroupName: !Sub BeerLog-${Environment}-SecurityGroup
       VpcId: !Ref BeerLogVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -179,6 +255,11 @@ Resources:
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-SecurityGroup
+        - Key: Environment
+          Value: !Ref Environment
 
   # RDS（Multi-AZ例）
   BeerLogDB:
@@ -187,8 +268,9 @@ Resources:
     UpdateReplacePolicy: Retain
     Properties:
       DBName: !Ref DBName
+      DBInstanceIdentifier: !Sub beerlog-${Environment}-db
       AllocatedStorage: 20
-      DBInstanceClass: db.t3.micro
+      DBInstanceClass: !FindInMap [EnvironmentConfig, !Ref Environment, DBInstanceClass]
       Engine: postgres
       MasterUsername:
         Fn::Sub: '{{resolve:secretsmanager:${BeerLogDBSecret}:SecretString:username}}'
@@ -197,9 +279,14 @@ Resources:
       VPCSecurityGroups:
         - !Ref BeerLogSecurityGroup
       DBSubnetGroupName: !Ref BeerLogDBSubnetGroup
-      MultiAZ: true
+      MultiAZ: !FindInMap [EnvironmentConfig, !Ref Environment, DBMultiAZ]
       PubliclyAccessible: false
-      BackupRetentionPeriod: 7
+      BackupRetentionPeriod: !FindInMap [EnvironmentConfig, !Ref Environment, DBBackupRetentionPeriod]
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-DB
+        - Key: Environment
+          Value: !Ref Environment
 
   # Secrets Manager シークレット
   BeerLogDBSecret:
@@ -207,18 +294,24 @@ Resources:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Retain
     Properties:
-      Name: beerlog-db-secret
-      Description: RDS用DBユーザーとパスワード
+      Name: !Sub beerlog-${Environment}-db-secret
+      Description: !Sub 'RDS用DBユーザーとパスワード (${Environment})'
       GenerateSecretString:
         SecretStringTemplate: !Sub '{"username": "${DBUser}"}'
         GenerateStringKey: password
         ExcludeCharacters: '"@/\'
         PasswordLength: 16
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-DBSecret
+        - Key: Environment
+          Value: !Ref Environment
 
   # Lambda実行ロール
   BeerLogLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Sub BeerLog-${Environment}-LambdaExecutionRole
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -227,7 +320,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: BeerLogLambdaPolicy
+        - PolicyName: !Sub BeerLog-${Environment}-LambdaPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -237,7 +330,7 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: arn:aws:logs:*:*:*
-        - PolicyName: BeerLogLambdaEC2NetworkInterfacePolicy
+        - PolicyName: !Sub BeerLog-${Environment}-LambdaEC2NetworkInterfacePolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -247,19 +340,24 @@ Resources:
                   - ec2:DescribeNetworkInterfaces
                   - ec2:DeleteNetworkInterface
                 Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-LambdaExecutionRole
+        - Key: Environment
+          Value: !Ref Environment
 
   # Lambda関数（プライベートサブネットに配置）
   BeerLogLambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: BeerLogApiHandler
+      FunctionName: !Sub BeerLog-${Environment}-ApiHandler
       Handler: bootstrap
-      Description: My Beer Log API Lambda Function
+      Description: !Sub 'My Beer Log API Lambda Function (${Environment})'
       Role: !GetAtt BeerLogLambdaExecutionRole.Arn
       Runtime: provided.al2023
       Code:
-        S3Bucket: beerlog-app-back
-        S3Key: sample.zip
+        S3Bucket: !Ref LambdaDeploymentBucket
+        S3Key: !Ref LambdaCodeKey
       VpcConfig:
         SubnetIds:
           - !Ref BeerLogPrivateSubnetA
@@ -274,13 +372,24 @@ Resources:
           DB_PASS:
             Fn::Sub: '{{resolve:secretsmanager:${BeerLogDBSecret}:SecretString:password}}'
           DB_NAME: !Ref DBName
+          ENVIRONMENT: !Ref Environment
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-LambdaFunction
+        - Key: Environment
+          Value: !Ref Environment
 
   # API Gateway
   BeerLogApiGateway:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: BeerLogApi
-      Description: My Beer Log用API Gateway
+      Name: !Sub BeerLog-${Environment}-Api
+      Description: !Sub 'My Beer Log用API Gateway (${Environment})'
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-ApiGateway
+        - Key: Environment
+          Value: !Ref Environment
 
   BeerLogApiDeployment:
     Type: AWS::ApiGateway::Deployment
@@ -292,10 +401,15 @@ Resources:
   BeerLogApiStage:
     Type: AWS::ApiGateway::Stage
     Properties:
-      StageName: v1
-      Description: v1ステージ
+      StageName: !FindInMap [EnvironmentConfig, !Ref Environment, ApiStageName]
+      Description: !Sub '${Environment} ステージ'
       RestApiId: !Ref BeerLogApiGateway
       DeploymentId: !Ref BeerLogApiDeployment
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-ApiStage
+        - Key: Environment
+          Value: !Ref Environment
 
   BeerLogApiResource:
     Type: AWS::ApiGateway::Resource
@@ -328,18 +442,23 @@ Resources:
   BeerLogS3FrontBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub beerlog-app-front-${AWS::AccountId}
+      BucketName: !Sub beerlog-${Environment}-app-front-${AWS::AccountId}
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-S3FrontBucket
+        - Key: Environment
+          Value: !Ref Environment
 
   # CloudFront OAC
   BeerLogCloudFrontOAC:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
       OriginAccessControlConfig:
-        Name: BeerLogOAC
+        Name: !Sub BeerLog-${Environment}-OAC
         OriginAccessControlOriginType: s3
         SigningBehavior: always
         SigningProtocol: sigv4
-        Description: OAC for BeerLog S3
+        Description: !Sub 'OAC for BeerLog S3 (${Environment})'
 
   # CloudFrontディストリビューション
   BeerLogCloudFrontDistribution:
@@ -365,10 +484,16 @@ Resources:
           ForwardedValues:
             QueryString: false
         DefaultRootObject: index.html
+        PriceClass: !FindInMap [EnvironmentConfig, !Ref Environment, CloudFrontPriceClass]
         CustomErrorResponses:
           - ErrorCode: 404
             ResponseCode: 200
             ResponsePagePath: /index.html
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-CloudFrontDistribution
+        - Key: Environment
+          Value: !Ref Environment
 
   # S3バケットポリシー（CloudFront OACのみ許可）
   BeerLogS3FrontBucketPolicy:
@@ -394,31 +519,66 @@ Resources:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Retain
     Properties:
-      UserPoolName: BeerLogUserPool
+      UserPoolName: !Sub BeerLog-${Environment}-UserPool
       AutoVerifiedAttributes:
         - email
+      UserPoolTags:
+        Environment: !Ref Environment
+        Name: !Sub BeerLog-${Environment}-UserPool
 
   # Cognito User Pool Client
   BeerLogCognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
-      ClientName: BeerLogUserPoolClient
+      ClientName: !Sub BeerLog-${Environment}-UserPoolClient
       UserPoolId: !Ref BeerLogCognitoUserPool
       GenerateSecret: false
 
 Outputs:
+  Environment:
+    Description: デプロイされた環境
+    Value: !Ref Environment
+    Export:
+      Name: !Sub ${AWS::StackName}-Environment
+  
   DBEndpoint:
     Description: RDSエンドポイント
     Value: !GetAtt BeerLogDB.Endpoint.Address
+    Export:
+      Name: !Sub ${AWS::StackName}-DBEndpoint
+  
   CognitoUserPoolId:
     Description: Cognito User Pool ID
     Value: !Ref BeerLogCognitoUserPool
+    Export:
+      Name: !Sub ${AWS::StackName}-CognitoUserPoolId
+  
   CognitoUserPoolClientId:
     Description: Cognito User Pool Client ID
     Value: !Ref BeerLogCognitoUserPoolClient
+    Export:
+      Name: !Sub ${AWS::StackName}-CognitoUserPoolClientId
+  
   S3BucketName:
     Description: 静的ホスティング用S3バケット名
     Value: !Ref BeerLogS3FrontBucket
+    Export:
+      Name: !Sub ${AWS::StackName}-S3BucketName
+  
   CloudFrontDomain:
     Description: CloudFrontドメイン名
     Value: !GetAtt BeerLogCloudFrontDistribution.DomainName
+    Export:
+      Name: !Sub ${AWS::StackName}-CloudFrontDomain
+  
+  ApiGatewayEndpoint:
+    Description: API Gateway エンドポイント
+    Value: !Sub 'https://${BeerLogApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${BeerLogApiStage}'
+    Export:
+      Name: !Sub ${AWS::StackName}-ApiGatewayEndpoint
+  
+  LambdaFunctionName:
+    Description: Lambda 関数名
+    Value: !Ref BeerLogLambdaFunction
+    Export:
+      Name: !Sub ${AWS::StackName}-LambdaFunctionName
