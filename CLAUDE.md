@@ -166,7 +166,12 @@ aws cloudformation delete-stack --stack-name beerlog-dev-stack
 
 - ユーザー管理に AWS Cognito を使用
 - ユーザープロファイルは`cognito_sub`を一意識別子として PostgreSQL に保存
-- Lambda 関数は API Gateway 統合を通じてユーザーコンテキストを受信
+- API Gateway Cognito Authorizerにより事前にJWT検証が完了
+- Lambda環境では以下のヘッダーからCognito情報を取得：
+  - `X-Cognito-Sub`: Cognito Sub ID
+  - `X-Amzn-Cognito-Sub`: AWS Lambda Proxy統合用
+  - `X-Cognito-Groups`: Cognitoグループ情報（管理者権限判定用）
+- 開発環境ではテストトークン機能で認証をシミュレート
 
 ### GPS 統合
 
@@ -230,11 +235,14 @@ export APP_VERSION=development
 │   │   ├── repository/      # リポジトリインターフェース
 │   │   └── usecase/         # ビジネスロジック
 │   ├── interfaces/          # 外部インターフェース
-│   │   ├── dto/             # データ転送オブジェクト
+│   │   ├── dto/             # データ転送オブジェクト（統一エラーレスポンス含む）
 │   │   └── mapper/          # DTO/Entity マッピング
 │   ├── models/              # Beego ORM モデル
 │   ├── init-db/             # データベース初期化スクリプト
-│   └── utils/               # ユーティリティ
+│   └── utils/               # ユーティリティ（商用リリース対応）
+│       ├── logger.go        # 構造化ログ（logrus）
+│       ├── middleware.go    # CORS・パニック復旧・ログミドルウェア
+│       └── test_auth.go     # 開発環境用認証
 ├── front/                   # フロントエンド（HTML/CSS/JS）
 ├── docs/                    # プロジェクトドキュメント
 ├── infra/                   # AWS CloudFormation テンプレート
@@ -248,3 +256,95 @@ export APP_VERSION=development
 3. **docs 正規化**: docs/ 配下のドキュメントを正とし、矛盾がある場合は確認を求める
 4. **変更承認**: 要求が既存の仕様や実装から変更となる場合は、その旨を明示し承認を得る
 5. **実装**: 承認後に実装を進める
+
+## 商用リリース対応実装詳細
+
+### 認証・セキュリティ
+
+#### Cognito認証フロー
+```go
+// BaseController内での認証取得
+func (c *BaseController) GetCognitoSub() (string, error) {
+    // API Gateway Cognito Authorizerが設定するヘッダーから取得
+    headers := []string{
+        "X-Cognito-Sub",                    // Cognito Authorizer
+        "X-Amzn-Cognito-Sub",              // AWS Lambda Proxy統合
+        "X-Amz-User-Sub",                  // カスタムヘッダー
+        "X-User-Sub",                      // カスタムヘッダー
+    }
+}
+```
+
+#### セキュリティヘッダー
+- X-Content-Type-Options: nosniff
+- X-Frame-Options: DENY
+- X-XSS-Protection: 1; mode=block
+- Strict-Transport-Security（HTTPS環境のみ）
+
+### ログ・モニタリング
+
+#### 構造化ログ設定
+```bash
+# 本番環境（JSON形式）
+LOG_LEVEL=info
+LOG_FORMAT=json
+
+# 開発環境（テキスト形式）
+LOG_LEVEL=debug
+LOG_FORMAT=text
+```
+
+#### リクエスト追跡
+- 自動生成されるリクエストID
+- パニック復旧による可用性確保
+- エラーレスポンスの統一化
+
+### エラーハンドリング
+
+#### 統一エラーレスポンス
+```json
+{
+  "error": "ユーザー向けメッセージ",
+  "code": "ERROR_CODE",
+  "message": "内部エラー詳細（開発時のみ）",
+  "details": {"field": "validation info"},
+  "request_id": "req_123456789",
+  "timestamp": "2025-01-27T10:00:00Z"
+}
+```
+
+#### エラーコード体系
+- UNAUTHORIZED: 認証エラー
+- VALIDATION_FAILED: 入力検証エラー
+- NOT_FOUND: リソース不存在
+- INTERNAL_SERVER_ERROR: システムエラー
+
+### 運用・監視
+
+#### ヘルスチェック拡張
+- データベース接続状態確認
+- 必要環境変数の存在確認
+- アプリケーションバージョン情報
+- ステータス別HTTPコード返却
+
+#### CORS設定
+```bash
+# 開発環境
+ALLOWED_ORIGINS="http://localhost:3000,http://localhost:8080"
+
+# 本番環境
+ALLOWED_ORIGINS="https://yourdomain.com,https://www.yourdomain.com"
+```
+
+### 開発支援
+
+#### テスト認証機能
+開発環境では`utils/test_auth.go`によりテストトークンで認証をシミュレート
+
+#### ミドルウェア階層
+1. パニック復旧（最優先）
+2. リクエストログ
+3. セキュリティヘッダー
+4. CORS
+
+この実装により、**商用リリース準備完了**状態を実現しています。
