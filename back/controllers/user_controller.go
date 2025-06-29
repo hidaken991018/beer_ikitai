@@ -2,10 +2,14 @@ package controllers
 
 import (
 	"encoding/json"
+	"errors"
 	"mybeerlog/domain/repository"
 	"mybeerlog/domain/usecase"
 	"mybeerlog/interfaces/dto"
 	"mybeerlog/interfaces/mapper"
+	"mybeerlog/utils"
+	"net/http"
+	"strings"
 )
 
 // UserController ユーザー関連のHTTPリクエストを処理するコントローラー
@@ -32,20 +36,19 @@ func NewUserController() *UserController {
 // @Failure 404 {object} dto.ErrorResponse
 // @router /users/profile [get]
 func (c *UserController) GetProfile() {
-	cognitoSub, err := c.GetCognitoSub()
-	if err != nil {
-		c.ErrorResponse(401, "Unauthorized", "UNAUTHORIZED")
+	cognitoSub, ok := c.RequireAuth()
+	if !ok {
 		return
 	}
 
 	profile, err := c.userProfileUsecase.GetProfile(cognitoSub)
 	if err != nil {
-		c.ErrorResponse(404, "Profile not found", "PROFILE_NOT_FOUND")
+		c.HandleNotFound("User profile")
 		return
 	}
 
 	response := mapper.UserProfileEntityToResponse(profile)
-	c.JSONResponse(response)
+	c.JSONResponseWithMessage(response, "Profile retrieved successfully")
 }
 
 // CreateProfile 新しいユーザープロファイルを作成する
@@ -58,31 +61,39 @@ func (c *UserController) GetProfile() {
 // @Failure 409 {object} dto.ErrorResponse
 // @router /users/profile [post]
 func (c *UserController) CreateProfile() {
-	cognitoSub, err := c.GetCognitoSub()
-	if err != nil {
-		c.ErrorResponse(401, "Unauthorized", "UNAUTHORIZED")
+	cognitoSub, ok := c.RequireAuth()
+	if !ok {
 		return
 	}
 
 	var request dto.UserProfileRequest
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &request); err != nil {
-		c.ErrorResponse(400, "Invalid request body", "INVALID_REQUEST")
+		c.HandleError(err, "Invalid request body", dto.ErrorCodeInvalidRequest, http.StatusBadRequest)
 		return
+	}
+
+	// バリデーション
+	if err := c.validateUserProfileRequest(&request); err != nil {
+		return // バリデーションエラーは関数内で処理済み
 	}
 
 	profile, err := c.userProfileUsecase.CreateProfile(cognitoSub, request.DisplayName, request.IconURL)
 	if err != nil {
-		if err.Error() == "profile already exists" {
-			c.ErrorResponse(409, "Profile already exists", "PROFILE_EXISTS")
+		if strings.Contains(err.Error(), "already exists") {
+			c.ErrorResponseDetailed(http.StatusConflict, "Profile already exists", err.Error(), dto.ErrorCodeProfileExists, nil)
 			return
 		}
-		c.ErrorResponse(400, err.Error(), "CREATE_FAILED")
+		c.HandleInternalError(err)
 		return
 	}
 
+	utils.LogInfo(c.Ctx.Request.Context(), "User profile created successfully", map[string]interface{}{
+		"cognito_sub": cognitoSub,
+	})
+
 	response := mapper.UserProfileEntityToResponse(profile)
-	c.Ctx.ResponseWriter.WriteHeader(201)
-	c.JSONResponse(response)
+	c.Ctx.ResponseWriter.WriteHeader(http.StatusCreated)
+	c.JSONResponseWithMessage(response, "Profile created successfully")
 }
 
 // UpdateProfile 認証されたユーザーのプロファイルを更新する
@@ -95,28 +106,58 @@ func (c *UserController) CreateProfile() {
 // @Failure 404 {object} dto.ErrorResponse
 // @router /users/profile [put]
 func (c *UserController) UpdateProfile() {
-	cognitoSub, err := c.GetCognitoSub()
-	if err != nil {
-		c.ErrorResponse(401, "Unauthorized", "UNAUTHORIZED")
+	cognitoSub, ok := c.RequireAuth()
+	if !ok {
 		return
 	}
 
 	var request dto.UserProfileRequest
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &request); err != nil {
-		c.ErrorResponse(400, "Invalid request body", "INVALID_REQUEST")
+		c.HandleError(err, "Invalid request body", dto.ErrorCodeInvalidRequest, http.StatusBadRequest)
 		return
+	}
+
+	// バリデーション
+	if err := c.validateUserProfileRequest(&request); err != nil {
+		return // バリデーションエラーは関数内で処理済み
 	}
 
 	profile, err := c.userProfileUsecase.UpdateProfile(cognitoSub, request.DisplayName, request.IconURL)
 	if err != nil {
-		if err.Error() == "profile not found" {
-			c.ErrorResponse(404, "Profile not found", "PROFILE_NOT_FOUND")
+		if strings.Contains(err.Error(), "not found") {
+			c.HandleNotFound("User profile")
 			return
 		}
-		c.ErrorResponse(400, err.Error(), "UPDATE_FAILED")
+		c.HandleInternalError(err)
 		return
 	}
 
+	utils.LogInfo(c.Ctx.Request.Context(), "User profile updated successfully", map[string]interface{}{
+		"cognito_sub": cognitoSub,
+	})
+
 	response := mapper.UserProfileEntityToResponse(profile)
-	c.JSONResponse(response)
+	c.JSONResponseWithMessage(response, "Profile updated successfully")
+}
+
+// validateUserProfileRequest ユーザープロファイルリクエストのバリデーション
+func (c *UserController) validateUserProfileRequest(request *dto.UserProfileRequest) error {
+	// DisplayName のバリデーション
+	if request.DisplayName == "" {
+		c.HandleValidationError("display_name", "Display name is required", "")
+		return errors.New("validation failed")
+	}
+	
+	if len(request.DisplayName) > 50 {
+		c.HandleValidationError("display_name", "Display name must be 50 characters or less", request.DisplayName)
+		return errors.New("validation failed")
+	}
+	
+	// IconURL のバリデーション（オプションフィールド）
+	if request.IconURL != "" && len(request.IconURL) > 255 {
+		c.HandleValidationError("icon_url", "Icon URL must be 255 characters or less", request.IconURL)
+		return errors.New("validation failed")
+	}
+	
+	return nil
 }

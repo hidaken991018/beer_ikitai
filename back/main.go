@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
-	"log"
 	"mybeerlog/controllers"
 	"mybeerlog/models"
+	"mybeerlog/utils"
 	"os"
 
 	"github.com/astaxie/beego"
-	beegoCtx "github.com/astaxie/beego/context"
 	"github.com/astaxie/beego/orm"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -35,7 +34,7 @@ func init() {
 
 	err := orm.RegisterDataBase("default", "postgres", dataSource)
 	if err != nil {
-		log.Fatal("データベース接続エラー:", err)
+		utils.Logger.WithError(err).Fatal("Database connection failed")
 	}
 
 	// モデル登録
@@ -48,22 +47,29 @@ func init() {
 	// Lambda 環境では run.mode を production に設定
 	beego.BConfig.RunMode = beego.PROD
 
+	// ミドルウェア設定
+	setupMiddleware()
+	
 	// ルーティング設定
 	setupRoutes()
 
-	// CORS設定
-	beego.InsertFilter("*", beego.BeforeRouter, func(ctx *beegoCtx.Context) {
-		ctx.Output.Header("Access-Control-Allow-Origin", "*")
-		ctx.Output.Header("Access-Control-Allow-Methods", "OPTIONS,DELETE,POST,GET,PUT")
-		ctx.Output.Header("Access-Control-Allow-Headers", "Content-Type,Authorization")
-		if ctx.Input.Method() == "OPTIONS" {
-			ctx.Output.SetStatus(200)
-			return
-		}
-	})
-
 	// Lambda adapter を初期化
 	beegoLambda = httpadapter.New(beego.BeeApp.Handlers)
+}
+
+// setupMiddleware ミドルウェアを設定する
+func setupMiddleware() {
+	// 1. パニック復旧ミドルウェア（最優先）
+	beego.InsertFilter("*", beego.BeforeRouter, utils.PanicRecoveryMiddleware)
+	
+	// 2. リクエストログミドルウェア
+	beego.InsertFilter("*", beego.BeforeRouter, utils.RequestLoggingMiddleware)
+	
+	// 3. セキュリティヘッダーミドルウェア
+	beego.InsertFilter("*", beego.BeforeRouter, utils.SecurityHeadersMiddleware)
+	
+	// 4. CORS ミドルウェア
+	beego.InsertFilter("*", beego.BeforeRouter, utils.CORSMiddleware)
 }
 
 // setupRoutes ルーティングを設定する
@@ -108,12 +114,12 @@ func main() {
 		lambda.Start(Handler)
 	} else {
 		// ローカル開発環境で実行
-		log.Println("Running in local development mode")
+		utils.Logger.Info("Running in local development mode")
 
 		// 開発環境でのテーブル自動作成
 		err := orm.RunSyncdb("default", false, true)
 		if err != nil {
-			log.Fatal("テーブル作成エラー:", err)
+			utils.Logger.WithError(err).Fatal("Table creation failed")
 		}
 
 		// テスト用エンドポイント（開発環境のみ）

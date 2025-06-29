@@ -30,10 +30,15 @@ package-lambda: build-lambda
 deploy-lambda: package-lambda
 	aws lambda update-function-code --function-name mybeerlog-backend --zip-file fileb://lambda-deployment.zip
 
-# Run the application
+# Run the application with development environment
 run:
 	$(GOBUILD) -o $(BINARY_NAME) -v ./...
-	./$(BINARY_NAME)
+	LOG_LEVEL=debug LOG_FORMAT=text ./$(BINARY_NAME)
+
+# Run the application with production-like logging
+run-prod:
+	$(GOBUILD) -o $(BINARY_NAME) -v ./...
+	LOG_LEVEL=info LOG_FORMAT=json ./$(BINARY_NAME)
 
 # Test the application
 test:
