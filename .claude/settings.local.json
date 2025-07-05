@@ -26,12 +26,12 @@
       "Bash(npm run type-check:*)",
       "Bash(touch:*)"
     ],
-    "deny": [],
-    "env": {
-      "GOPATH": "$HOME/go",
-      "PATH": "$HOME/go_local/go/bin:$PATH",
-      "BASH_DEFAULT_TIMEOUT_MS": "600000",
-      "BASH_MAX_TIMEOUT_MS": "1200000"
-    }
+    "deny": []
+  },
+  "env": {
+    "GOPATH": "$HOME/go",
+    "PATH": "$HOME/go_local/go/bin:$PATH",
+    "BASH_DEFAULT_TIMEOUT_MS": "600000",
+    "BASH_MAX_TIMEOUT_MS": "1200000"
   }
 }
