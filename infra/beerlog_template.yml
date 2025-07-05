@@ -302,7 +302,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
 
-  # NOTE:Lambda実行ロール
+  # Lambda実行ロール
   BeerLogLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
