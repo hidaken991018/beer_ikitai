@@ -236,12 +236,7 @@ jobs:
   summary:
     name: Deployment Summary
     if: always()
-    needs:
-      [
-        deploy-infrastructure-dev,
-        deploy-infrastructure-staging,
-        deploy-infrastructure-prod,
-      ]
+    needs: [deploy-infrastructure-dev, deploy-infrastructure-prod]
     runs-on: ubuntu-latest
     steps:
       - name: Generate deployment summary
@@ -256,15 +251,6 @@ jobs:
             echo "⏭️  Development: Skipped"
           else
             echo "❌ Development: Failed"
-          fi
-
-          # Staging environment
-          if [[ "${{ needs.deploy-infrastructure-staging.result }}" == "success" ]]; then
-            echo "✅ Staging: ${{ needs.deploy-infrastructure-staging.outputs.api-endpoint }}"
-          elif [[ "${{ needs.deploy-infrastructure-staging.result }}" == "skipped" ]]; then
-            echo "⏭️  Staging: Skipped"
-          else
-            echo "❌ Staging: Failed"
           fi
 
           # Production environment
