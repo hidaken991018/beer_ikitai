@@ -115,7 +115,7 @@ export default function RegisterPage() {
 
                 <div className='text-center'>
                   <Link
-                    href='/auth/confirm-signup'
+                    href={ROUTES.confirmSignup}
                     className='text-blue-600 hover:text-blue-500'
                   >
                     <Button>確認コードを入力</Button>

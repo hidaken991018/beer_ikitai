@@ -26,6 +26,7 @@ export default function LoginPage() {
     password: '',
   });
   const [errors, setErrors] = useState<Partial<LoginCredentials>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<LoginCredentials> = {};
@@ -53,11 +54,14 @@ export default function LoginPage() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       await login(formData);
       router.push(ROUTES.home);
     } catch (error) {
       console.error('Login failed:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -128,9 +132,9 @@ export default function LoginPage() {
               <Button
                 type='submit'
                 className='w-full'
-                disabled={authState.isLoading}
+                disabled={isSubmitting}
               >
-                {authState.isLoading ? 'ログイン中...' : 'ログイン'}
+                {isSubmitting ? 'ログイン中...' : 'ログイン'}
               </Button>
             </form>
 

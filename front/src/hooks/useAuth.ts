@@ -22,6 +22,7 @@ import {
   updateUser,
   updateTokens,
   clearError,
+  setLoading,
   selectAuth,
 } from '@/store/slices/authSlice';
 import type {
@@ -173,6 +174,7 @@ export function useAuth() {
         const result = await cognitoAuthService.confirmSignUp(input);
 
         dispatch(clearError());
+        dispatch(setLoading(false)); // 成功時にローディング状態を明示的にリセット
         return result;
       } catch (error) {
         const message =

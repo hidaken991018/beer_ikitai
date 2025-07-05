@@ -62,7 +62,7 @@ function AuthInitializer({ children }: AuthProviderProps) {
     };
 
     initializeAuth();
-  }, [auth]);
+  }, []);
 
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 }
