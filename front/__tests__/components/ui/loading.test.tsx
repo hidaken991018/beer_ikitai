@@ -52,27 +52,28 @@ describe('Loading Components', () => {
 
   describe('LoadingSkeleton', () => {
     it('renders single line by default', () => {
-      render(<LoadingSkeleton />);
-      const skeletons = screen.getAllByRole('generic');
-      expect(skeletons).toHaveLength(1);
+      render(<LoadingSkeleton data-testid='skeleton' />);
+      const skeleton = screen.getByTestId('skeleton');
+      const lines = skeleton.querySelectorAll('div');
+      expect(lines).toHaveLength(1);
     });
 
     it('renders multiple lines', () => {
-      render(<LoadingSkeleton lines={3} />);
-      const container = screen.getByRole('generic');
+      render(<LoadingSkeleton lines={3} data-testid='skeleton' />);
+      const container = screen.getByTestId('skeleton');
       const lines = container.querySelectorAll('div');
       expect(lines).toHaveLength(3);
     });
 
     it('applies custom className', () => {
-      render(<LoadingSkeleton className='custom-skeleton' />);
-      const container = screen.getByRole('generic');
+      render(<LoadingSkeleton className='custom-skeleton' data-testid='skeleton' />);
+      const container = screen.getByTestId('skeleton');
       expect(container).toHaveClass('custom-skeleton');
     });
 
     it('applies different width to last line when multiple lines', () => {
-      render(<LoadingSkeleton lines={2} />);
-      const container = screen.getByRole('generic');
+      render(<LoadingSkeleton lines={2} data-testid='skeleton' />);
+      const container = screen.getByTestId('skeleton');
       const lines = container.querySelectorAll('div');
       expect(lines[0]).toHaveClass('w-full');
       expect(lines[1]).toHaveClass('w-3/4');
@@ -81,51 +82,43 @@ describe('Loading Components', () => {
 
   describe('LoadingCard', () => {
     it('renders loading card structure', () => {
-      render(<LoadingCard />);
-      const container = screen.getByRole('generic');
+      render(<LoadingCard data-testid='loading-card' />);
+      const container = screen.getByTestId('loading-card');
       expect(container).toHaveClass('border', 'rounded-lg', 'p-6', 'space-y-4');
     });
 
     it('applies custom className', () => {
-      render(<LoadingCard className='custom-card' />);
-      const container = screen.getByRole('generic');
+      render(<LoadingCard className='custom-card' data-testid='loading-card' />);
+      const container = screen.getByTestId('loading-card');
       expect(container).toHaveClass('custom-card');
     });
 
     it('contains loading elements with pulse animation', () => {
-      render(<LoadingCard />);
-      const pulseElements = screen
-        .getAllByRole('generic')
-        .filter(el => el.className.includes('animate-pulse'));
+      render(<LoadingCard data-testid='loading-card' />);
+      const container = screen.getByTestId('loading-card');
+      const pulseElements = container.querySelectorAll('.animate-pulse');
       expect(pulseElements.length).toBeGreaterThan(0);
     });
   });
 
   describe('LoadingList', () => {
     it('renders default number of items', () => {
-      render(<LoadingList />);
-      const containers = screen.getAllByRole('generic');
-      // Filter out containers that are not LoadingCard containers
-      const cardContainers = containers.filter(
-        el =>
-          el.className.includes('border') && el.className.includes('rounded-lg')
-      );
+      render(<LoadingList data-testid='loading-list' />);
+      const container = screen.getByTestId('loading-list');
+      const cardContainers = container.querySelectorAll('.border.rounded-lg');
       expect(cardContainers).toHaveLength(5);
     });
 
     it('renders specified number of items', () => {
-      render(<LoadingList items={3} />);
-      const containers = screen.getAllByRole('generic');
-      const cardContainers = containers.filter(
-        el =>
-          el.className.includes('border') && el.className.includes('rounded-lg')
-      );
+      render(<LoadingList items={3} data-testid='loading-list' />);
+      const container = screen.getByTestId('loading-list');
+      const cardContainers = container.querySelectorAll('.border.rounded-lg');
       expect(cardContainers).toHaveLength(3);
     });
 
     it('applies custom className', () => {
-      render(<LoadingList className='custom-list' />);
-      const container = screen.getAllByRole('generic')[0];
+      render(<LoadingList className='custom-list' data-testid='loading-list' />);
+      const container = screen.getByTestId('loading-list');
       expect(container).toHaveClass('custom-list');
     });
   });

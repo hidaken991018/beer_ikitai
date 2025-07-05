@@ -53,30 +53,30 @@ jobs:
     needs: lint
     runs-on: ubuntu-latest
     environment: development
-    
+
     outputs:
       stack-name: ${{ steps.deploy.outputs.stack-name }}
       api-endpoint: ${{ steps.stack-outputs.outputs.api-endpoint }}
       cognito-user-pool-id: ${{ steps.stack-outputs.outputs.cognito-user-pool-id }}
       cognito-client-id: ${{ steps.stack-outputs.outputs.cognito-client-id }}
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-      
+
       - name: Deploy CloudFormation stack
         id: deploy
         run: |
           STACK_NAME="beerlog-dev-stack"
           echo "stack-name=${STACK_NAME}" >> $GITHUB_OUTPUT
-          
+
           aws cloudformation deploy \
             --template-file infra/beerlog_template.yml \
             --stack-name ${STACK_NAME} \
@@ -92,131 +92,52 @@ jobs:
               Environment=dev \
               Project=BeerLog \
               ManagedBy=GitHub-Actions
-      
+
       - name: Get stack outputs
         id: stack-outputs
         run: |
           STACK_NAME="beerlog-dev-stack"
-          
+
           API_ENDPOINT=$(aws cloudformation describe-stacks \
             --stack-name ${STACK_NAME} \
             --query 'Stacks[0].Outputs[?OutputKey==`ApiGatewayEndpoint`].OutputValue' \
             --output text)
-          
+
           COGNITO_POOL_ID=$(aws cloudformation describe-stacks \
             --stack-name ${STACK_NAME} \
             --query 'Stacks[0].Outputs[?OutputKey==`CognitoUserPoolId`].OutputValue' \
             --output text)
-          
+
           COGNITO_CLIENT_ID=$(aws cloudformation describe-stacks \
             --stack-name ${STACK_NAME} \
             --query 'Stacks[0].Outputs[?OutputKey==`CognitoUserPoolClientId`].OutputValue' \
             --output text)
-          
+
           echo "api-endpoint=${API_ENDPOINT}" >> $GITHUB_OUTPUT
           echo "cognito-user-pool-id=${COGNITO_POOL_ID}" >> $GITHUB_OUTPUT
           echo "cognito-client-id=${COGNITO_CLIENT_ID}" >> $GITHUB_OUTPUT
-          
+
           echo "📋 Deployment Summary:"
           echo "API Endpoint: ${API_ENDPOINT}"
           echo "Cognito User Pool ID: ${COGNITO_POOL_ID}"
           echo "Cognito Client ID: ${COGNITO_CLIENT_ID}"
-      
+
       - name: Validate infrastructure
         run: |
           echo "🔍 Validating infrastructure deployment..."
-          
+
           # Check if stack exists and is in good state
           STACK_STATUS=$(aws cloudformation describe-stacks \
             --stack-name beerlog-dev-stack \
             --query 'Stacks[0].StackStatus' \
             --output text)
-          
+
           if [[ "${STACK_STATUS}" != "CREATE_COMPLETE" && "${STACK_STATUS}" != "UPDATE_COMPLETE" ]]; then
             echo "❌ Stack is not in a healthy state: ${STACK_STATUS}"
             exit 1
           fi
-          
-          echo "✅ Infrastructure validation completed successfully"
 
-  # ステージング環境インフラデプロイ
-  deploy-infrastructure-staging:
-    name: Deploy Infrastructure (Staging)
-    if: |
-      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
-    needs: lint
-    runs-on: ubuntu-latest
-    environment: staging
-    
-    outputs:
-      stack-name: ${{ steps.deploy.outputs.stack-name }}
-      api-endpoint: ${{ steps.stack-outputs.outputs.api-endpoint }}
-      cognito-user-pool-id: ${{ steps.stack-outputs.outputs.cognito-user-pool-id }}
-      cognito-client-id: ${{ steps.stack-outputs.outputs.cognito-client-id }}
-    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_STAGING }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_STAGING }}
-          aws-region: ${{ env.AWS_REGION }}
-      
-      - name: Deploy CloudFormation stack
-        id: deploy
-        run: |
-          STACK_NAME="beerlog-staging-stack"
-          echo "stack-name=${STACK_NAME}" >> $GITHUB_OUTPUT
-          
-          aws cloudformation deploy \
-            --template-file infra/beerlog_template.yml \
-            --stack-name ${STACK_NAME} \
-            --parameter-overrides \
-              Environment=staging \
-              DBUser=beerloguser \
-              DBName=beerlogdb_staging \
-              DBInstanceClass=db.t3.small \
-              LambdaDeploymentBucket=beerlog-app-back \
-              LambdaCodeKey=sample.zip \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset \
-            --tags \
-              Environment=staging \
-              Project=BeerLog \
-              ManagedBy=GitHub-Actions
-      
-      - name: Get stack outputs
-        id: stack-outputs
-        run: |
-          STACK_NAME="beerlog-staging-stack"
-          
-          API_ENDPOINT=$(aws cloudformation describe-stacks \
-            --stack-name ${STACK_NAME} \
-            --query 'Stacks[0].Outputs[?OutputKey==`ApiGatewayEndpoint`].OutputValue' \
-            --output text)
-          
-          COGNITO_POOL_ID=$(aws cloudformation describe-stacks \
-            --stack-name ${STACK_NAME} \
-            --query 'Stacks[0].Outputs[?OutputKey==`CognitoUserPoolId`].OutputValue' \
-            --output text)
-          
-          COGNITO_CLIENT_ID=$(aws cloudformation describe-stacks \
-            --stack-name ${STACK_NAME} \
-            --query 'Stacks[0].Outputs[?OutputKey==`CognitoUserPoolClientId`].OutputValue' \
-            --output text)
-          
-          echo "api-endpoint=${API_ENDPOINT}" >> $GITHUB_OUTPUT
-          echo "cognito-user-pool-id=${COGNITO_POOL_ID}" >> $GITHUB_OUTPUT
-          echo "cognito-client-id=${COGNITO_CLIENT_ID}" >> $GITHUB_OUTPUT
-          
-          echo "📋 Deployment Summary:"
-          echo "API Endpoint: ${API_ENDPOINT}"
-          echo "Cognito User Pool ID: ${COGNITO_POOL_ID}"
-          echo "Cognito Client ID: ${COGNITO_CLIENT_ID}"
+          echo "✅ Infrastructure validation completed successfully"
 
   # 本番環境インフラデプロイ
   deploy-infrastructure-prod:
@@ -226,30 +147,30 @@ jobs:
     needs: lint
     runs-on: ubuntu-latest
     environment: production
-    
+
     outputs:
       stack-name: ${{ steps.deploy.outputs.stack-name }}
       api-endpoint: ${{ steps.stack-outputs.outputs.api-endpoint }}
       cognito-user-pool-id: ${{ steps.stack-outputs.outputs.cognito-user-pool-id }}
       cognito-client-id: ${{ steps.stack-outputs.outputs.cognito-client-id }}
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
           aws-region: ${{ env.AWS_REGION }}
-      
+
       - name: Deploy CloudFormation stack
         id: deploy
         run: |
           STACK_NAME="beerlog-prod-stack"
           echo "stack-name=${STACK_NAME}" >> $GITHUB_OUTPUT
-          
+
           aws cloudformation deploy \
             --template-file infra/beerlog_template.yml \
             --stack-name ${STACK_NAME} \
@@ -266,59 +187,64 @@ jobs:
               Environment=prod \
               Project=BeerLog \
               ManagedBy=GitHub-Actions
-      
+
       - name: Get stack outputs
         id: stack-outputs
         run: |
           STACK_NAME="beerlog-prod-stack"
-          
+
           API_ENDPOINT=$(aws cloudformation describe-stacks \
             --stack-name ${STACK_NAME} \
             --query 'Stacks[0].Outputs[?OutputKey==`ApiGatewayEndpoint`].OutputValue' \
             --output text)
-          
+
           COGNITO_POOL_ID=$(aws cloudformation describe-stacks \
             --stack-name ${STACK_NAME} \
             --query 'Stacks[0].Outputs[?OutputKey==`CognitoUserPoolId`].OutputValue' \
             --output text)
-          
+
           COGNITO_CLIENT_ID=$(aws cloudformation describe-stacks \
             --stack-name ${STACK_NAME} \
             --query 'Stacks[0].Outputs[?OutputKey==`CognitoUserPoolClientId`].OutputValue' \
             --output text)
-          
+
           echo "api-endpoint=${API_ENDPOINT}" >> $GITHUB_OUTPUT
           echo "cognito-user-pool-id=${COGNITO_POOL_ID}" >> $GITHUB_OUTPUT
           echo "cognito-client-id=${COGNITO_CLIENT_ID}" >> $GITHUB_OUTPUT
-          
+
           echo "📋 Deployment Summary:"
           echo "API Endpoint: ${API_ENDPOINT}"
           echo "Cognito User Pool ID: ${COGNITO_POOL_ID}"
           echo "Cognito Client ID: ${COGNITO_CLIENT_ID}"
-      
+
       - name: Backup configuration
         run: |
           echo "💾 Creating deployment backup..."
-          
+
           # Export current configuration for rollback purposes
           aws cloudformation describe-stacks \
             --stack-name beerlog-prod-stack \
             --output json > stack-backup-$(date +%Y%m%d-%H%M%S).json
-          
+
           echo "✅ Configuration backup completed"
 
   # デプロイサマリー
   summary:
     name: Deployment Summary
     if: always()
-    needs: [deploy-infrastructure-dev, deploy-infrastructure-staging, deploy-infrastructure-prod]
+    needs:
+      [
+        deploy-infrastructure-dev,
+        deploy-infrastructure-staging,
+        deploy-infrastructure-prod,
+      ]
     runs-on: ubuntu-latest
     steps:
       - name: Generate deployment summary
         run: |
           echo "🚀 Infrastructure Deployment Summary"
           echo "==================================="
-          
+
           # Dev environment
           if [[ "${{ needs.deploy-infrastructure-dev.result }}" == "success" ]]; then
             echo "✅ Development: ${{ needs.deploy-infrastructure-dev.outputs.api-endpoint }}"
@@ -327,7 +253,7 @@ jobs:
           else
             echo "❌ Development: Failed"
           fi
-          
+
           # Staging environment
           if [[ "${{ needs.deploy-infrastructure-staging.result }}" == "success" ]]; then
             echo "✅ Staging: ${{ needs.deploy-infrastructure-staging.outputs.api-endpoint }}"
@@ -336,7 +262,7 @@ jobs:
           else
             echo "❌ Staging: Failed"
           fi
-          
+
           # Production environment
           if [[ "${{ needs.deploy-infrastructure-prod.result }}" == "success" ]]; then
             echo "✅ Production: ${{ needs.deploy-infrastructure-prod.outputs.api-endpoint }}"
@@ -345,7 +271,7 @@ jobs:
           else
             echo "❌ Production: Failed"
           fi
-          
+
           echo ""
           echo "📝 Next Steps:"
           echo "- Deploy backend code using deploy-backend.yml workflow"

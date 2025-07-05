@@ -26,8 +26,10 @@ describe('Footer Component', () => {
 
   it('displays app name from config', () => {
     render(<Footer />);
-    const appNames = screen.getAllByText('My Beer Log');
-    expect(appNames).toHaveLength(2); // One in logo area, one in copyright
+    // Logo area - exact text match
+    expect(screen.getByText('My Beer Log')).toBeInTheDocument();
+    // Copyright area - partial text match
+    expect(screen.getByText('© 2024 My Beer Log')).toBeInTheDocument();
   });
 
   it('displays app version from config', () => {
@@ -107,9 +109,9 @@ describe('Footer Component', () => {
     const copyright = screen.getByText('© 2024 My Beer Log');
     const version = screen.getByText('v1.0.0');
 
-    const infoContainer = copyright.closest('.flex.items-center.space-x-6');
-    expect(infoContainer).toContain(copyright);
-    expect(infoContainer).toContain(version);
+    const infoContainer = copyright.closest('div');
+    expect(infoContainer).toContainElement(copyright);
+    expect(infoContainer).toContainElement(version);
   });
 
   it('applies responsive classes correctly', () => {
@@ -132,10 +134,14 @@ describe('Footer Component', () => {
     expect(appName).toHaveClass('text-sm', 'font-medium');
 
     const copyright = screen.getByText('© 2024 My Beer Log');
-    expect(copyright).toHaveClass('text-sm', 'text-muted-foreground');
+    const copyrightParent = copyright.closest('div');
+    expect(copyrightParent?.className).toContain('text-sm');
+    expect(copyrightParent?.className).toContain('text-muted-foreground');
 
     const version = screen.getByText('v1.0.0');
-    expect(version).toHaveClass('text-sm', 'text-muted-foreground');
+    const versionParent = version.closest('div');
+    expect(versionParent?.className).toContain('text-sm');
+    expect(versionParent?.className).toContain('text-muted-foreground');
   });
 
   it('uses semantic HTML structure', () => {

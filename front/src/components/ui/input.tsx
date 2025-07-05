@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 const Input = React.forwardRef<
   HTMLInputElement,
   React.InputHTMLAttributes<HTMLInputElement>
->(({ className, type, ...props }, ref) => {
+>(({ className, type = 'text', ...props }, ref) => {
   return (
     <input
       type={type}

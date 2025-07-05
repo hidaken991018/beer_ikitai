@@ -35,14 +35,16 @@ export function LoadingSpinner({
 interface LoadingSkeletonProps {
   className?: string;
   lines?: number;
+  'data-testid'?: string;
 }
 
 export function LoadingSkeleton({
   className,
   lines = 1,
+  'data-testid': testId,
 }: LoadingSkeletonProps) {
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn('space-y-2', className)} data-testid={testId}>
       {Array.from({ length: lines }).map((_, i) => (
         <div
           key={i}
@@ -58,15 +60,17 @@ export function LoadingSkeleton({
 
 interface LoadingCardProps {
   className?: string;
+  'data-testid'?: string;
 }
 
-export function LoadingCard({ className }: LoadingCardProps) {
+export function LoadingCard({ className, 'data-testid': testId }: LoadingCardProps) {
   return (
     <div
       className={cn(
         'border border-gray-200 rounded-lg p-6 space-y-4',
         className
       )}
+      data-testid={testId}
     >
       <div className='flex items-center space-x-4'>
         <div className='bg-gray-200 rounded-full h-12 w-12 animate-pulse' />
@@ -86,11 +90,12 @@ export function LoadingCard({ className }: LoadingCardProps) {
 interface LoadingListProps {
   items?: number;
   className?: string;
+  'data-testid'?: string;
 }
 
-export function LoadingList({ items = 5, className }: LoadingListProps) {
+export function LoadingList({ items = 5, className, 'data-testid': testId }: LoadingListProps) {
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn('space-y-4', className)} data-testid={testId}>
       {Array.from({ length: items }).map((_, i) => (
         <LoadingCard key={i} />
       ))}
