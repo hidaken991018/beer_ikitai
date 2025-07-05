@@ -10,33 +10,22 @@ Parameters:
       - dev
       - staging
       - prod
-  
-  DBInstanceClass:
-    Type: String
-    Description: RDS インスタンスクラス
-    Default: db.t3.micro
-    AllowedValues:
-      - db.t3.micro
-      - db.t3.small
-      - db.t3.medium
-      - db.r5.large
-      - db.r5.xlarge
-  
+
   LambdaDeploymentBucket:
     Type: String
     Description: Lambda デプロイ用 S3 バケット名
     Default: beerlog-app-back
-  
+
   LambdaCodeKey:
     Type: String
     Description: Lambda コードの S3 キー
     Default: sample.zip
-  
+
   DBUser:
     Type: String
     Description: RDS DBユーザー名
     Default: beerloguser
-  
+
   DBName:
     Type: String
     Description: RDS DB名
@@ -270,7 +259,8 @@ Resources:
       DBName: !Ref DBName
       DBInstanceIdentifier: !Sub beerlog-${Environment}-db
       AllocatedStorage: 20
-      DBInstanceClass: !FindInMap [EnvironmentConfig, !Ref Environment, DBInstanceClass]
+      DBInstanceClass:
+        !FindInMap [EnvironmentConfig, !Ref Environment, DBInstanceClass]
       Engine: postgres
       MasterUsername:
         Fn::Sub: '{{resolve:secretsmanager:${BeerLogDBSecret}:SecretString:username}}'
@@ -281,7 +271,12 @@ Resources:
       DBSubnetGroupName: !Ref BeerLogDBSubnetGroup
       MultiAZ: !FindInMap [EnvironmentConfig, !Ref Environment, DBMultiAZ]
       PubliclyAccessible: false
-      BackupRetentionPeriod: !FindInMap [EnvironmentConfig, !Ref Environment, DBBackupRetentionPeriod]
+      BackupRetentionPeriod:
+        !FindInMap [
+          EnvironmentConfig,
+          !Ref Environment,
+          DBBackupRetentionPeriod,
+        ]
       Tags:
         - Key: Name
           Value: !Sub BeerLog-${Environment}-DB
@@ -438,8 +433,6 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BeerLogApiGateway}/*
 
-
-
   # Cognito User Pool
   BeerLogCognitoUserPool:
     Type: AWS::Cognito::UserPool
@@ -461,42 +454,39 @@ Resources:
       UserPoolId: !Ref BeerLogCognitoUserPool
       GenerateSecret: false
 
-
 Outputs:
   Environment:
     Description: デプロイされた環境
     Value: !Ref Environment
     Export:
       Name: !Sub ${AWS::StackName}-Environment
-  
+
   DBEndpoint:
     Description: RDSエンドポイント
     Value: !GetAtt BeerLogDB.Endpoint.Address
     Export:
       Name: !Sub ${AWS::StackName}-DBEndpoint
-  
+
   CognitoUserPoolId:
     Description: Cognito User Pool ID
     Value: !Ref BeerLogCognitoUserPool
     Export:
       Name: !Sub ${AWS::StackName}-CognitoUserPoolId
-  
+
   CognitoUserPoolClientId:
     Description: Cognito User Pool Client ID
     Value: !Ref BeerLogCognitoUserPoolClient
     Export:
       Name: !Sub ${AWS::StackName}-CognitoUserPoolClientId
-  
-  
+
   ApiGatewayEndpoint:
     Description: API Gateway エンドポイント
     Value: !Sub 'https://${BeerLogApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${BeerLogApiStage}'
     Export:
       Name: !Sub ${AWS::StackName}-ApiGatewayEndpoint
-  
+
   LambdaFunctionName:
     Description: Lambda 関数名
     Value: !Ref BeerLogLambdaFunction
     Export:
       Name: !Sub ${AWS::StackName}-LambdaFunctionName
-
