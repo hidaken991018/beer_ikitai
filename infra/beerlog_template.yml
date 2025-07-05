@@ -438,80 +438,7 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${BeerLogApiGateway}/*
 
-  # S3バケット（CloudFront OAC対応）
-  BeerLogS3FrontBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub beerlog-${Environment}-app-front-${AWS::AccountId}
-      Tags:
-        - Key: Name
-          Value: !Sub BeerLog-${Environment}-S3FrontBucket
-        - Key: Environment
-          Value: !Ref Environment
 
-  # CloudFront OAC
-  BeerLogCloudFrontOAC:
-    Type: AWS::CloudFront::OriginAccessControl
-    Properties:
-      OriginAccessControlConfig:
-        Name: !Sub BeerLog-${Environment}-OAC
-        OriginAccessControlOriginType: s3
-        SigningBehavior: always
-        SigningProtocol: sigv4
-        Description: !Sub 'OAC for BeerLog S3 (${Environment})'
-
-  # CloudFrontディストリビューション
-  BeerLogCloudFrontDistribution:
-    Type: AWS::CloudFront::Distribution
-    Properties:
-      DistributionConfig:
-        Enabled: true
-        Origins:
-          - Id: BeerLogS3Origin
-            DomainName: !GetAtt BeerLogS3FrontBucket.RegionalDomainName
-            S3OriginConfig: {}
-            OriginAccessControlId: !Ref BeerLogCloudFrontOAC
-        DefaultCacheBehavior:
-          TargetOriginId: BeerLogS3Origin
-          ViewerProtocolPolicy: https-only
-          AllowedMethods:
-            - GET
-            - HEAD
-          CachedMethods:
-            - GET
-            - HEAD
-          Compress: true
-          ForwardedValues:
-            QueryString: false
-        DefaultRootObject: index.html
-        PriceClass: !FindInMap [EnvironmentConfig, !Ref Environment, CloudFrontPriceClass]
-        CustomErrorResponses:
-          - ErrorCode: 404
-            ResponseCode: 200
-            ResponsePagePath: /index.html
-      Tags:
-        - Key: Name
-          Value: !Sub BeerLog-${Environment}-CloudFrontDistribution
-        - Key: Environment
-          Value: !Ref Environment
-
-  # S3バケットポリシー（CloudFront OACのみ許可）
-  BeerLogS3FrontBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref BeerLogS3FrontBucket
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: AllowCloudFrontServicePrincipalRead
-            Effect: Allow
-            Principal:
-              Service: cloudfront.amazonaws.com
-            Action: 's3:GetObject'
-            Resource: !Sub '${BeerLogS3FrontBucket.Arn}/*'
-            Condition:
-              StringEquals:
-                AWS:SourceArn: !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${BeerLogCloudFrontDistribution}'
 
   # Cognito User Pool
   BeerLogCognitoUserPool:
@@ -533,6 +460,7 @@ Resources:
       ClientName: !Sub BeerLog-${Environment}-UserPoolClient
       UserPoolId: !Ref BeerLogCognitoUserPool
       GenerateSecret: false
+
 
 Outputs:
   Environment:
@@ -559,17 +487,6 @@ Outputs:
     Export:
       Name: !Sub ${AWS::StackName}-CognitoUserPoolClientId
   
-  S3BucketName:
-    Description: 静的ホスティング用S3バケット名
-    Value: !Ref BeerLogS3FrontBucket
-    Export:
-      Name: !Sub ${AWS::StackName}-S3BucketName
-  
-  CloudFrontDomain:
-    Description: CloudFrontドメイン名
-    Value: !GetAtt BeerLogCloudFrontDistribution.DomainName
-    Export:
-      Name: !Sub ${AWS::StackName}-CloudFrontDomain
   
   ApiGatewayEndpoint:
     Description: API Gateway エンドポイント
@@ -582,3 +499,4 @@ Outputs:
     Value: !Ref BeerLogLambdaFunction
     Export:
       Name: !Sub ${AWS::StackName}-LambdaFunctionName
+

@@ -10,11 +10,11 @@ My Beer Log は GPS ベースの醸造所チェックイン機能を持つクラ
 
 AWS ベースのサーバーレスアプリケーションで、以下の構成です：
 
-- **フロントエンド**: 静的 HTML/CSS/JS（予定：Next.js + React + TypeScript + Tailwind + shadcn/ui）
+- **フロントエンド**: Next.js + React + TypeScript + Tailwind + shadcn/ui（AWS Amplify手動デプロイ）
 - **バックエンド**: Beego フレームワークの Go アプリケーション（Go + REST API + クリーンアーキテクチャ）
 - **データベース**: Amazon RDS 上の PostgreSQL
 - **認証**: AWS Cognito
-- **インフラ**: AWS CloudFormation（S3 + CloudFront + API Gateway + Lambda + RDS）
+- **インフラ**: AWS CloudFormation（API Gateway + Lambda + RDS + Cognito）
 
 ## 主要コンポーネント
 
@@ -84,7 +84,7 @@ cd back && make docker-stop
 
 ### インフラ
 
-#### 環境別デプロイ
+#### バックエンドインフラ環境別デプロイ
 
 ```bash
 # 開発環境のデプロイ
@@ -120,7 +120,7 @@ aws cloudformation deploy \
   --capabilities CAPABILITY_NAMED_IAM
 ```
 
-#### Lambdaコードのデプロイ準備
+#### バックエンドLambdaコードのデプロイ準備
 
 ```bash
 # デプロイ用のLambdaコードパッケージ化
@@ -223,7 +223,7 @@ export APP_VERSION=development
 - データベーススキーマは `back/init-db/01_create_tables.sql` で定義
 - サンプルデータは `back/init-db/02_sample_data.sql` で提供
 - API仕様は `docs/api/openapi.yml` で定義
-- フロントエンドデプロイは CloudFront ディストリビューションを持つ S3 バケットを対象
+- フロントエンドは AWS Amplify で独立デプロイ
 
 ### プロジェクト構造
 
@@ -243,7 +243,7 @@ export APP_VERSION=development
 │       ├── logger.go        # 構造化ログ（logrus）
 │       ├── middleware.go    # CORS・パニック復旧・ログミドルウェア
 │       └── test_auth.go     # 開発環境用認証
-├── front/                   # フロントエンド（HTML/CSS/JS）
+├── front/                   # Next.js フロントエンド（CSR + Amplify デプロイ）
 ├── docs/                    # プロジェクトドキュメント
 ├── infra/                   # AWS CloudFormation テンプレート
 └── tool/                    # 開発支援ツール
@@ -256,6 +256,58 @@ export APP_VERSION=development
 3. **docs 正規化**: docs/ 配下のドキュメントを正とし、矛盾がある場合は確認を求める
 4. **変更承認**: 要求が既存の仕様や実装から変更となる場合は、その旨を明示し承認を得る
 5. **実装**: 承認後に実装を進める
+6. **品質チェック**: 処理変更後は必ず以下のコード品質チェックを実行し、問題がないことを確認する
+
+## コード品質チェック
+
+処理を変更した後は、以下のチェックを必ず実行してコードの品質が問題ないことを確認する：
+
+### フロントエンド（front/）
+
+```bash
+# TypeScript型チェック実行
+cd front && npm run type-check
+
+# ESLintによるコード品質チェック実行
+cd front && npm run lint
+
+# Jestによるテスト実行
+cd front && npm test
+
+# Prettierによるコードフォーマット実行
+cd front && npm run format
+
+# 品質チェック一括実行
+cd front && npm run check
+```
+
+**フロントエンド開発環境構築状況（2025年1月更新）**:
+- **TypeScript**: 型チェック環境完全構築済み（テストファイル含む）
+- **ESLint**: Next.js + TypeScript 対応、import順序・未使用変数検出強化済み
+- **Prettier**: 統一コードフォーマット設定済み（シングルクォート・2スペースインデント）
+- **Jest**: テスト環境構築済み（@testing-library/react, jsdom対応）
+- **品質チェック**: 全ツールが正常動作、CLAUDE.md品質要件完全対応
+
+### バックエンド（back/）
+
+```bash
+# すべてのチェック実行（フォーマット、Lint、テスト）
+cd back && make check
+
+# 個別実行の場合
+cd back && make fmt     # コードフォーマット
+cd back && make lint    # Lintチェック
+cd back && make test    # テスト実行
+```
+
+### 品質チェック基準
+
+- **TypeScript**: 型エラーが0件であること
+- **ESLint**: Lintエラー・警告が0件であること
+- **Jest**: 全テストが通過すること（51 passed）
+- **Go**: `make check` が正常完了すること
+
+これらのチェックが全て通過した場合のみ、変更を完了とする。
 
 ## 商用リリース対応実装詳細
 
@@ -348,3 +400,59 @@ ALLOWED_ORIGINS="https://yourdomain.com,https://www.yourdomain.com"
 4. CORS
 
 この実装により、**商用リリース準備完了**状態を実現しています。
+
+## フロントエンドデプロイ
+
+### AWS Amplify 手動デプロイ
+
+#### デプロイ方式
+- **プラットフォーム**: AWS Amplify Hosting
+- **デプロイ**: 手動アップロード（GitHubワークフロー経由）
+- **ビルド**: Next.js CSR アプリケーション
+
+#### Next.js設定
+
+CSR（Client-Side Rendering）用の設定が`next.config.ts`に設定済み：
+
+```typescript
+{
+  trailingSlash: false,       // 標準的なURL構造
+  images: { unoptimized: true } // 静的環境用画像最適化無効
+}
+```
+
+#### 動的ルート対応
+- **CSRによる実装**: `/brewery/[id]` 等の動的パスをクライアントサイドで処理
+- **useParams()**: URLパラメータの取得
+- **APIコール**: 醸造所データを動的にフェッチ
+- **ブラウザルーティング**: Next.js App Routerによる履歴管理
+
+#### GitHub Actions ワークフロー
+
+**CI ワークフロー（frontend-ci.yml）**
+- **トリガー**: `front/` ディレクトリの変更時（push/PR）
+- **品質チェック**:
+  - TypeScript型チェック (`npm run type-check`)
+  - ESLintによるコード品質チェック (`npm run lint`)
+  - Jestテスト実行 (`npm run test:ci`)
+  - Next.jsビルド確認 (`npm run build`)
+  - テストカバレッジレポート生成
+
+**手動デプロイワークフロー**
+- **ビルド**: `npm run build` で Next.js アプリケーションをビルド
+- **成果物**: `.next/` ディレクトリの静的ファイル
+- **Amplify**: 手動でzipアップロード またはAmplifyコンソールからデプロイ
+
+#### メリット
+- ✅ **簡単なデプロイ**: Amplifyの自動ビルド・デプロイ機能
+- ✅ **動的ルート対応**: CSRで`/brewery/[id]`完全サポート
+- ✅ **低コスト**: 無料枠範囲内での運用可能
+- ✅ **高速CDN**: CloudFrontによる高速配信
+- ✅ **HTTPS自動対応**: SSL証明書自動生成
+- ✅ **独立運用**: バックエンドとフロントエンドの分離デプロイ
+
+#### 手動デプロイ手順
+1. **ローカルビルド**: `npm run build` を実行
+2. **ファイル準備**: `.next/` ディレクトリの内容を準備
+3. **Amplifyアップロード**: AWSコンソールまたはCLIでデプロイ
+4. **動作確認**: デプロイ後のURL確認と機能テスト

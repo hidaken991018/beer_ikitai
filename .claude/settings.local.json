@@ -23,7 +23,8 @@
       "Bash(npm cache clean:*)",
       "Bash(npx:*)",
       "Bash(npm run lint)",
-      "Bash(npm run type-check:*)"
+      "Bash(npm run type-check:*)",
+      "Bash(touch:*)"
     ],
     "deny": [],
     "env": {

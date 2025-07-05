@@ -1,0 +1,229 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths: ['back/**']
+  push:
+    branches: [main, develop]
+    paths: ['back/**']
+
+env:
+  GO_VERSION: '1.21'
+
+jobs:
+  # コード品質チェック
+  lint:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./back
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('back/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      
+      - name: Install dependencies
+        run: go mod download
+      
+      - name: Check formatting
+        run: |
+          if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
+            echo "Code is not formatted. Please run 'go fmt ./...'"
+            gofmt -s -l .
+            exit 1
+          fi
+      
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.54.2
+          working-directory: back
+          args: --timeout=5m
+      
+      - name: Run go vet
+        run: go vet ./...
+      
+      - name: Check go mod tidy
+        run: |
+          go mod tidy
+          if [ -n "$(git status --porcelain go.mod go.sum)" ]; then
+            echo "go.mod or go.sum is not tidy. Please run 'go mod tidy'"
+            git diff go.mod go.sum
+            exit 1
+          fi
+
+  # セキュリティスキャン
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./back
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      
+      - name: Run Gosec Security Scanner
+        uses: securecodewarrior/github-action-gosec@master
+        with:
+          args: './back/...'
+        continue-on-error: true
+      
+      - name: Run govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+        continue-on-error: true
+
+  # 単体テスト
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./back
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('back/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      
+      - name: Install dependencies
+        run: go mod download
+      
+      - name: Setup test database
+        env:
+          PGPASSWORD: testpass
+        run: |
+          psql -h localhost -U testuser -d testdb -f init-db/01_create_tables.sql
+          psql -h localhost -U testuser -d testdb -f init-db/02_sample_data.sql
+      
+      - name: Run tests with coverage
+        env:
+          DB_HOST: localhost
+          DB_USER: testuser
+          DB_PASS: testpass
+          DB_NAME: testdb
+          DB_PORT: 5432
+        run: |
+          go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+      
+      - name: Generate coverage report
+        run: go tool cover -html=coverage.out -o coverage.html
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./back/coverage.out
+          flags: backend
+          name: backend-coverage
+        continue-on-error: true
+      
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: |
+            back/coverage.out
+            back/coverage.html
+          retention-days: 30
+
+  # ビルドテスト
+  build:
+    name: Build Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./back
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('back/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      
+      - name: Install dependencies
+        run: go mod download
+      
+      - name: Build for different platforms
+        run: |
+          echo "Building for Linux (Lambda)..."
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bootstrap-linux ./
+          
+          echo "Building for macOS..."
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o bootstrap-darwin ./
+          
+          echo "Building for Windows..."
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o bootstrap-windows.exe ./
+      
+      - name: Verify Lambda build
+        run: |
+          if [ ! -f bootstrap-linux ]; then
+            echo "Lambda build failed"
+            exit 1
+          fi
+          echo "Lambda build successful"
+          ls -la bootstrap-*
+
+  # 統合チェック
+  integration-check:
+    name: Integration Check
+    needs: [lint, security, test, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all jobs passed
+        run: echo "✅ All CI checks passed successfully!"

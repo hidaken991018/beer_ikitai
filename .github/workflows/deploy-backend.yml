@@ -1,0 +1,229 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main, develop]
+    paths: ['back/**']
+  pull_request:
+    branches: [main]
+    paths: ['back/**']
+  workflow_run:
+    workflows: ["Deploy Infrastructure"]
+    types:
+      - completed
+    branches: [main, develop]
+
+env:
+  GO_VERSION: '1.21'
+  AWS_REGION: ap-northeast-1
+
+jobs:
+  # CI フェーズ
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./back
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('back/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run security scan
+        run: |
+          go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+          gosec ./...
+        continue-on-error: true
+
+      - name: Run tests with coverage
+        run: go test -v -race -coverprofile=coverage.out ./...
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./back/coverage.out
+        continue-on-error: true
+
+  # ビルドフェーズ
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./back
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('back/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Build for Lambda
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bootstrap ./
+          zip lambda-deployment.zip bootstrap
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: lambda-deployment
+          path: back/lambda-deployment.zip
+          retention-days: 7
+
+  # 開発環境デプロイ
+  deploy-dev:
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: lambda-deployment
+
+      - name: Check infrastructure exists
+        run: |
+          if ! aws cloudformation describe-stacks --stack-name beerlog-dev-stack >/dev/null 2>&1; then
+            echo "❌ Infrastructure stack 'beerlog-dev-stack' not found"
+            echo "Please run 'Deploy Infrastructure' workflow first"
+            exit 1
+          fi
+          echo "✅ Infrastructure stack found"
+
+      - name: Get Lambda function name
+        id: get-function-name
+        run: |
+          FUNCTION_NAME=$(aws cloudformation describe-stacks \
+            --stack-name beerlog-dev-stack \
+            --query 'Stacks[0].Outputs[?OutputKey==`LambdaFunctionName`].OutputValue' \
+            --output text)
+          echo "function-name=${FUNCTION_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Update Lambda function
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ steps.get-function-name.outputs.function-name }} \
+            --zip-file fileb://lambda-deployment.zip
+
+      - name: Wait for function update
+        run: |
+          aws lambda wait function-updated \
+            --function-name ${{ steps.get-function-name.outputs.function-name }}
+
+      - name: Health check
+        run: |
+          HEALTH_URL=$(aws cloudformation describe-stacks \
+            --stack-name beerlog-dev-stack \
+            --query 'Stacks[0].Outputs[?OutputKey==`ApiGatewayEndpoint`].OutputValue' \
+            --output text)
+          echo "Health check URL: ${HEALTH_URL}/v1/health"
+          sleep 30
+          curl -f "${HEALTH_URL}/v1/health" || exit 1
+
+  # 本番環境デプロイ
+  deploy-prod:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: lambda-deployment
+
+      - name: Check infrastructure exists
+        run: |
+          if ! aws cloudformation describe-stacks --stack-name beerlog-prod-stack >/dev/null 2>&1; then
+            echo "❌ Infrastructure stack 'beerlog-prod-stack' not found"
+            echo "Please run 'Deploy Infrastructure' workflow first"
+            exit 1
+          fi
+          echo "✅ Infrastructure stack found"
+
+      - name: Get Lambda function name
+        id: get-function-name
+        run: |
+          FUNCTION_NAME=$(aws cloudformation describe-stacks \
+            --stack-name beerlog-prod-stack \
+            --query 'Stacks[0].Outputs[?OutputKey==`LambdaFunctionName`].OutputValue' \
+            --output text)
+          echo "function-name=${FUNCTION_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Update Lambda function
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ steps.get-function-name.outputs.function-name }} \
+            --zip-file fileb://lambda-deployment.zip
+
+      - name: Wait for function update
+        run: |
+          aws lambda wait function-updated \
+            --function-name ${{ steps.get-function-name.outputs.function-name }}
+
+      - name: Health check
+        run: |
+          HEALTH_URL=$(aws cloudformation describe-stacks \
+            --stack-name beerlog-prod-stack \
+            --query 'Stacks[0].Outputs[?OutputKey==`ApiGatewayEndpoint`].OutputValue' \
+            --output text)
+          echo "Health check URL: ${HEALTH_URL}/v1/health"
+          sleep 30
+          curl -f "${HEALTH_URL}/v1/health" || exit 1
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "✅ Production deployment successful!"
+          echo "API Gateway URL: ${HEALTH_URL}"
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "❌ Production deployment failed. Consider manual rollback if needed."
+          echo "Rollback command: aws lambda update-function-code --function-name ${{ steps.get-function-name.outputs.function-name }} --zip-file fileb://previous-version.zip"
