@@ -63,7 +63,10 @@ interface LoadingCardProps {
   'data-testid'?: string;
 }
 
-export function LoadingCard({ className, 'data-testid': testId }: LoadingCardProps) {
+export function LoadingCard({
+  className,
+  'data-testid': testId,
+}: LoadingCardProps) {
   return (
     <div
       className={cn(
@@ -93,7 +96,11 @@ interface LoadingListProps {
   'data-testid'?: string;
 }
 
-export function LoadingList({ items = 5, className, 'data-testid': testId }: LoadingListProps) {
+export function LoadingList({
+  items = 5,
+  className,
+  'data-testid': testId,
+}: LoadingListProps) {
   return (
     <div className={cn('space-y-4', className)} data-testid={testId}>
       {Array.from({ length: items }).map((_, i) => (

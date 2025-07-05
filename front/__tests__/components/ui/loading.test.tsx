@@ -66,7 +66,9 @@ describe('Loading Components', () => {
     });
 
     it('applies custom className', () => {
-      render(<LoadingSkeleton className='custom-skeleton' data-testid='skeleton' />);
+      render(
+        <LoadingSkeleton className='custom-skeleton' data-testid='skeleton' />
+      );
       const container = screen.getByTestId('skeleton');
       expect(container).toHaveClass('custom-skeleton');
     });
@@ -88,7 +90,9 @@ describe('Loading Components', () => {
     });
 
     it('applies custom className', () => {
-      render(<LoadingCard className='custom-card' data-testid='loading-card' />);
+      render(
+        <LoadingCard className='custom-card' data-testid='loading-card' />
+      );
       const container = screen.getByTestId('loading-card');
       expect(container).toHaveClass('custom-card');
     });
@@ -117,7 +121,9 @@ describe('Loading Components', () => {
     });
 
     it('applies custom className', () => {
-      render(<LoadingList className='custom-list' data-testid='loading-list' />);
+      render(
+        <LoadingList className='custom-list' data-testid='loading-list' />
+      );
       const container = screen.getByTestId('loading-list');
       expect(container).toHaveClass('custom-list');
     });
