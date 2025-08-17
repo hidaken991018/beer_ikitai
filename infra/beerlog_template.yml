@@ -190,29 +190,11 @@ Resources:
       SubnetId: !Ref BeerLogPrivateSubnetB
       RouteTableId: !Ref BeerLogPrivateRouteTable
 
-  # NAT Gateway（1つ/AZ1のみ設置例）
-  BeerLogEIP:
-    Type: AWS::EC2::EIP
-    Properties:
-      Domain: vpc
-
-  BeerLogNATGateway:
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt BeerLogEIP.AllocationId
-      SubnetId: !Ref BeerLogPublicSubnetA
-      Tags:
-        - Key: Name
-          Value: !Sub BeerLog-${Environment}-NATGateway
-        - Key: Environment
-          Value: !Ref Environment
-
   BeerLogPrivateRoute:
     Type: AWS::EC2::Route
     Properties:
       RouteTableId: !Ref BeerLogPrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref BeerLogNATGateway
 
   # DB Subnet Group（2AZ）
   BeerLogDBSubnetGroup:
