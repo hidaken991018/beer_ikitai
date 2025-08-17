@@ -6,11 +6,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 My Beer Log は GPS ベースの醸造所チェックイン機能を持つクラフトビール記録アプリケーションです。現在は MVP フェーズ 1 の初期開発段階で、基本的なアカウント管理と位置情報ベースの醸造所訪問機能に焦点を当てています。
 
+## ドキュメント管理
+
+プロジェクトは構造化されたドキュメントアプローチに従います：
+
+1. **docs/marketing/**: ビジネス計画（リーンキャンバス、顧客分析）
+2. **docs/product/**: 機能仕様とユーザーフロー
+3. **docs/architect/**: 技術アーキテクチャとデータベース設計
+4. **docs/api/**: OpenAPI 仕様と権限マトリックス
+
 ## アーキテクチャ
 
 AWS ベースのサーバーレスアプリケーションで、以下の構成です：
 
-- **フロントエンド**: Next.js + React + TypeScript + Tailwind + shadcn/ui（AWS Amplify手動デプロイ）
+- **フロントエンド**: Next.js + React + TypeScript + Tailwind + shadcn/ui（AWS Amplify 手動デプロイ）
 - **バックエンド**: Beego フレームワークの Go アプリケーション（Go + REST API + クリーンアーキテクチャ）
 - **データベース**: Amazon RDS 上の PostgreSQL
 - **認証**: AWS Cognito
@@ -18,7 +27,7 @@ AWS ベースのサーバーレスアプリケーションで、以下の構成�
 
 ## 主要コンポーネント
 
-### データベーススキーマ（database.dbml）
+### データベーススキーマ（database.dbml）(https://dbdocs.io/hidaken991018/MyBeerLog)
 
 - **Brewery**: GPS 座標を含む醸造所情報
 - **UserProfile**: Cognito sub ID に連携されたユーザープロファイル
@@ -42,16 +51,16 @@ AWS ベースのサーバーレスアプリケーションで、以下の構成�
   - Domain Layer: Entity, Repository, UseCase の分離実装済み
   - Infrastructure Layer: DTO, Mapper による API インターフェース実装済み
   - データベース初期化スクリプトとサンプルデータ準備済み
-  - **商用リリース対応（2025年1月追加）**:
+  - **商用リリース対応（2025 年 1 月追加）**: NOTE 実装要確認
     - 構造化ログ（logrus）による JSON/テキスト出力対応
-    - リクエストID追跡とパニック復旧ミドルウェア
+    - リクエスト ID 追跡とパニック復旧ミドルウェア
     - 統一エラーレスポンス構造とエラーハンドリング
     - API Gateway Cognito Authorizer 連携強化
-    - セキュリティヘッダーと環境別CORS設定
-    - 拡張ヘルスチェック（DB接続・環境変数チェック）
+    - セキュリティヘッダーと環境別 CORS 設定
+    - 拡張ヘルスチェック（DB 接続・環境変数チェック）
 - **フロントエンド**: 基本的な HTML テンプレート（`front/index.html`）
 - **ツール**: 位置情報取得ツール（`tool/get_target_geo/`）
-- **ドキュメント**: 日本語での包括的な計画書（API仕様、権限マトリックス含む）
+- **ドキュメント**: 日本語での包括的な計画書（API 仕様、権限マトリックス含む）
 
 ## 開発コマンド
 
@@ -120,7 +129,7 @@ aws cloudformation deploy \
   --capabilities CAPABILITY_NAMED_IAM
 ```
 
-#### バックエンドLambdaコードのデプロイ準備
+#### バックエンド Lambda コードのデプロイ準備
 
 ```bash
 # デプロイ用のLambdaコードパッケージ化
@@ -151,26 +160,17 @@ aws cloudformation describe-stacks \
 aws cloudformation delete-stack --stack-name beerlog-dev-stack
 ```
 
-### プロジェクト構造管理
-
-プロジェクトは構造化されたドキュメントアプローチに従います：
-
-1. **docs/marketing/**: ビジネス計画（リーンキャンバス、顧客分析）
-2. **docs/product/**: 機能仕様とユーザーフロー
-3. **docs/architect/**: 技術アーキテクチャとデータベース設計
-4. **docs/api/**: OpenAPI仕様と権限マトリックス
-
 ## 開発ノート
 
 ### 認証フロー
 
 - ユーザー管理に AWS Cognito を使用
 - ユーザープロファイルは`cognito_sub`を一意識別子として PostgreSQL に保存
-- API Gateway Cognito Authorizerにより事前にJWT検証が完了
-- Lambda環境では以下のヘッダーからCognito情報を取得：
+- API Gateway Cognito Authorizer により事前に JWT 検証が完了
+- Lambda 環境では以下のヘッダーから Cognito 情報を取得：
   - `X-Cognito-Sub`: Cognito Sub ID
-  - `X-Amzn-Cognito-Sub`: AWS Lambda Proxy統合用
-  - `X-Cognito-Groups`: Cognitoグループ情報（管理者権限判定用）
+  - `X-Amzn-Cognito-Sub`: AWS Lambda Proxy 統合用
+  - `X-Cognito-Groups`: Cognito グループ情報（管理者権限判定用）
 - 開発環境ではテストトークン機能で認証をシミュレート
 
 ### GPS 統合
@@ -182,9 +182,11 @@ aws cloudformation delete-stack --stack-name beerlog-dev-stack
 ### 環境設定
 
 #### 本番環境（Lambda）
+
 Lambda 関数は以下の環境変数を期待：
 
 **データベース設定:**
+
 - `DB_HOST`: RDS エンドポイント
 - `DB_USER`: データベースユーザー名（Secrets Manager から）
 - `DB_PASS`: データベースパスワード（Secrets Manager から）
@@ -193,18 +195,22 @@ Lambda 関数は以下の環境変数を期待：
 - `DB_SSLMODE`: SSL モード（本番: require, 開発: disable）
 
 **ログ設定:**
+
 - `LOG_LEVEL`: ログレベル（debug, info, warn, error, fatal）
 - `LOG_FORMAT`: ログフォーマット（json, text）
 
 **アプリケーション設定:**
+
 - `APP_VERSION`: アプリケーションバージョン
 - `ALLOWED_ORIGINS`: 許可するオリジンのカンマ区切りリスト
 
 #### 開発環境（Docker）
-Docker環境では `back/docker-compose.yml` で PostgreSQL コンテナが自動構成されます。
+
+Docker 環境では `back/docker-compose.yml` で PostgreSQL コンテナが自動構成されます。
 設定は `back/conf/app.conf` で管理されています。
 
 **開発用環境変数例:**
+
 ```bash
 # ログ設定
 export LOG_LEVEL=debug
@@ -222,7 +228,7 @@ export APP_VERSION=development
 - CloudFormation テンプレートは Lambda デプロイ用の S3 バケット`beerlog-app-back`を参照
 - データベーススキーマは `back/init-db/01_create_tables.sql` で定義
 - サンプルデータは `back/init-db/02_sample_data.sql` で提供
-- API仕様は `docs/api/openapi.yml` で定義
+- API 仕様は `docs/api/openapi.yml` で定義
 - フロントエンドは AWS Amplify で独立デプロイ
 
 ### プロジェクト構造
@@ -281,12 +287,13 @@ cd front && npm run format
 cd front && npm run check
 ```
 
-**フロントエンド開発環境構築状況（2025年1月更新）**:
+**フロントエンド開発環境構築状況（2025 年 1 月更新）**:
+
 - **TypeScript**: 型チェック環境完全構築済み（テストファイル含む）
-- **ESLint**: Next.js + TypeScript 対応、import順序・未使用変数検出強化済み
-- **Prettier**: 統一コードフォーマット設定済み（シングルクォート・2スペースインデント）
-- **Jest**: テスト環境構築済み（@testing-library/react, jsdom対応）
-- **品質チェック**: 全ツールが正常動作、CLAUDE.md品質要件完全対応
+- **ESLint**: Next.js + TypeScript 対応、import 順序・未使用変数検出強化済み
+- **Prettier**: 統一コードフォーマット設定済み（シングルクォート・2 スペースインデント）
+- **Jest**: テスト環境構築済み（@testing-library/react, jsdom 対応）
+- **品質チェック**: 全ツールが正常動作、CLAUDE.md 品質要件完全対応
 
 ### バックエンド（back/）
 
@@ -302,8 +309,8 @@ cd back && make test    # テスト実行
 
 ### 品質チェック基準
 
-- **TypeScript**: 型エラーが0件であること
-- **ESLint**: Lintエラー・警告が0件であること
+- **TypeScript**: 型エラーが 0 件であること
+- **ESLint**: Lint エラー・警告が 0 件であること
 - **Jest**: 全テストが通過すること（51 passed）
 - **Go**: `make check` が正常完了すること
 
@@ -313,7 +320,8 @@ cd back && make test    # テスト実行
 
 ### 認証・セキュリティ
 
-#### Cognito認証フロー
+#### Cognito 認証フロー
+
 ```go
 // BaseController内での認証取得
 func (c *BaseController) GetCognitoSub() (string, error) {
@@ -328,14 +336,16 @@ func (c *BaseController) GetCognitoSub() (string, error) {
 ```
 
 #### セキュリティヘッダー
+
 - X-Content-Type-Options: nosniff
 - X-Frame-Options: DENY
 - X-XSS-Protection: 1; mode=block
-- Strict-Transport-Security（HTTPS環境のみ）
+- Strict-Transport-Security（HTTPS 環境のみ）
 
 ### ログ・モニタリング
 
 #### 構造化ログ設定
+
 ```bash
 # 本番環境（JSON形式）
 LOG_LEVEL=info
@@ -347,25 +357,27 @@ LOG_FORMAT=text
 ```
 
 #### リクエスト追跡
-- 自動生成されるリクエストID
-- パニック復旧による可用性確保
+
+- 自動生成されるリクエスト ID
 - エラーレスポンスの統一化
 
 ### エラーハンドリング
 
 #### 統一エラーレスポンス
+
 ```json
 {
   "error": "ユーザー向けメッセージ",
   "code": "ERROR_CODE",
   "message": "内部エラー詳細（開発時のみ）",
-  "details": {"field": "validation info"},
+  "details": { "field": "validation info" },
   "request_id": "req_123456789",
   "timestamp": "2025-01-27T10:00:00Z"
 }
 ```
 
 #### エラーコード体系
+
 - UNAUTHORIZED: 認証エラー
 - VALIDATION_FAILED: 入力検証エラー
 - NOT_FOUND: リソース不存在
@@ -374,12 +386,14 @@ LOG_FORMAT=text
 ### 運用・監視
 
 #### ヘルスチェック拡張
+
 - データベース接続状態確認
 - 必要環境変数の存在確認
 - アプリケーションバージョン情報
-- ステータス別HTTPコード返却
+- ステータス別 HTTP コード返却
 
-#### CORS設定
+#### CORS 設定
+
 ```bash
 # 開発環境
 ALLOWED_ORIGINS="http://localhost:3000,http://localhost:8080"
@@ -391,9 +405,11 @@ ALLOWED_ORIGINS="https://yourdomain.com,https://www.yourdomain.com"
 ### 開発支援
 
 #### テスト認証機能
+
 開発環境では`utils/test_auth.go`によりテストトークンで認証をシミュレート
 
 #### ミドルウェア階層
+
 1. パニック復旧（最優先）
 2. リクエストログ
 3. セキュリティヘッダー
@@ -406,53 +422,29 @@ ALLOWED_ORIGINS="https://yourdomain.com,https://www.yourdomain.com"
 ### AWS Amplify 手動デプロイ
 
 #### デプロイ方式
+
 - **プラットフォーム**: AWS Amplify Hosting
-- **デプロイ**: 手動アップロード（GitHubワークフロー経由）
+- **デプロイ**: 手動アップロード（GitHub ワークフロー経由）
 - **ビルド**: Next.js CSR アプリケーション
 
-#### Next.js設定
-
-CSR（Client-Side Rendering）用の設定が`next.config.ts`に設定済み：
-
-```typescript
-{
-  trailingSlash: false,       // 標準的なURL構造
-  images: { unoptimized: true } // 静的環境用画像最適化無効
-}
 ```
 
 #### 動的ルート対応
-- **CSRによる実装**: `/brewery/[id]` 等の動的パスをクライアントサイドで処理
-- **useParams()**: URLパラメータの取得
-- **APIコール**: 醸造所データを動的にフェッチ
-- **ブラウザルーティング**: Next.js App Routerによる履歴管理
+
+- **CSR による実装**: `/brewery/[id]` 等の動的パスをクライアントサイドで処理
+- **useParams()**: URL パラメータの取得
+- **API コール**: 醸造所データを動的にフェッチ
+- **ブラウザルーティング**: Next.js App Router による履歴管理
 
 #### GitHub Actions ワークフロー
 
 **CI ワークフロー（frontend-ci.yml）**
+
 - **トリガー**: `front/` ディレクトリの変更時（push/PR）
 - **品質チェック**:
-  - TypeScript型チェック (`npm run type-check`)
-  - ESLintによるコード品質チェック (`npm run lint`)
-  - Jestテスト実行 (`npm run test:ci`)
-  - Next.jsビルド確認 (`npm run build`)
+  - TypeScript 型チェック (`npm run type-check`)
+  - ESLint によるコード品質チェック (`npm run lint`)
+  - Jest テスト実行 (`npm run test:ci`)
+  - Next.js ビルド確認 (`npm run build`)
   - テストカバレッジレポート生成
-
-**手動デプロイワークフロー**
-- **ビルド**: `npm run build` で Next.js アプリケーションをビルド
-- **成果物**: `.next/` ディレクトリの静的ファイル
-- **Amplify**: 手動でzipアップロード またはAmplifyコンソールからデプロイ
-
-#### メリット
-- ✅ **簡単なデプロイ**: Amplifyの自動ビルド・デプロイ機能
-- ✅ **動的ルート対応**: CSRで`/brewery/[id]`完全サポート
-- ✅ **低コスト**: 無料枠範囲内での運用可能
-- ✅ **高速CDN**: CloudFrontによる高速配信
-- ✅ **HTTPS自動対応**: SSL証明書自動生成
-- ✅ **独立運用**: バックエンドとフロントエンドの分離デプロイ
-
-#### 手動デプロイ手順
-1. **ローカルビルド**: `npm run build` を実行
-2. **ファイル準備**: `.next/` ディレクトリの内容を準備
-3. **Amplifyアップロード**: AWSコンソールまたはCLIでデプロイ
-4. **動作確認**: デプロイ後のURL確認と機能テスト
+```
