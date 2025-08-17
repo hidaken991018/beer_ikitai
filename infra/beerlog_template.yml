@@ -167,35 +167,6 @@ Resources:
       SubnetId: !Ref BeerLogPublicSubnetB
       RouteTableId: !Ref BeerLogPublicRouteTable
 
-  # ルートテーブル（プライベート/NAT用）
-  BeerLogPrivateRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref BeerLogVPC
-      Tags:
-        - Key: Name
-          Value: !Sub BeerLog-${Environment}-PrivateRouteTable
-        - Key: Environment
-          Value: !Ref Environment
-
-  BeerLogPrivateSubnetARouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref BeerLogPrivateSubnetA
-      RouteTableId: !Ref BeerLogPrivateRouteTable
-
-  BeerLogPrivateSubnetBRouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref BeerLogPrivateSubnetB
-      RouteTableId: !Ref BeerLogPrivateRouteTable
-
-  BeerLogPrivateRoute:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref BeerLogPrivateRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-
   # DB Subnet Group（2AZ）
   BeerLogDBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
