@@ -21,9 +21,9 @@
  * ```
  */
 export const APP_CONFIG = {
-  /** アプリケーション名（環境変数: NEXT_PUBLIC_APP_NAME） */
+  /** アプリケーション名 */
   name: process.env.NEXT_PUBLIC_APP_NAME || 'My Beer Log',
-  /** 実行環境（環境変数: NEXT_PUBLIC_APP_ENV） */
+  /** 実行環境 */
   env: process.env.NEXT_PUBLIC_APP_ENV || 'development',
   /** アプリケーションバージョン */
   version: '1.0.0',
@@ -43,12 +43,12 @@ export const APP_CONFIG = {
  * ```
  */
 export const API_CONFIG = {
-  /** APIのベースURL（環境変数: NEXT_PUBLIC_API_BASE_URL） */
+  /** APIのベースURL（*/
   baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080',
   /** リクエストタイムアウト時間（ミリ秒） */
-  timeout: 10000,
+  timeout: process.env.NEXT_PUBLIC_API_TIMEOUT || 10000,
   /** 失敗時のリトライ回数 */
-  retryAttempts: 3,
+  retryAttempts: process.env.NEXT_PUBLIC_API_RETRY_ATTEMPTS || 3,
 } as const;
 
 /**
