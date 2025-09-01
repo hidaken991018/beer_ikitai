@@ -100,7 +100,7 @@ export function useAuth() {
         if (user) {
           const tokens = await cognitoAuthService.getTokens();
 
-          if (tokens.accessToken && tokens.idToken && tokens.refreshToken) {
+          if (tokens.accessToken && tokens.idToken) {
             // Set API client token
             apiClient.setAccessToken(tokens.accessToken);
 
@@ -109,7 +109,7 @@ export function useAuth() {
                 user,
                 accessToken: tokens.accessToken,
                 idToken: tokens.idToken,
-                refreshToken: tokens.refreshToken,
+                refreshToken: tokens?.refreshToken || '',
               })
             );
           } else {
