@@ -170,7 +170,7 @@ export default function VisitsPage() {
     return null; // Will redirect to login
   }
 
-  if (breweryState.isLoading) {
+  if (breweryState?.isLoading) {
     return (
       <AppLayout>
         <div className='flex justify-center items-center py-12'>
@@ -219,8 +219,8 @@ export default function VisitsPage() {
               <h3 className='text-2xl font-bold'>
                 {visitStats.totalVisits > 0
                   ? Math.round(
-                      (visitStats.totalVisits / visitStats.uniqueBreweries) * 10
-                    ) / 10
+                    (visitStats.totalVisits / visitStats.uniqueBreweries) * 10
+                  ) / 10
                   : 0}
               </h3>
               <p className='text-muted-foreground'>平均訪問回数</p>
