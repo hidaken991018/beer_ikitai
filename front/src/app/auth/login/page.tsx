@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import { useAuthContext } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,14 @@ export default function LoginPage() {
   });
   const [errors, setErrors] = useState<Partial<LoginCredentials>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Redirect to home if already logged in
+  useEffect(() => {
+    console.log('Auth State:', authState);
+    if (authState.isAuthenticated && !authState.isLoading) {
+      router.push(ROUTES.home);
+    }
+  }, [authState.isAuthenticated, authState.isLoading, router]);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<LoginCredentials> = {};
@@ -74,6 +82,25 @@ export default function LoginPage() {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
+
+  // Show redirect message if already authenticated
+  if (authState.isAuthenticated && !authState.isLoading) {
+    return (
+      <div className='min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8'>
+        <div className='max-w-md w-full space-y-8'>
+          <Card>
+            <CardContent className='pt-6'>
+              <div className='text-center'>
+                <p className='text-sm text-gray-600'>
+                  ホームページへリダイレクトしています...
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8'>

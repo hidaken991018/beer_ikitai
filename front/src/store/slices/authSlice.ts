@@ -82,6 +82,7 @@ const authSlice = createSlice({
       }>
     ) => {
       state.isAuthenticated = true;
+      state.isLoading = false;
       state.accessToken = action.payload.accessToken;
       state.idToken = action.payload.idToken;
       if (action.payload.refreshToken) {
