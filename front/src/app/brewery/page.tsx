@@ -8,6 +8,7 @@ import {
   BreweryCard,
   BreweryCardCompact,
 } from '@/components/brewery/BreweryCard';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -20,7 +21,6 @@ import { Input } from '@/components/ui/input';
 import { useBreweries } from '@/hooks/useBreweries';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { ROUTES } from '@/lib/constants';
-import { AppLayout } from '@/components/layout/AppLayout';
 
 type ViewMode = 'grid' | 'list';
 

@@ -30,11 +30,10 @@ export default function LoginPage() {
 
   // Redirect to home if already logged in
   useEffect(() => {
-    console.log('Auth State:', authState);
     if (authState.isAuthenticated && !authState.isLoading) {
       router.push(ROUTES.home);
     }
-  }, [authState.isAuthenticated, authState.isLoading, router]);
+  }, [authState, router]);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<LoginCredentials> = {};
