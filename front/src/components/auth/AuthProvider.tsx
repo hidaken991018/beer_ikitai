@@ -62,7 +62,8 @@ function AuthInitializer({ children }: AuthProviderProps) {
     };
 
     initializeAuth();
-  }, [auth]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 }
