@@ -81,7 +81,6 @@ func (r *beegoUserProfileRepository) Update(userProfile *entity.UserProfile) (*e
 		Build()
 }
 
-
 // modelToEntity モデルからエンティティに変換する
 func (r *beegoUserProfileRepository) modelToEntity(model *models.UserProfile) (*entity.UserProfile, error) {
 	return entity.NewUserProfileBuilder().

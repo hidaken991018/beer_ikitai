@@ -49,7 +49,7 @@ func init() {
 
 	// ミドルウェア設定
 	setupMiddleware()
-	
+
 	// ルーティング設定
 	setupRoutes()
 
@@ -61,13 +61,13 @@ func init() {
 func setupMiddleware() {
 	// 1. パニック復旧ミドルウェア（最優先）
 	beego.InsertFilter("*", beego.BeforeRouter, utils.PanicRecoveryMiddleware)
-	
+
 	// 2. リクエストログミドルウェア
 	beego.InsertFilter("*", beego.BeforeRouter, utils.RequestLoggingMiddleware)
-	
+
 	// 3. セキュリティヘッダーミドルウェア
 	beego.InsertFilter("*", beego.BeforeRouter, utils.SecurityHeadersMiddleware)
-	
+
 	// 4. CORS ミドルウェア
 	beego.InsertFilter("*", beego.BeforeRouter, utils.CORSMiddleware)
 }

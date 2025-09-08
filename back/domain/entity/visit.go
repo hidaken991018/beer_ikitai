@@ -143,4 +143,3 @@ func (v *Visit) validate() error {
 func (v *Visit) IsSameUser(userProfileID int) bool {
 	return v.userProfileID == userProfileID
 }
-

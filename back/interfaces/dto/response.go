@@ -72,33 +72,33 @@ type ValidationError struct {
 // ErrorCode エラーコードの定数定義
 const (
 	// 認証・認可関連
-	ErrorCodeUnauthorized        = "UNAUTHORIZED"
-	ErrorCodeForbidden          = "FORBIDDEN"
-	ErrorCodeInvalidToken       = "INVALID_TOKEN"
-	ErrorCodeTokenExpired       = "TOKEN_EXPIRED"
-	
+	ErrorCodeUnauthorized = "UNAUTHORIZED"
+	ErrorCodeForbidden    = "FORBIDDEN"
+	ErrorCodeInvalidToken = "INVALID_TOKEN"
+	ErrorCodeTokenExpired = "TOKEN_EXPIRED"
+
 	// バリデーション関連
-	ErrorCodeValidationFailed   = "VALIDATION_FAILED"
-	ErrorCodeInvalidRequest     = "INVALID_REQUEST"
-	ErrorCodeMissingParameter   = "MISSING_PARAMETER"
-	ErrorCodeInvalidParameter   = "INVALID_PARAMETER"
-	
+	ErrorCodeValidationFailed = "VALIDATION_FAILED"
+	ErrorCodeInvalidRequest   = "INVALID_REQUEST"
+	ErrorCodeMissingParameter = "MISSING_PARAMETER"
+	ErrorCodeInvalidParameter = "INVALID_PARAMETER"
+
 	// リソース関連
-	ErrorCodeNotFound           = "NOT_FOUND"
-	ErrorCodeResourceExists     = "RESOURCE_EXISTS"
-	ErrorCodeResourceConflict   = "RESOURCE_CONFLICT"
-	
+	ErrorCodeNotFound         = "NOT_FOUND"
+	ErrorCodeResourceExists   = "RESOURCE_EXISTS"
+	ErrorCodeResourceConflict = "RESOURCE_CONFLICT"
+
 	// システム関連
 	ErrorCodeInternalServer     = "INTERNAL_SERVER_ERROR"
 	ErrorCodeServiceUnavailable = "SERVICE_UNAVAILABLE"
 	ErrorCodeDatabaseError      = "DATABASE_ERROR"
 	ErrorCodeExternalAPIError   = "EXTERNAL_API_ERROR"
-	
+
 	// ビジネスロジック関連
-	ErrorCodeProfileNotFound    = "PROFILE_NOT_FOUND"
-	ErrorCodeProfileExists      = "PROFILE_EXISTS"
-	ErrorCodeBreweryNotFound    = "BREWERY_NOT_FOUND"
-	ErrorCodeVisitNotFound      = "VISIT_NOT_FOUND"
-	ErrorCodeCheckInFailed      = "CHECKIN_FAILED"
-	ErrorCodeLocationTooFar     = "LOCATION_TOO_FAR"
+	ErrorCodeProfileNotFound = "PROFILE_NOT_FOUND"
+	ErrorCodeProfileExists   = "PROFILE_EXISTS"
+	ErrorCodeBreweryNotFound = "BREWERY_NOT_FOUND"
+	ErrorCodeVisitNotFound   = "VISIT_NOT_FOUND"
+	ErrorCodeCheckInFailed   = "CHECKIN_FAILED"
+	ErrorCodeLocationTooFar  = "LOCATION_TOO_FAR"
 )

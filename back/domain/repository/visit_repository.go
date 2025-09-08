@@ -117,7 +117,6 @@ func (r *visitRepository) Create(visit *entity.Visit) (*entity.Visit, error) {
 	return r.modelToEntity(model)
 }
 
-
 // modelToEntity モデルからエンティティに変換する
 func (r *visitRepository) modelToEntity(model *models.Visit) (*entity.Visit, error) {
 	builder := entity.NewVisitBuilder().

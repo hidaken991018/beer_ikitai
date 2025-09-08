@@ -12,9 +12,9 @@ import (
 
 // TestAuthToken ローカル開発用のテスト認証トークンを表す
 type TestAuthToken struct {
-	Token     string `json:"token"`
+	Token      string `json:"token"`
 	CognitoSub string `json:"cognito_sub"`
-	ExpiresAt int64  `json:"expires_at"`
+	ExpiresAt  int64  `json:"expires_at"`
 }
 
 // TestAuthTokenManager テスト認証トークンを管理する
@@ -28,15 +28,15 @@ func NewTestAuthTokenManager() *TestAuthTokenManager {
 	manager := &TestAuthTokenManager{
 		tokens: make(map[string]*TestAuthToken),
 	}
-	
+
 	// デフォルトのテストトークンを追加
 	defaultToken := &TestAuthToken{
-		Token:     "test-token",
+		Token:      "test-token",
 		CognitoSub: "test-user-sub",
-		ExpiresAt: time.Now().Add(24 * time.Hour).Unix(), // 24時間有効
+		ExpiresAt:  time.Now().Add(24 * time.Hour).Unix(), // 24時間有効
 	}
 	manager.tokens["test-token"] = defaultToken
-	
+
 	return manager
 }
 
@@ -51,9 +51,9 @@ func (m *TestAuthTokenManager) GenerateToken(cognitoSub string) *TestAuthToken {
 	expiresAt := time.Now().Add(time.Hour).Unix()
 
 	testToken := &TestAuthToken{
-		Token:     token,
+		Token:      token,
 		CognitoSub: cognitoSub,
-		ExpiresAt: expiresAt,
+		ExpiresAt:  expiresAt,
 	}
 
 	// トークンストアに保存
@@ -139,14 +139,14 @@ func (m *TestAuthTokenManager) GetTokenCount() int {
 // グローバルインスタンス（シングルトンパターン）
 var (
 	testAuthManager *TestAuthTokenManager
-	once           sync.Once
+	once            sync.Once
 )
 
 // GetTestAuthTokenManager TestAuthTokenManagerのシングルトンインスタンスを返す
 func GetTestAuthTokenManager() *TestAuthTokenManager {
 	once.Do(func() {
 		testAuthManager = NewTestAuthTokenManager()
-		
+
 		// 定期的な期限切れトークンのクリーンアップ（バックグラウンド処理）
 		go func() {
 			ticker := time.NewTicker(30 * time.Minute)

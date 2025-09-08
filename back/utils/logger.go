@@ -109,9 +109,9 @@ func LogRequest(ctx context.Context, method, path, userAgent string) {
 // LogResponse レスポンス時のログを出力する
 func LogResponse(ctx context.Context, statusCode int, duration int64) {
 	entry := WithRequestID(ctx).WithFields(logrus.Fields{
-		"status_code":    statusCode,
-		"duration_ms":    duration,
-		"type":           "request_end",
+		"status_code": statusCode,
+		"duration_ms": duration,
+		"type":        "request_end",
 	})
 
 	if statusCode >= 500 {
@@ -126,44 +126,44 @@ func LogResponse(ctx context.Context, statusCode int, duration int64) {
 // LogError エラーログを出力する
 func LogError(ctx context.Context, err error, message string, fields ...logrus.Fields) {
 	entry := WithRequestID(ctx).WithError(err)
-	
+
 	if len(fields) > 0 {
 		entry = entry.WithFields(fields[0])
 	}
-	
+
 	entry.WithField("type", "application_error").Error(message)
 }
 
 // LogWarn 警告ログを出力する
 func LogWarn(ctx context.Context, message string, fields ...logrus.Fields) {
 	entry := WithRequestID(ctx)
-	
+
 	if len(fields) > 0 {
 		entry = entry.WithFields(fields[0])
 	}
-	
+
 	entry.WithField("type", "application_warning").Warn(message)
 }
 
 // LogInfo 情報ログを出力する
 func LogInfo(ctx context.Context, message string, fields ...logrus.Fields) {
 	entry := WithRequestID(ctx)
-	
+
 	if len(fields) > 0 {
 		entry = entry.WithFields(fields[0])
 	}
-	
+
 	entry.WithField("type", "application_info").Info(message)
 }
 
 // LogDebug デバッグログを出力する
 func LogDebug(ctx context.Context, message string, fields ...logrus.Fields) {
 	entry := WithRequestID(ctx)
-	
+
 	if len(fields) > 0 {
 		entry = entry.WithFields(fields[0])
 	}
-	
+
 	entry.WithField("type", "application_debug").Debug(message)
 }
 

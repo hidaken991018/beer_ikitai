@@ -194,4 +194,3 @@ func (b *Brewery) IsWithinCheckinRange(lat, lng float64, maxDistance float64) (b
 
 	return distance <= maxDistance, nil
 }
-

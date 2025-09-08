@@ -10,7 +10,7 @@ func BreweryEntityToResponse(e *entity.Brewery) *dto.BreweryResponse {
 	if e == nil {
 		return nil
 	}
-	
+
 	return &dto.BreweryResponse{
 		ID:          e.ID(),
 		Name:        e.Name(),
@@ -28,7 +28,7 @@ func BreweryEntityToPublicResponse(e *entity.Brewery) *dto.BreweryPublicResponse
 	if e == nil {
 		return nil
 	}
-	
+
 	return &dto.BreweryPublicResponse{
 		ID:          e.ID(),
 		Name:        e.Name(),

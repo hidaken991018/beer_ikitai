@@ -133,7 +133,6 @@ func (r *beegoBreweryRepository) Create(brewery *entity.Brewery) (*entity.Brewer
 	return r.modelToEntity(model)
 }
 
-
 // modelToEntity モデルからエンティティに変換する
 func (r *beegoBreweryRepository) modelToEntity(model *models.Brewery) (*entity.Brewery, error) {
 	return entity.NewBreweryBuilder().

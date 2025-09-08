@@ -126,4 +126,3 @@ func (u *UserProfile) validate() error {
 	}
 	return nil
 }
-

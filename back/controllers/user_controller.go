@@ -22,7 +22,7 @@ type UserController struct {
 func NewUserController() *UserController {
 	userProfileRepo := repository.NewUserProfileRepository()
 	userProfileUsecase := usecase.NewUserProfileUsecase(userProfileRepo)
-	
+
 	return &UserController{
 		userProfileUsecase: userProfileUsecase,
 	}
@@ -147,17 +147,17 @@ func (c *UserController) validateUserProfileRequest(request *dto.UserProfileRequ
 		c.HandleValidationError("display_name", "Display name is required", "")
 		return errors.New("validation failed")
 	}
-	
+
 	if len(request.DisplayName) > 50 {
 		c.HandleValidationError("display_name", "Display name must be 50 characters or less", request.DisplayName)
 		return errors.New("validation failed")
 	}
-	
+
 	// IconURL のバリデーション（オプションフィールド）
 	if request.IconURL != "" && len(request.IconURL) > 255 {
 		c.HandleValidationError("icon_url", "Icon URL must be 255 characters or less", request.IconURL)
 		return errors.New("validation failed")
 	}
-	
+
 	return nil
 }

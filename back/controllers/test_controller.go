@@ -142,7 +142,7 @@ func (c *TestController) GetTokenInfo() {
 
 	response := map[string]interface{}{
 		"active_tokens": c.authManager.GetTokenCount(),
-		"message":      "Token information retrieved successfully",
+		"message":       "Token information retrieved successfully",
 	}
 	c.JSONResponse(response)
 }
