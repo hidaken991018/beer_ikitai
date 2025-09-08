@@ -51,12 +51,13 @@ func RequestLoggingMiddleware(ctx *beegoCtx.Context) {
 	LogRequest(reqCtx, ctx.Request.Method, ctx.Request.URL.Path, ctx.Request.UserAgent())
 
 	// リクエスト処理後のログ出力用に後処理を設定
-	ctx.ResponseWriter.ResponseWriter.(*beegoCtx.Response).ResponseWriter = &responseWriter{
-		ResponseWriter: ctx.ResponseWriter.ResponseWriter.(*beegoCtx.Response).ResponseWriter,
+	rw := &responseWriter{
+		ResponseWriter: ctx.ResponseWriter.ResponseWriter,
 		statusCode:     200, // デフォルト
 		requestCtx:     reqCtx,
 		startTime:      startTime,
 	}
+	ctx.ResponseWriter.ResponseWriter = rw
 }
 
 // responseWriter レスポンス情報を記録するためのカスタムResponseWriter
