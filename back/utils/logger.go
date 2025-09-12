@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+
 // Logger 構造化ログ用のグローバルロガー
 var Logger *logrus.Logger
 
