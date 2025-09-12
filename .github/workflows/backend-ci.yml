@@ -21,11 +21,11 @@ jobs:
         working-directory: ./back
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
-      
+
       - name: Cache Go modules
         uses: actions/cache@v3
         with:
@@ -35,10 +35,10 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('back/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      
+
       - name: Install dependencies
         run: go mod download
-      
+
       - name: Check formatting
         run: |
           if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then
@@ -46,17 +46,17 @@ jobs:
             gofmt -s -l .
             exit 1
           fi
-      
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.54.2
           working-directory: back
           args: --timeout=5m
-      
+
       - name: Run go vet
         run: go vet ./...
-      
+
       - name: Check go mod tidy
         run: |
           go mod tidy
@@ -74,18 +74,17 @@ jobs:
       run:
         working-directory: ./back
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: actions/setup-go@v4
+      - name: Checkout Source
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
-      
+
       - name: Run Gosec Security Scanner
-        uses: securecodewarrior/github-action-gosec@master
+        uses: securego/gosec@master
         with:
           args: './back/...'
         continue-on-error: true
-      
+
       - name: Run govulncheck
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -99,7 +98,7 @@ jobs:
     defaults:
       run:
         working-directory: ./back
-    
+
     services:
       postgres:
         image: postgres:15
@@ -114,14 +113,14 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
-      
+
       - name: Cache Go modules
         uses: actions/cache@v3
         with:
@@ -131,17 +130,17 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('back/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      
+
       - name: Install dependencies
         run: go mod download
-      
+
       - name: Setup test database
         env:
           PGPASSWORD: testpass
         run: |
           psql -h localhost -U testuser -d testdb -f init-db/01_create_tables.sql
           psql -h localhost -U testuser -d testdb -f init-db/02_sample_data.sql
-      
+
       - name: Run tests with coverage
         env:
           DB_HOST: localhost
@@ -151,10 +150,10 @@ jobs:
           DB_PORT: 5432
         run: |
           go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
-      
+
       - name: Generate coverage report
         run: go tool cover -html=coverage.out -o coverage.html
-      
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -162,7 +161,7 @@ jobs:
           flags: backend
           name: backend-coverage
         continue-on-error: true
-      
+
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -181,11 +180,11 @@ jobs:
         working-directory: ./back
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
-      
+
       - name: Cache Go modules
         uses: actions/cache@v3
         with:
@@ -195,21 +194,21 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('back/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      
+
       - name: Install dependencies
         run: go mod download
-      
+
       - name: Build for different platforms
         run: |
           echo "Building for Linux (Lambda)..."
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bootstrap-linux ./
-          
+
           echo "Building for macOS..."
           CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o bootstrap-darwin ./
-          
+
           echo "Building for Windows..."
           CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o bootstrap-windows.exe ./
-      
+
       - name: Verify Lambda build
         run: |
           if [ ! -f bootstrap-linux ]; then
