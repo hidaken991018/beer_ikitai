@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: back
+        working-directory: ../back
     steps:
       - name: Checkout Source
         uses: actions/setup-go@v4

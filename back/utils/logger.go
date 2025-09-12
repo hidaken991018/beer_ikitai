@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Logger 構造化ログ用のグローバルロガー
+// Logger 構造化ログ用のグローバルロガ
 var Logger *logrus.Logger
 
 // RequestIDKey リクエストIDをコンテキストに保存するためのキー
