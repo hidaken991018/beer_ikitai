@@ -81,8 +81,6 @@ jobs:
 
       - name: Run Gosec Security Scanner
         uses: securego/gosec@master
-        with:
-          args: './back/...'
         continue-on-error: true
 
       - name: Run govulncheck
