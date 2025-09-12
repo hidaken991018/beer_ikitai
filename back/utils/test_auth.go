@@ -44,7 +44,9 @@ func NewTestAuthTokenManager() *TestAuthTokenManager {
 func (m *TestAuthTokenManager) GenerateToken(cognitoSub string) *TestAuthToken {
 	// ランダムトークン生成
 	tokenBytes := make([]byte, 32)
-	rand.Read(tokenBytes)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		Logger.WithError(err).Error("failed to generate random bytes: %w", err)
+	}
 	token := hex.EncodeToString(tokenBytes)
 
 	// 1時間後に期限切れ
@@ -125,7 +127,9 @@ func (m *TestAuthTokenManager) GetDefaultTestCognitoSub() string {
 // generateRandomString 指定された長さのランダム文字列を生成する
 func (m *TestAuthTokenManager) generateRandomString(length int) string {
 	bytes := make([]byte, length/2)
-	rand.Read(bytes)
+	if _, err := rand.Read(bytes); err != nil {
+		Logger.WithError(err).Error("failed to generate random bytes: %w", err)
+	}
 	return hex.EncodeToString(bytes)[:length]
 }
 

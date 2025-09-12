@@ -122,12 +122,16 @@ func PanicRecoveryMiddleware(ctx *beegoCtx.Context) {
 			ctx.ResponseWriter.Header().Set(RequestIDHeader, requestID)
 			// JSONエラーレスポンスを出力
 			if jsonData, err := json.Marshal(errorResponse); err == nil {
-				ctx.ResponseWriter.Write(jsonData)
+				if _, err := ctx.ResponseWriter.Write(jsonData); err != nil {
+					Logger.WithError(err).Error("Failed to write JSON error response")
+				}
 			} else {
 				// JSONマーシャルに失敗した場合のフォールバック
 				fallbackResponse := fmt.Sprintf(`{"error":"Internal server error","code":"INTERNAL_SERVER_ERROR","request_id":"%s","timestamp":"%s"}`,
 					requestID, time.Now().UTC().Format(time.RFC3339))
-				ctx.ResponseWriter.Write([]byte(fallbackResponse))
+				if _, err := ctx.ResponseWriter.Write([]byte(fallbackResponse)); err != nil {
+					Logger.WithError(err).Error("Failed to write fallback error response")
+				}
 			}
 		}
 	}()
