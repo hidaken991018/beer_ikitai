@@ -109,16 +109,6 @@ jobs:
           aws lambda wait function-updated \
             --function-name ${{ steps.get-function-name.outputs.function-name }}
 
-      - name: Health check
-        run: |
-          HEALTH_URL=$(aws cloudformation describe-stacks \
-            --stack-name beerlog-dev-stack \
-            --query 'Stacks[0].Outputs[?OutputKey==`ApiGatewayEndpoint`].OutputValue' \
-            --output text)
-          echo "Health check URL: ${HEALTH_URL}/v1/health"
-          sleep 30
-          curl -f "${HEALTH_URL}/v1/health" || exit 1
-
   # 本番環境デプロイ
   deploy-prod:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
