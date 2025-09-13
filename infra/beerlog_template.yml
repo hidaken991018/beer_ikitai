@@ -374,6 +374,7 @@ Resources:
       HttpMethod: ANY
       AuthorizationType: NONE
       Integration:
+        IntegrationHttpMethod: POST
         Type: AWS_PROXY
         Uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BeerLogLambdaFunction.Arn}/invocations
         IntegrationResponses:
