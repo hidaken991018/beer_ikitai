@@ -137,7 +137,7 @@ export function useBreweries() {
 
         const response = await apiClientRef.current.get<
           PaginatedResponse<Brewery>
-        >('/api/breweries', queryParams);
+        >('/breweries', queryParams);
 
         dispatch(setBreweries(response.data));
       } catch (error) {
@@ -176,7 +176,7 @@ export function useBreweries() {
         };
 
         const response = await apiClientRef.current.get<ApiResponse<Brewery[]>>(
-          '/api/breweries/nearby',
+          '/breweries/nearby',
           params
         );
 
@@ -222,7 +222,7 @@ export function useBreweries() {
         dispatch(clearError());
 
         const response = await apiClientRef.current.get<ApiResponse<Brewery>>(
-          `/api/breweries/${id}`
+          `/breweries/${id}`
         );
         dispatch(setCurrentBrewery(response.data));
       } catch (error) {
@@ -251,7 +251,7 @@ export function useBreweries() {
         dispatch(clearError());
 
         const response = await apiClientRef.current.post<ApiResponse<Brewery>>(
-          '/api/breweries',
+          '/breweries',
           breweryData
         );
         dispatch(addBrewery(response.data));
@@ -284,7 +284,7 @@ export function useBreweries() {
         dispatch(clearError());
 
         const response = await apiClientRef.current.put<ApiResponse<Brewery>>(
-          `/api/breweries/${id}`,
+          `/breweries/${id}`,
           breweryData
         );
         dispatch(updateBrewery(response.data));
@@ -314,7 +314,7 @@ export function useBreweries() {
         dispatch(setLoading(true));
         dispatch(clearError());
 
-        await apiClientRef.current.delete(`/api/breweries/${id}`);
+        await apiClientRef.current.delete(`/breweries/${id}`);
         dispatch(removeBrewery(id));
       } catch (error) {
         const message =
@@ -354,7 +354,7 @@ export function useBreweries() {
 
         const response = await apiClientRef.current.get<
           PaginatedResponse<Brewery>
-        >('/api/breweries/search', params);
+        >('/breweries/search', params);
 
         // If location is provided, calculate distances
         if (filter.location) {
@@ -402,7 +402,7 @@ export function useBreweries() {
 
         const response = await apiClientRef.current.get<
           PaginatedResponse<Visit>
-        >('/api/visits', queryParams);
+        >('/visits', queryParams);
         dispatch(setVisits(response.data));
       } catch (error) {
         const message =
@@ -438,7 +438,7 @@ export function useBreweries() {
         );
 
         const response = await apiClientRef.current.post<CheckinResponse>(
-          '/api/visits/checkin',
+          '/visits/checkin',
           checkinData
         );
 
