@@ -253,13 +253,13 @@ npm run test:ci
 
 ```typescript
 // 醸造所検索
-GET /api/breweries?lat={lat}&lng={lng}&radius={radius}
+GET /breweries?lat={lat}&lng={lng}&radius={radius}
 
 // 醸造所詳細
-GET /api/breweries/{id}
+GET /breweries/{id}
 
 // チェックイン
-POST /api/visits
+POST /visits
 {
   "brewery_id": "uuid",
   "latitude": 35.6762,
@@ -268,7 +268,7 @@ POST /api/visits
 }
 
 // 訪問履歴
-GET /api/visits?user_id={cognito_sub}
+GET /visits?user_id={cognito_sub}
 
 // ユーザープロファイル
 GET /api/users/profile
