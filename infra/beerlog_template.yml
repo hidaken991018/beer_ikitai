@@ -194,12 +194,82 @@ Resources:
           FromPort: 5432
           ToPort: 5432
           CidrIp: 10.0.0.0/16 # VPC内のみ許可
+        - IpProtocol: tcp # 追加: EC2セキュリティグループからの接続を許可
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref BeerLogEC2SecurityGroup
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
           Value: !Sub BeerLog-${Environment}-SecurityGroup
+        - Key: Environment
+          Value: !Ref Environment
+
+  # EC2用セキュリティグループ
+  BeerLogEC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub BeerLog ${Environment} EC2 Security Group
+      GroupName: !Sub BeerLog-${Environment}-EC2SecurityGroup
+      VpcId: !Ref BeerLogVPC
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-EC2SecurityGroup
+        - Key: Environment
+          Value: !Ref Environment
+
+  # EC2インスタンス用のIAMロール
+  BeerLogEC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub BeerLog-${Environment}-EC2Role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-EC2Role
+        - Key: Environment
+          Value: !Ref Environment
+
+  # EC2インスタンスプロファイル
+  BeerLogEC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub BeerLog-${Environment}-EC2InstanceProfile
+      Roles:
+        - !Ref BeerLogEC2Role
+
+  # EC2インスタンス
+  BeerLogEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0b7546e839d7ace12 # Amazon Linux 2023 AMI
+      InstanceType: t2.micro
+      SubnetId: !Ref BeerLogPrivateSubnetA # プライベートサブネットに配置
+      SecurityGroupIds:
+        - !Ref BeerLogEC2SecurityGroup
+      IamInstanceProfile: !Ref BeerLogEC2InstanceProfile
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          yum update -y
+          yum install -y postgresql15
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-EC2
         - Key: Environment
           Value: !Ref Environment
 
