@@ -214,6 +214,11 @@ Resources:
       GroupDescription: !Sub BeerLog ${Environment} EC2 Security Group
       GroupName: !Sub BeerLog-${Environment}-EC2SecurityGroup
       VpcId: !Ref BeerLogVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 10.0.0.0/16
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
@@ -238,6 +243,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
         - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
       Tags:
         - Key: Name
           Value: !Sub BeerLog-${Environment}-EC2Role
@@ -265,8 +271,8 @@ Resources:
       UserData:
         Fn::Base64: |
           #!/bin/bash
-          yum update -y
-          yum install -y postgresql15
+          sudo yum update -y
+          sudo yum install -y postgresql15
       Tags:
         - Key: Name
           Value: !Sub BeerLog-${Environment}-EC2
