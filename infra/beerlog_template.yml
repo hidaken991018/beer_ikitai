@@ -287,7 +287,7 @@ Resources:
   BeerLogEC2Instance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: ami-0b7546e839d7ace12 # Amazon Linux 2023 AMI
+      ImageId: ami-0da7e6494d4770776 # Amazon Linux 2023 AMI
       InstanceType: t2.micro
       SubnetId: !Ref BeerLogPrivateSubnetA # プライベートサブネットに配置
       SecurityGroupIds:
