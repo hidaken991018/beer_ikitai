@@ -167,6 +167,31 @@ Resources:
       SubnetId: !Ref BeerLogPublicSubnetB
       RouteTableId: !Ref BeerLogPublicRouteTable
 
+  # プライベートサブネット用のルートテーブル
+  BeerLogPrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref BeerLogVPC
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-PrivateRouteTable
+        - Key: Environment
+          Value: !Ref Environment
+
+  # プライベートサブネットAのルートテーブル関連付け
+  BeerLogPrivateSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref BeerLogPrivateSubnetA
+      RouteTableId: !Ref BeerLogPrivateRouteTable
+
+  # プライベートサブネットBのルートテーブル関連付け
+  BeerLogPrivateSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref BeerLogPrivateSubnetB
+      RouteTableId: !Ref BeerLogPrivateRouteTable
+
   # DB Subnet Group（2AZ）
   BeerLogDBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
@@ -543,6 +568,14 @@ Resources:
       VpcEndpointType: Gateway
       RouteTableIds:
         - !Ref BeerLogPublicRouteTable
+        - !Ref BeerLogPrivateRouteTable
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: 's3:*'
+            Resource: '*'
 
 Outputs:
   Environment:
