@@ -535,6 +535,15 @@ Resources:
         - !Ref BeerLogEC2SecurityGroup
       PrivateDnsEnabled: true
 
+  S3Endpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref BeerLogVPC
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcEndpointType: Gateway
+      RouteTableIds:
+        - !Ref BeerLogPublicRouteTable
+
 Outputs:
   Environment:
     Description: デプロイされた環境
