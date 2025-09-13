@@ -489,21 +489,6 @@ Resources:
       UserPoolId: !Ref BeerLogCognitoUserPool
       GenerateSecret: false
 
-  # VPCエンドポイント用のセキュリティグループ
-  BeerLogVPCEndpointSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for VPC Endpoints
-      VpcId: !Ref BeerLogVPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 10.0.0.0/16
-      Tags:
-        - Key: Name
-          Value: !Sub BeerLog-${Environment}-VPCEndpointSG
-
   # Systems Manager用のVPCエンドポイント
   SSMEndpoint:
     Type: AWS::EC2::VPCEndpoint
@@ -515,7 +500,7 @@ Resources:
         - !Ref BeerLogPrivateSubnetA
         - !Ref BeerLogPrivateSubnetB
       SecurityGroupIds:
-        - !Ref BeerLogVPCEndpointSecurityGroup
+        - !Ref BeerLogEC2SecurityGroup
       PrivateDnsEnabled: true
 
   SSMMessagesEndpoint:
@@ -528,7 +513,7 @@ Resources:
         - !Ref BeerLogPrivateSubnetA
         - !Ref BeerLogPrivateSubnetB
       SecurityGroupIds:
-        - !Ref BeerLogVPCEndpointSecurityGroup
+        - !Ref BeerLogEC2SecurityGroup
       PrivateDnsEnabled: true
 
   EC2MessagesEndpoint:
@@ -541,7 +526,7 @@ Resources:
         - !Ref BeerLogPrivateSubnetA
         - !Ref BeerLogPrivateSubnetB
       SecurityGroupIds:
-        - !Ref BeerLogVPCEndpointSecurityGroup
+        - !Ref BeerLogEC2SecurityGroup
       PrivateDnsEnabled: true
 
 Outputs:
