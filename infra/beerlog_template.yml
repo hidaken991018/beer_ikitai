@@ -364,7 +364,7 @@ Resources:
     Properties:
       RestApiId: !Ref BeerLogApiGateway
       ParentId: !GetAtt BeerLogApiGateway.RootResourceId
-      PathPart: v1
+      PathPart: '{ proxy+ }'
 
   BeerLogApiMethod:
     Type: AWS::ApiGateway::Method
