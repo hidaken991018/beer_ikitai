@@ -309,7 +309,7 @@ Resources:
     Type: AWS::RDS::DBParameterGroup
     Properties:
       Description: !Sub 'BeerLog ${Environment} DB Parameter Group for PostgreSQL'
-      Family: postgres15
+      Family: postgres17
       Parameters:
         rds.force_ssl: 0
       Tags:
