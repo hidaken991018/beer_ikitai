@@ -297,10 +297,24 @@ Resources:
         Fn::Base64: |
           #!/bin/bash
           sudo yum update -y
-          sudo yum install -y postgresql15
+          sudo yum install -y postgresql17
       Tags:
         - Key: Name
           Value: !Sub BeerLog-${Environment}-EC2
+        - Key: Environment
+          Value: !Ref Environment
+
+  # DBパラメータグループ
+  BeerLogDBParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: !Sub 'BeerLog ${Environment} DB Parameter Group for PostgreSQL'
+      Family: postgres15
+      Parameters:
+        rds.force_ssl: 0
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-DBParameterGroup
         - Key: Environment
           Value: !Ref Environment
 
@@ -331,6 +345,7 @@ Resources:
           !Ref Environment,
           DBBackupRetentionPeriod,
         ]
+      DBParameterGroupName: !Ref BeerLogDBParameterGroup
       Tags:
         - Key: Name
           Value: !Sub BeerLog-${Environment}-DB
