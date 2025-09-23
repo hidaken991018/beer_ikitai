@@ -36,7 +36,9 @@ jobs:
         with:
           prompt_file: ${{ runner.temp }}/implementation-prompt-processed.txt
           allowed_tools: |
-            Bash(git:*),
+            Bash,
+            WebFetch,
+            WebSearch,
             Write,
             Edit,
             MultiEdit,
