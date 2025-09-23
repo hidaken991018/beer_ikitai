@@ -8,7 +8,7 @@ Issue情報:
 1. mcp__github__get_issueを使用してissueの要件を理解する
 2. 最新の'develop'ブランチをチェックアウトしてプルする
 3. 'develop'から新しいフィーチャーブランチを作成する: "feature/issue-${ISSUE_NUMBER}"
-4. 実装に必要に応じて、MCPを介してAWSドキュメント、CDKパターン、context7の知識を参照する
+4. 実装に必要に応じて、MCPを介してcontext7の知識を参照する
 5. issueに記述されている内容のみを実装する
 6. プロジェクトの規約に従って、クリーンで動作するコードを書く
 9. mcp__github__create_pull_requestを使用して'develop'ブランチをターゲットとするPRを作成する
