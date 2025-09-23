@@ -4,6 +4,9 @@ Issue情報:
 - REPO: ${REPOSITORY}
 - ISSUE_NUMBER: ${ISSUE_NUMBER}
 
+事前準備:
+0. git statusでgitコマンドが利用できることを確認する。利用できなければ終了
+
 ワークフロー:
 1. mcp__github__get_issueを使用してissueの要件を理解する
 2. 最新の'develop'ブランチをチェックアウトしてプルする
@@ -11,8 +14,8 @@ Issue情報:
 4. 実装に必要に応じて、MCPを介してcontext7の知識を参照する
 5. issueに記述されている内容のみを実装する
 6. プロジェクトの規約に従って、クリーンで動作するコードを書く
-9. mcp__github__create_pull_requestを使用して'develop'ブランチをターゲットとするPRを作成する
-11. "ready-for-implementation"ラベルを削除し、mcp__github__update_issueを使用して"implemented"ラベルを追加する 
+7. mcp__github__create_pull_requestを使用して'develop'ブランチをターゲットとするPRを作成する
+8. "ready-for-implementation"ラベルを削除し、mcp__github__update_issueを使用して"implemented"ラベルを追加する 
 
 利用可能なMCPリソース:
 - AWSドキュメント: AWSサービスドキュメントにはawslabs.aws-documentation-mcp-serverを使用
@@ -20,7 +23,6 @@ Issue情報:
 - Context7: 追加のコーディング知識とパターンにはcontext7を使用
 
 重点項目:
-- gitコマンドは利用しないこと。代わりにgithub mcp serverを利用すること。
 - 記述された具体的な問題を解決する
 - 保守可能なコードを書く
 - コードベース内の既存パターンに従う
