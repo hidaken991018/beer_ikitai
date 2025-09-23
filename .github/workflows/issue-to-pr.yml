@@ -35,11 +35,33 @@ jobs:
               .github/prompts/implementation-prompt.txt > ${{ runner.temp }}/implementation-prompt-processed.txt
 
       - name: Run Implementation
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-base-action@beta
         with:
           prompt_file: ${{ runner.temp }}/implementation-prompt-processed.txt
-          claude_args: |
-            --allowedTools "Bash,WebFetch,WebSearch,Write,Edit,MultiEdit,Read,LS,Glob,Grep,mcp__github__get_issue,mcp__github__create_branch,mcp__github__create_pull_request,mcp__github__update_issue,mcp__awslabs.aws-documentation-mcp-server__get_aws_documentation,mcp__awslabs.aws-documentation-mcp-server__search_aws_documentation,mcp__context7__resolve-library-id,mcp__context7__get-library-docs"
+          allowed_tools: |
+            Bash,
+            WebFetch,
+            WebSearch,
+            Write,
+            Edit,
+            MultiEdit,
+            Read,
+            LS,
+            Glob,
+            Grep,
+            mcp__github__get_issue,
+            mcp__github__create_branch,
+            mcp__github__create_pull_request,
+            mcp__github__update_issue,
+            mcp__github__list_branches,
+            mcp__github__create_or_update_file,
+            mcp__github__update_pull_request,
+            mcp__github__update_pull_request_branch,
+            mcp__github__push_files,
+            mcp__awslabs.aws-documentation-mcp-server__get_aws_documentation,
+            mcp__awslabs.aws-documentation-mcp-server__search_aws_documentation,
+            mcp__context7__resolve-library-id,
+            mcp__context7__get-library-docs
           mcp_config: |
             {
               "mcpServers": {
