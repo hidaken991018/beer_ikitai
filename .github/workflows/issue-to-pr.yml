@@ -19,15 +19,6 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Configure Git
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global init.defaultBranch main
-
-          # Git認証設定
-          git config --global credential.helper store
-          echo "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com" > ~/.git-credentials
 
       - name: Install uv
         run: |
@@ -60,6 +51,7 @@ jobs:
             mcp__github__create_pull_request,
             mcp__github__update_issue,
             mcp__github__list_branches,
+            mcp__github__create_or_update_file,
             mcp__awslabs.aws-documentation-mcp-server__get_aws_documentation,
             mcp__awslabs.aws-documentation-mcp-server__search_aws_documentation,
             mcp__context7__resolve-library-id,
