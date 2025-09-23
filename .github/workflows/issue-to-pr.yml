@@ -32,7 +32,7 @@ jobs:
               .github/prompts/implementation-prompt.txt > ${{ runner.temp }}/implementation-prompt-processed.txt
 
       - name: Run Implementation
-        uses: anthropics/claude-code-base-action@v1
+        uses: anthropics/claude-code-base-action@beta
         with:
           prompt_file: ${{ runner.temp }}/implementation-prompt-processed.txt
           allowed_tools: |
