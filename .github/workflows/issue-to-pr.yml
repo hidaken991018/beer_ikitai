@@ -52,13 +52,6 @@ jobs:
             mcp__github__update_issue,
             mcp__awslabs.aws-documentation-mcp-server__get_aws_documentation,
             mcp__awslabs.aws-documentation-mcp-server__search_aws_documentation,
-            mcp__awslabs.cdk-mcp-server__CDKGeneralGuidance,
-            mcp__awslabs.cdk-mcp-server__GetAwsSolutionsConstructPattern,
-            mcp__awslabs.cdk-mcp-server__SearchGenAICDKConstructs,
-            mcp__awslabs.cdk-mcp-server__GenerateBedrockAgentSchema,
-            mcp__awslabs.cdk-mcp-server__LambdaLayerDocumentationProvider,
-            mcp__awslabs.cdk-mcp-server__ExplainCDKNagRule,
-            mcp__awslabs.cdk-mcp-server__CheckCDKNagSuppressions,
             mcp__context7__resolve-library-id,
             mcp__context7__get-library-docs
           mcp_config: |
@@ -74,7 +67,15 @@ jobs:
                 "context7": {
                   "type": "sse",
                   "url": "https://mcp.context7.com/sse"
-                }
+                },
+                "awslabs.aws-documentation-mcp-server": {
+                  "command": "uvx",
+                  "args": ["awslabs.aws-documentation-mcp-server@latest"],
+                  "env": {
+                    "FASTMCP_LOG_LEVEL": "ERROR",
+                    "AWS_DOCUMENTATION_PARTITION": "aws"
+                  }
+                },
               },
               "inputs": [
                 {
