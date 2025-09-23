@@ -77,14 +77,6 @@ jobs:
                 "context7": {
                   "type": "sse",
                   "url": "https://mcp.context7.com/sse"
-                },
-                "awslabs.aws-documentation-mcp-server": {
-                  "command": "uvx",
-                  "args": ["awslabs.aws-documentation-mcp-server@latest"],
-                  "env": {
-                    "FASTMCP_LOG_LEVEL": "ERROR",
-                    "AWS_DOCUMENTATION_PARTITION": "aws"
-                  }
                 }
               },
               "inputs": [
