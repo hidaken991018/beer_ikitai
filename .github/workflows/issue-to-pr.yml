@@ -36,7 +36,7 @@ jobs:
         with:
           prompt_file: ${{ runner.temp }}/implementation-prompt-processed.txt
           allowed_tools: |
-            Bash,
+            Bash(git:*),
             Write,
             Edit,
             MultiEdit,
