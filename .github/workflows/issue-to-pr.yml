@@ -59,7 +59,31 @@ jobs:
             mcp__awslabs.cdk-mcp-server__CheckCDKNagSuppressions,
             mcp__context7__resolve-library-id,
             mcp__context7__get-library-docs
-          mcp_config: .github/mcp-servers.json
+          mcp_config: |
+            {
+              "mcpServers": {
+                "github": {
+                  "type": "http",
+                  "url": "https://api.githubcopilot.com/mcp/",
+                  "headers": {
+                    "Authorization": "Bearer ${{ secrets.CLAUDE_CODE_GITHUB_MCP_ACCESS_TOKEN }}"
+                  }
+                },
+                "context7": {
+                  "type": "sse",
+                  "url": "https://mcp.context7.com/sse"
+                }
+              },
+              "inputs": [
+                {
+                  "type": "promptString",
+                  "id": "github_mcp_pat",
+                  "description": "GitHub Personal Access Token",
+                  "password": true
+                }
+              ]
+            }
+
           timeout_minutes: '20'
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         env:
