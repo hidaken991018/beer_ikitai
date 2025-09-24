@@ -137,28 +137,82 @@ func (c *BaseController) GetCognitoSub() (string, error) {
 
 // getCognitoSubFromHeaders API Gatewayが設定する各種ヘッダーからCognito Subを取得
 func (c *BaseController) getCognitoSubFromHeaders() string {
-	// API Gateway Cognito Authorizer が設定するヘッダー（一般的なパターン）
+	// API Gateway Cognito Authorizerが実際に設定するヘッダーパターン
+	// 優先順位の高い順に配列
 	headers := []string{
-		"X-Cognito-Sub",      // Cognito Authorizer
-		"X-Amzn-Cognito-Sub", // AWS Lambda Proxy統合
-		"X-Amz-User-Sub",     // カスタムヘッダー
-		"X-User-Sub",         // カスタムヘッダー
+		// 1. 最も標準的なパターン - API Gateway Cognito Authorizer
+		"x-amzn-requestcontext-authorizer-claims-sub",
+		"x-apigateway-event-requestcontext-authorizer-claims-sub",
+		
+		// 2. Lambda プロキシ統合での一般的なヘッダー
+		"x-amzn-cognito-sub", 
+		"x-cognito-sub",
+		
+		// 3. カスタムヘッダーやその他のパターン
+		"x-amz-user-sub",
+		"x-user-sub",
+		"x-apigateway-context-authorizer-sub",
+		
+		// 4. requestContextからの直接マッピング
+		"x-amzn-requestcontext-identity-cognito-identity-id",
+		"x-amzn-requestcontext-identity-user-arn",
 	}
 
+	// デバッグ用：全ヘッダーをログ出力（開発環境のみ）
+	if beego.BConfig.RunMode == "dev" {
+		allHeaders := make(map[string]string)
+		for key, values := range c.Ctx.Request.Header {
+			if len(values) > 0 {
+				// Cognito関連のヘッダーのみログ出力
+				if strings.Contains(strings.ToLower(key), "cognito") || 
+				   strings.Contains(strings.ToLower(key), "authorizer") ||
+				   strings.Contains(strings.ToLower(key), "sub") ||
+				   strings.Contains(strings.ToLower(key), "amzn") ||
+				   strings.Contains(strings.ToLower(key), "apigateway") {
+					allHeaders[key] = values[0]
+				}
+			}
+		}
+		if len(allHeaders) > 0 {
+			utils.LogDebug(c.Ctx.Request.Context(), "Auth-related headers found", map[string]interface{}{
+				"headers": allHeaders,
+			})
+		}
+	}
+
+	// 各ヘッダーをチェック
 	for _, header := range headers {
-		if value := c.Ctx.Request.Header.Get(header); value != "" {
+		if value := c.Ctx.Request.Header.Get(header); value != "" && value != "null" {
+			utils.LogDebug(c.Ctx.Request.Context(), "Cognito Sub found in header", map[string]interface{}{
+				"header":      header,
+				"cognito_sub": value,
+			})
 			return value
 		}
 	}
 
-	// Lambda環境での requestContext からの取得（追加の確認）
-	if c.Ctx.Request.Header.Get("X-Amzn-Requestid") != "" {
-		// API Gateway Lambda プロキシ統合でのリクエストコンテキスト情報
-		if value := c.Ctx.Request.Header.Get("X-Amzn-Requestcontext-Authorizer-Claims-Sub"); value != "" {
-			return value
+	// Lambda プロキシ統合での追加チェック
+	// API Gateway のリクエストIDが存在する場合のみ実行
+	if requestId := c.Ctx.Request.Header.Get("x-amzn-requestid"); requestId != "" {
+		// Lambda プロキシ統合での特別なヘッダーパターンをチェック
+		additionalHeaders := []string{
+			"x-amzn-requestcontext-authorizer-principalid",
+			"x-apigateway-event-requestcontext-identity-user",
+			"x-amzn-requestcontext-identity-caller",
+		}
+		
+		for _, header := range additionalHeaders {
+			if value := c.Ctx.Request.Header.Get(header); value != "" && value != "null" {
+				utils.LogDebug(c.Ctx.Request.Context(), "Alternative Cognito identifier found", map[string]interface{}{
+					"header": header,
+					"value":  value,
+				})
+				return value
+			}
 		}
 	}
 
+	utils.LogWarn(c.Ctx.Request.Context(), "No Cognito Sub found in any header pattern")
 	return ""
 }
 
@@ -177,21 +231,22 @@ func (c *BaseController) IsAdmin() bool {
 // getCognitoGroupsFromHeaders API Gatewayが設定するヘッダーからCognitoグループ情報を取得
 func (c *BaseController) getCognitoGroupsFromHeaders() []string {
 	// API Gateway Cognito Authorizer が設定するグループヘッダー
-	groupsHeader := c.Ctx.Request.Header.Get("X-Cognito-Groups")
-	if groupsHeader == "" {
-		groupsHeader = c.Ctx.Request.Header.Get("X-Amzn-Cognito-Groups")
-	}
-	if groupsHeader == "" {
-		groupsHeader = c.Ctx.Request.Header.Get("X-Amzn-Requestcontext-Authorizer-Claims-Cognito-Groups")
+	groupHeaders := []string{
+		"x-amzn-requestcontext-authorizer-claims-cognito-groups",
+		"x-cognito-groups",
+		"x-amzn-cognito-groups",
+		"x-apigateway-event-requestcontext-authorizer-claims-cognito-groups",
 	}
 
-	if groupsHeader != "" {
-		// カンマ区切りまたはスペース区切りでグループが設定される場合がある
-		groups := strings.Split(groupsHeader, ",")
-		for i, group := range groups {
-			groups[i] = strings.TrimSpace(group)
+	for _, header := range groupHeaders {
+		if groupsHeader := c.Ctx.Request.Header.Get(header); groupsHeader != "" {
+			// カンマ区切りまたはスペース区切りでグループが設定される場合がある
+			groups := strings.Split(groupsHeader, ",")
+			for i, group := range groups {
+				groups[i] = strings.TrimSpace(group)
+			}
+			return groups
 		}
-		return groups
 	}
 
 	return []string{}
