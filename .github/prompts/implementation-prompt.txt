@@ -18,11 +18,11 @@ Issue情報:
 8. "ready-for-implementation"ラベルを削除し、mcp__github__update_issueを使用して"implemented"ラベルを追加する 
 
 利用可能なMCPリソース:
-- AWSドキュメント: AWSサービスドキュメントにはawslabs.aws-documentation-mcp-serverを使用
-- CDKパターン: CDKのベストプラクティスとパターンにはawslabs.cdk-mcp-serverを使用
 - Context7: 追加のコーディング知識とパターンにはcontext7を使用
+- Github：要件理解からプルリクエストまで実施する。
 
 重点項目:
+- Claude Codeの実行環境ではGitコマンド利用できないため Github MCP を利用すること
 - 記述された具体的な問題を解決する
 - 保守可能なコードを書く
 - コードベース内の既存パターンに従う
