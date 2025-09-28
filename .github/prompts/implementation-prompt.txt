@@ -15,7 +15,7 @@ Issue情報:
 5. issueに記述されている内容のみを実装する
 6. プロジェクトの規約に従って、クリーンで動作するコードを書く
 7. mcp__github__create_pull_requestを使用して'develop'ブランチをターゲットとするPRを作成する
-8. "ready-for-implementation"ラベルを削除し、mcp__github__update_issueを使用して"implemented"ラベルを追加する 
+8. "ready-for-plan"ラベルを削除し、mcp__github__update_issueを使用して"implemented"ラベルを追加する 
 
 利用可能なMCPリソース:
 - Context7: 追加のコーディング知識とパターンにはcontext7を使用

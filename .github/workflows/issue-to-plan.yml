@@ -1,4 +1,4 @@
-name: Issue to PR
+name: Issue to Plan
 
 on:
   issues:
@@ -6,12 +6,11 @@ on:
 
 jobs:
   implement:
-    if: github.event.label.name == 'ready-for-implementation'
+    if: github.event.label.name == 'ready-for-plan'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       issues: write
-      pull-requests: write
 
     steps:
       - name: Checkout repository
@@ -19,9 +18,6 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Show git status
-        run: git status
 
       - name: Install uv
         run: |
@@ -32,12 +28,12 @@ jobs:
         run: |
           sed -e 's|\${REPOSITORY}|${{ github.repository }}|g' \
               -e 's|\${ISSUE_NUMBER}|${{ github.event.issue.number }}|g' \
-              .github/prompts/implementation-prompt.txt > ${{ runner.temp }}/implementation-prompt-processed.txt
+              .github/prompts/plan-prompt.txt > ${{ runner.temp }}/plan-prompt-processed.txt
 
-      - name: Run Implementation
+      - name: Run plan
         uses: anthropics/claude-code-base-action@beta
         with:
-          prompt_file: ${{ runner.temp }}/implementation-prompt-processed.txt
+          prompt_file: ${{ runner.temp }}/plan-prompt-processed.txt
           allowed_tools: |
             WebFetch,
             WebSearch,
@@ -49,16 +45,8 @@ jobs:
             Glob,
             Grep,
             mcp__github__get_issue,
-            mcp__github__create_branch,
-            mcp__github__create_pull_request,
             mcp__github__update_issue,
             mcp__github__list_branches,
-            mcp__github__create_or_update_file,
-            mcp__github__update_pull_request,
-            mcp__github__update_pull_request_branch,
-            mcp__github__push_files,
-            mcp__awslabs.aws-documentation-mcp-server__get_aws_documentation,
-            mcp__awslabs.aws-documentation-mcp-server__search_aws_documentation,
             mcp__context7__resolve-library-id,
             mcp__context7__get-library-docs
           mcp_config: |
