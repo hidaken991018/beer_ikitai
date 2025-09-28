@@ -1,22 +1,17 @@
 package main
 
 import (
-	"context"
 	"mybeerlog/controllers"
+	"mybeerlog/lambda"
 	"mybeerlog/models"
 	"mybeerlog/utils"
 	"os"
 
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
 
 	_ "github.com/lib/pq"
 )
-
-var beegoLambda *httpadapter.HandlerAdapter
 
 func init() {
 	// Lambda 環境変数からデータベース設定を取得
@@ -52,9 +47,6 @@ func init() {
 
 	// ルーティング設定
 	setupRoutes()
-
-	// Lambda adapter を初期化
-	beegoLambda = httpadapter.New(beego.BeeApp.Handlers)
 }
 
 // setupMiddleware ミドルウェアを設定する
@@ -93,11 +85,6 @@ func setupRoutes() {
 	beego.Router("/visits/:visit_id", visitController, "get:GetVisit")
 }
 
-// Handler Lambda ハンドラー関数
-func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	// API Gateway プロキシ統合を使用してリクエストを処理
-	return beegoLambda.ProxyWithContext(ctx, req)
-}
 
 // getEnvOrDefault 環境変数を取得し、存在しない場合はデフォルト値を返す
 func getEnvOrDefault(key, defaultValue string) string {
@@ -110,8 +97,8 @@ func getEnvOrDefault(key, defaultValue string) string {
 func main() {
 	// Lambda 環境かどうかをチェック
 	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
-		// Lambda 環境で実行
-		lambda.Start(Handler)
+		// Lambda 環境で実行（新しいLambda Handlerを使用）
+		lambda.Start()
 	} else {
 		// ローカル開発環境で実行
 		utils.Logger.Info("Running in local development mode")
