@@ -95,8 +95,54 @@ func setupRoutes() {
 
 // Handler Lambda ハンドラー関数
 func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	// Cognito認証情報をヘッダーに変換
+	enrichedRequest := enrichRequestWithCognitoInfo(req)
+	
 	// API Gateway プロキシ統合を使用してリクエストを処理
-	return beegoLambda.ProxyWithContext(ctx, req)
+	return beegoLambda.ProxyWithContext(ctx, enrichedRequest)
+}
+
+// enrichRequestWithCognitoInfo API Gateway ProxyRequestからCognito認証情報を抽出してヘッダーに追加
+func enrichRequestWithCognitoInfo(req events.APIGatewayProxyRequest) events.APIGatewayProxyRequest {
+	// リクエストのヘッダーマップを初期化（存在しない場合）
+	if req.Headers == nil {
+		req.Headers = make(map[string]string)
+	}
+	
+	// API Gateway Cognito Authorizerから認証情報を取得
+	if req.RequestContext.Authorizer != nil {
+		// Authorizerのclaims情報からCognito Subを取得
+		if claims, ok := req.RequestContext.Authorizer["claims"].(map[string]interface{}); ok {
+			// Cognito Subを取得
+			if sub, exists := claims["sub"]; exists {
+				if subStr, ok := sub.(string); ok && subStr != "" {
+					req.Headers["X-Cognito-Sub"] = subStr
+					utils.Logger.WithField("cognito_sub", subStr).Debug("Cognito Sub extracted from requestContext.authorizer.claims")
+				}
+			}
+			
+			// Cognito グループ情報を取得（存在する場合）
+			if groups, exists := claims["cognito:groups"]; exists {
+				if groupsStr, ok := groups.(string); ok && groupsStr != "" {
+					req.Headers["X-Cognito-Groups"] = groupsStr
+					utils.Logger.WithField("cognito_groups", groupsStr).Debug("Cognito Groups extracted from requestContext.authorizer.claims")
+				}
+			}
+			
+			// その他のCognitoクレーム情報も必要に応じて追加
+			if email, exists := claims["email"]; exists {
+				if emailStr, ok := email.(string); ok && emailStr != "" {
+					req.Headers["X-Cognito-Email"] = emailStr
+				}
+			}
+		} else {
+			utils.Logger.Warn("requestContext.authorizer.claims not found or invalid format")
+		}
+	} else {
+		utils.Logger.Warn("requestContext.authorizer not found - authentication may not be enabled")
+	}
+	
+	return req
 }
 
 // getEnvOrDefault 環境変数を取得し、存在しない場合はデフォルト値を返す

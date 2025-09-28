@@ -443,6 +443,17 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
 
+  # Cognito Authorizer
+  BeerLogApiAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      Name: !Sub BeerLog-${Environment}-CognitoAuthorizer
+      Type: COGNITO_USER_POOLS
+      IdentitySource: method.request.header.Authorization
+      RestApiId: !Ref BeerLogApiGateway
+      ProviderARNs:
+        - !GetAtt BeerLogCognitoUserPool.Arn
+
   # API Gateway
   BeerLogApiGateway:
     Type: AWS::ApiGateway::RestApi
@@ -488,7 +499,8 @@ Resources:
       RestApiId: !Ref BeerLogApiGateway
       ResourceId: !Ref BeerLogApiResource
       HttpMethod: ANY
-      AuthorizationType: NONE
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref BeerLogApiAuthorizer
       Integration:
         IntegrationHttpMethod: POST
         Type: AWS_PROXY

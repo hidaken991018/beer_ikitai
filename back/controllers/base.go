@@ -137,28 +137,46 @@ func (c *BaseController) GetCognitoSub() (string, error) {
 
 // getCognitoSubFromHeaders API Gatewayが設定する各種ヘッダーからCognito Subを取得
 func (c *BaseController) getCognitoSubFromHeaders() string {
-	// API Gateway Cognito Authorizer が設定するヘッダー（一般的なパターン）
+	// 1. Lambda Handler層でrequestContext.authorizer.claimsから変換されたヘッダー（最優先）
+	if value := c.Ctx.Request.Header.Get("X-Cognito-Sub"); value != "" {
+		utils.LogDebug(c.Ctx.Request.Context(), "Cognito Sub found in X-Cognito-Sub header", map[string]interface{}{
+			"source": "lambda_handler_enrichment",
+			"cognito_sub": value,
+		})
+		return value
+	}
+
+	// 2. その他のAPI Gateway Cognito Authorizer が設定する可能性のあるヘッダー
 	headers := []string{
-		"X-Cognito-Sub",      // Cognito Authorizer
-		"X-Amzn-Cognito-Sub", // AWS Lambda Proxy統合
+		"X-Amzn-Cognito-Sub", // AWS Lambda Proxy統合（直接設定される場合）
 		"X-Amz-User-Sub",     // カスタムヘッダー
 		"X-User-Sub",         // カスタムヘッダー
 	}
 
 	for _, header := range headers {
 		if value := c.Ctx.Request.Header.Get(header); value != "" {
+			utils.LogDebug(c.Ctx.Request.Context(), "Cognito Sub found in fallback header", map[string]interface{}{
+				"source": "fallback_header",
+				"header": header,
+				"cognito_sub": value,
+			})
 			return value
 		}
 	}
 
-	// Lambda環境での requestContext からの取得（追加の確認）
+	// 3. Lambda環境での requestContext からの取得（レガシー対応）
 	if c.Ctx.Request.Header.Get("X-Amzn-Requestid") != "" {
 		// API Gateway Lambda プロキシ統合でのリクエストコンテキスト情報
 		if value := c.Ctx.Request.Header.Get("X-Amzn-Requestcontext-Authorizer-Claims-Sub"); value != "" {
+			utils.LogDebug(c.Ctx.Request.Context(), "Cognito Sub found in legacy requestcontext header", map[string]interface{}{
+				"source": "legacy_requestcontext",
+				"cognito_sub": value,
+			})
 			return value
 		}
 	}
 
+	utils.LogWarn(c.Ctx.Request.Context(), "Cognito Sub not found in any expected headers")
 	return ""
 }
 
