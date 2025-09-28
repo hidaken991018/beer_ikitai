@@ -143,16 +143,16 @@ func (c *BaseController) getCognitoSubFromHeaders() string {
 		// 1. 最も標準的なパターン - API Gateway Cognito Authorizer
 		"x-amzn-requestcontext-authorizer-claims-sub",
 		"x-apigateway-event-requestcontext-authorizer-claims-sub",
-		
+
 		// 2. Lambda プロキシ統合での一般的なヘッダー
-		"x-amzn-cognito-sub", 
+		"x-amzn-cognito-sub",
 		"x-cognito-sub",
-		
+
 		// 3. カスタムヘッダーやその他のパターン
 		"x-amz-user-sub",
 		"x-user-sub",
 		"x-apigateway-context-authorizer-sub",
-		
+
 		// 4. requestContextからの直接マッピング
 		"x-amzn-requestcontext-identity-cognito-identity-id",
 		"x-amzn-requestcontext-identity-user-arn",
@@ -164,11 +164,11 @@ func (c *BaseController) getCognitoSubFromHeaders() string {
 		for key, values := range c.Ctx.Request.Header {
 			if len(values) > 0 {
 				// Cognito関連のヘッダーのみログ出力
-				if strings.Contains(strings.ToLower(key), "cognito") || 
-				   strings.Contains(strings.ToLower(key), "authorizer") ||
-				   strings.Contains(strings.ToLower(key), "sub") ||
-				   strings.Contains(strings.ToLower(key), "amzn") ||
-				   strings.Contains(strings.ToLower(key), "apigateway") {
+				if strings.Contains(strings.ToLower(key), "cognito") ||
+					strings.Contains(strings.ToLower(key), "authorizer") ||
+					strings.Contains(strings.ToLower(key), "sub") ||
+					strings.Contains(strings.ToLower(key), "amzn") ||
+					strings.Contains(strings.ToLower(key), "apigateway") {
 					allHeaders[key] = values[0]
 				}
 			}
@@ -200,7 +200,7 @@ func (c *BaseController) getCognitoSubFromHeaders() string {
 			"x-apigateway-event-requestcontext-identity-user",
 			"x-amzn-requestcontext-identity-caller",
 		}
-		
+
 		for _, header := range additionalHeaders {
 			if value := c.Ctx.Request.Header.Get(header); value != "" && value != "null" {
 				utils.LogDebug(c.Ctx.Request.Context(), "Alternative Cognito identifier found", map[string]interface{}{
