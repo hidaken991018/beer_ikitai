@@ -137,26 +137,41 @@ func (c *BaseController) GetCognitoSub() (string, error) {
 
 // getCognitoSubFromHeaders API Gatewayが設定する各種ヘッダーからCognito Subを取得
 func (c *BaseController) getCognitoSubFromHeaders() string {
-	// API Gateway Cognito Authorizer が設定するヘッダー（一般的なパターン）
-	headers := []string{
-		"X-Cognito-Sub",      // Cognito Authorizer
-		"X-Amzn-Cognito-Sub", // AWS Lambda Proxy統合
-		"X-Amz-User-Sub",     // カスタムヘッダー
-		"X-User-Sub",         // カスタムヘッダー
+	// 1. API Gateway Cognito Authorizer が requestContext.authorizer.claims から設定するヘッダー
+	// 最も確実な方法：API Gateway Cognito Authorizer が設定するヘッダー
+	if value := c.Ctx.Request.Header.Get("X-Amzn-Requestcontext-Authorizer-Claims-Sub"); value != "" {
+		utils.LogDebug(c.Ctx.Request.Context(), "Cognito Sub found from requestContext.authorizer.claims", map[string]interface{}{
+			"source": "X-Amzn-Requestcontext-Authorizer-Claims-Sub",
+			"value":  value,
+		})
+		return value
 	}
 
-	for _, header := range headers {
+	// 2. 代替となる可能性があるヘッダー（Lambda Authorizer使用時など）
+	alternativeHeaders := []string{
+		"X-Cognito-Sub",              // Lambda Authorizer がカスタム設定する場合
+		"X-Amzn-Cognito-Sub",         // AWS Lambda Proxy統合の代替パターン
+		"X-Amz-User-Sub",             // カスタムヘッダー
+		"X-User-Sub",                 // カスタムヘッダー
+		"X-Cognito-Claims-Sub",       // その他の可能なパターン
+		"X-Amzn-Cognito-Claims-Sub",  // その他の可能なパターン
+	}
+
+	for _, header := range alternativeHeaders {
 		if value := c.Ctx.Request.Header.Get(header); value != "" {
+			utils.LogDebug(c.Ctx.Request.Context(), "Cognito Sub found from alternative header", map[string]interface{}{
+				"source": header,
+				"value":  value,
+			})
 			return value
 		}
 	}
 
-	// Lambda環境での requestContext からの取得（追加の確認）
-	if c.Ctx.Request.Header.Get("X-Amzn-Requestid") != "" {
-		// API Gateway Lambda プロキシ統合でのリクエストコンテキスト情報
-		if value := c.Ctx.Request.Header.Get("X-Amzn-Requestcontext-Authorizer-Claims-Sub"); value != "" {
-			return value
-		}
+	// 3. デバッグログ：見つからない場合のヘッダー情報をログ出力
+	if beego.BConfig.RunMode == "dev" {
+		utils.LogDebug(c.Ctx.Request.Context(), "Cognito Sub not found, debugging request headers", map[string]interface{}{
+			"all_headers": c.Ctx.Request.Header,
+		})
 	}
 
 	return ""
@@ -176,22 +191,54 @@ func (c *BaseController) IsAdmin() bool {
 
 // getCognitoGroupsFromHeaders API Gatewayが設定するヘッダーからCognitoグループ情報を取得
 func (c *BaseController) getCognitoGroupsFromHeaders() []string {
-	// API Gateway Cognito Authorizer が設定するグループヘッダー
-	groupsHeader := c.Ctx.Request.Header.Get("X-Cognito-Groups")
-	if groupsHeader == "" {
-		groupsHeader = c.Ctx.Request.Header.Get("X-Amzn-Cognito-Groups")
-	}
-	if groupsHeader == "" {
-		groupsHeader = c.Ctx.Request.Header.Get("X-Amzn-Requestcontext-Authorizer-Claims-Cognito-Groups")
+	// 1. API Gateway Cognito Authorizer が requestContext.authorizer.claims から設定するヘッダー
+	// 最も確実な方法：requestContext からのクレーム情報
+	groupsHeaders := []string{
+		"X-Amzn-Requestcontext-Authorizer-Claims-Cognito-Groups", // 標準的なCognitoグループ
+		"X-Amzn-Requestcontext-Authorizer-Claims-Groups",         // その他のグループクレーム
 	}
 
-	if groupsHeader != "" {
-		// カンマ区切りまたはスペース区切りでグループが設定される場合がある
-		groups := strings.Split(groupsHeader, ",")
-		for i, group := range groups {
-			groups[i] = strings.TrimSpace(group)
+	for _, header := range groupsHeaders {
+		if groupsHeader := c.Ctx.Request.Header.Get(header); groupsHeader != "" {
+			groups := strings.Split(groupsHeader, ",")
+			for i, group := range groups {
+				groups[i] = strings.TrimSpace(group)
+			}
+			utils.LogDebug(c.Ctx.Request.Context(), "Cognito Groups found from requestContext", map[string]interface{}{
+				"source": header,
+				"groups": groups,
+			})
+			return groups
 		}
-		return groups
+	}
+
+	// 2. 代替となる可能性があるヘッダー（Lambda Authorizer使用時など）
+	alternativeGroupsHeaders := []string{
+		"X-Cognito-Groups",      // Lambda Authorizer がカスタム設定する場合
+		"X-Amzn-Cognito-Groups", // AWS Lambda Proxy統合の代替パターン
+		"X-Amz-User-Groups",     // カスタムヘッダー
+		"X-User-Groups",         // カスタムヘッダー
+	}
+
+	for _, header := range alternativeGroupsHeaders {
+		if groupsHeader := c.Ctx.Request.Header.Get(header); groupsHeader != "" {
+			groups := strings.Split(groupsHeader, ",")
+			for i, group := range groups {
+				groups[i] = strings.TrimSpace(group)
+			}
+			utils.LogDebug(c.Ctx.Request.Context(), "Cognito Groups found from alternative header", map[string]interface{}{
+				"source": header,
+				"groups": groups,
+			})
+			return groups
+		}
+	}
+
+	// 3. デバッグログ：グループが見つからない場合
+	if beego.BConfig.RunMode == "dev" {
+		utils.LogDebug(c.Ctx.Request.Context(), "Cognito Groups not found", map[string]interface{}{
+			"message": "No Cognito groups found in request headers",
+		})
 	}
 
 	return []string{}
