@@ -1,4 +1,4 @@
-name: Issue to PR
+name: Plan to PR
 
 on:
   issues:
