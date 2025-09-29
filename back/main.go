@@ -54,6 +54,7 @@ func init() {
 	setupRoutes()
 
 	// Lambda adapter を初期化
+	// NOTE: https://github.com/awslabs/aws-lambda-go-api-proxy
 	beegoLambda = httpadapter.New(beego.BeeApp.Handlers)
 }
 
@@ -96,6 +97,8 @@ func setupRoutes() {
 // Handler Lambda ハンドラー関数
 func Handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// API Gateway プロキシ統合を使用してリクエストを処理
+	// NOTE: https://github.com/awslabs/aws-lambda-go-api-proxy
+	// この処理により、Beego のルーティングとミドルウェアが適用される
 	return beegoLambda.ProxyWithContext(ctx, req)
 }
 
