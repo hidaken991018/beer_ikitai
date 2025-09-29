@@ -29,12 +29,12 @@ jobs:
         run: |
           sed -e 's|\${REPOSITORY}|${{ github.repository }}|g' \
               -e 's|\${ISSUE_NUMBER}|${{ github.event.issue.number }}|g' \
-              .github/prompts/implementation-prompt.txt > ${{ runner.temp }}/implementation-prompt-processed.txt
+              .github/prompts/implementation-prompt.txt > ${{ runner.temp }}/implementation-prompt-processed.md
 
       - name: Run Implementation
         uses: anthropics/claude-code-base-action@beta
         with:
-          prompt_file: ${{ runner.temp }}/implementation-prompt-processed.txt
+          prompt_file: ${{ runner.temp }}/implementation-prompt-processed.md
           allowed_tools: |
             WebFetch,
             WebSearch,
