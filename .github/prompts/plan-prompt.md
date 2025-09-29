@@ -14,7 +14,7 @@
 1. 実装に必要に応じて、MCP を介して context7 の知識を参照する
 1. issue に記述されている内容から実装計画を検討する。
 1. 検討完了したら mcp\_\_github\_\_update_issue を使用して、issue の内容に検討内容を追記する。
-1. "ready-for-plan"ラベルを削除し、mcp\_\_github\_\_update_issue を使用して"ready-for-implemented"ラベルを追加する
+1. "ready-for-plan"ラベルを削除し、mcp\_\_github\_\_update_issue を使用して"planed"ラベルを追加する
 
 ## 利用可能な MCP リソース
 
