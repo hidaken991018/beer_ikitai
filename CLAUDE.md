@@ -56,7 +56,7 @@ AWS ベースのサーバーレスアプリケーションで、以下の構成�
     - リクエスト ID 追跡とパニック復旧ミドルウェア
     - 統一エラーレスポンス構造とエラーハンドリング
     - API Gateway Cognito Authorizer 連携強化
-    - セキュリティヘッダーと環境別 CORS 設定
+    - セキュリティヘッダー設定（CORS設定はAPI Gatewayで実施）
     - 拡張ヘルスチェック（DB 接続・環境変数チェック）
 - **フロントエンド**: 基本的な HTML テンプレート（`front/index.html`）
 - **ツール**: 位置情報取得ツール（`tool/get_target_geo/`）
@@ -216,8 +216,8 @@ Docker 環境では `back/docker-compose.yml` で PostgreSQL コンテナが自�
 export LOG_LEVEL=debug
 export LOG_FORMAT=text
 
-# CORS設定（開発環境）
-export ALLOWED_ORIGINS="http://localhost:3000,http://localhost:8080"
+# CORS設定はAPI Gatewayで実施（バックエンドでは削除済み）
+# ローカル開発ではNext.jsプロキシでCORS問題を回避
 
 # アプリケーション情報
 export APP_VERSION=development
@@ -247,7 +247,7 @@ export APP_VERSION=development
 │   ├── init-db/             # データベース初期化スクリプト
 │   └── utils/               # ユーティリティ（商用リリース対応）
 │       ├── logger.go        # 構造化ログ（logrus）
-│       ├── middleware.go    # CORS・パニック復旧・ログミドルウェア
+│       ├── middleware.go    # パニック復旧・ログ・セキュリティヘッダーミドルウェア
 │       └── test_auth.go     # 開発環境用認証
 ├── front/                   # Next.js フロントエンド（CSR + Amplify デプロイ）
 ├── docs/                    # プロジェクトドキュメント
@@ -394,13 +394,14 @@ LOG_FORMAT=text
 
 #### CORS 設定
 
-```bash
-# 開発環境
-ALLOWED_ORIGINS="http://localhost:3000,http://localhost:8080"
+**本番・ステージング環境：**
+- API Gateway で CORS を制御（CloudFormation テンプレートで設定済み）
+- バックエンドソフトウェアでは CORS ミドルウェアを削除済み
 
-# 本番環境
-ALLOWED_ORIGINS="https://yourdomain.com,https://www.yourdomain.com"
-```
+**ローカル開発環境：**
+- Next.js プロキシ機能で CORS 問題を回避
+- `/api/*` → `http://localhost:8080/*` への自動プロキシ設定
+- `front/next.config.ts` で設定済み
 
 ### 開発支援
 
@@ -413,7 +414,8 @@ ALLOWED_ORIGINS="https://yourdomain.com,https://www.yourdomain.com"
 1. パニック復旧（最優先）
 2. リクエストログ
 3. セキュリティヘッダー
-4. CORS
+
+**注：** CORS ミドルウェアは削除済み（API Gateway で制御）
 
 この実装により、**商用リリース準備完了**状態を実現しています。
 
@@ -448,3 +450,12 @@ ALLOWED_ORIGINS="https://yourdomain.com,https://www.yourdomain.com"
   - Next.js ビルド確認 (`npm run build`)
   - テストカバレッジレポート生成
 ```
+
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
+
+      
+      IMPORTANT: this context may or may not be relevant to your tasks. You should not respond to this context unless it is highly relevant to your task.
