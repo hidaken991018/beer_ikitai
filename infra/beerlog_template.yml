@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: My Beer Log - 改善版MVP用AWS CloudFormationテンプレート
+Description: My Beer Log - 改善版MVP用AWS CloudFormationテンプレート（API Gateway自動デプロイメント対応）
 
 Parameters:
   Environment:
@@ -10,6 +10,23 @@ Parameters:
       - dev
       - staging
       - prod
+
+  AutoDeployApiGateway:
+    Type: String
+    Description: API Gateway自動デプロイメント設定（true=自動、false=手動）
+    Default: true
+    AllowedValues:
+      - true
+      - false
+
+  ApiDeploymentStrategy:
+    Type: String
+    Description: API Gatewayデプロイメント戦略（timestamp=タイムスタンプ、hash=ハッシュ、manual=手動）
+    Default: timestamp
+    AllowedValues:
+      - timestamp
+      - hash
+      - manual
 
   LambdaDeploymentBucket:
     Type: String
@@ -30,6 +47,14 @@ Parameters:
     Type: String
     Description: RDS DB名
     Default: beerlogdb
+
+Conditions:
+  IsAutoDeployEnabled: !Equals [!Ref AutoDeployApiGateway, "true"]
+  IsTimestampStrategy: !Equals [!Ref ApiDeploymentStrategy, "timestamp"]
+  IsHashStrategy: !Equals [!Ref ApiDeploymentStrategy, "hash"]
+  IsManualStrategy: !Equals [!Ref ApiDeploymentStrategy, "manual"]
+  IsDevEnvironment: !Equals [!Ref Environment, "dev"]
+  IsProdEnvironment: !Equals [!Ref Environment, "prod"]
 
 Mappings:
   EnvironmentConfig:
@@ -455,28 +480,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
 
-  BeerLogApiDeployment:
-    Type: AWS::ApiGateway::Deployment
-    DependsOn: 
-      - BeerLogApiMethod
-      - BeerLogApiAuthorizer
-    Properties:
-      RestApiId: !Ref BeerLogApiGateway
-      StageName: v1 # ダミー（ステージリソースで上書き）
-
-  BeerLogApiStage:
-    Type: AWS::ApiGateway::Stage
-    Properties:
-      StageName: !FindInMap [EnvironmentConfig, !Ref Environment, ApiStageName]
-      Description: !Sub '${Environment} ステージ'
-      RestApiId: !Ref BeerLogApiGateway
-      DeploymentId: !Ref BeerLogApiDeployment
-      Tags:
-        - Key: Name
-          Value: !Sub BeerLog-${Environment}-ApiStage
-        - Key: Environment
-          Value: !Ref Environment
-
+  # API Gatewayリソース
   BeerLogApiResource:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -495,6 +499,7 @@ Resources:
       ProviderARNs:
         - !GetAtt BeerLogCognitoUserPool.Arn
 
+  # API Gateway Method
   BeerLogApiMethod:
     Type: AWS::ApiGateway::Method
     Properties:
@@ -520,6 +525,60 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: true
             method.response.header.Access-Control-Allow-Origin: true
 
+  # 改良版API Gateway Deployment（自動デプロイメント戦略対応）
+  BeerLogApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Condition: IsAutoDeployEnabled
+    DependsOn: 
+      - BeerLogApiMethod
+      - BeerLogApiAuthorizer
+    Properties:
+      RestApiId: !Ref BeerLogApiGateway
+      Description: !If
+        - IsTimestampStrategy
+        - !Sub 'Auto deployment for ${Environment} - ${AWS::StackName}'
+        - !If
+          - IsHashStrategy
+          - !Sub 'Hash-based deployment for ${Environment} - ${AWS::StackName}'
+          - !Sub 'Manual deployment for ${Environment} - ${AWS::StackName}'
+      # CloudFormationの制限回避：StageName の削除により、Stageリソースで管理
+
+  # 手動デプロイメント用（自動デプロイが無効の場合）
+  BeerLogApiDeploymentManual:
+    Type: AWS::ApiGateway::Deployment
+    Condition: IsManualStrategy
+    DependsOn: 
+      - BeerLogApiMethod
+      - BeerLogApiAuthorizer
+    Properties:
+      RestApiId: !Ref BeerLogApiGateway
+      Description: !Sub 'Manual deployment for ${Environment} - requires manual API Gateway deployment'
+
+  # API Gateway Stage（改良版）
+  BeerLogApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      StageName: !FindInMap [EnvironmentConfig, !Ref Environment, ApiStageName]
+      Description: !Sub '${Environment} environment stage - Auto deployment: ${AutoDeployApiGateway}'
+      RestApiId: !Ref BeerLogApiGateway
+      DeploymentId: !If
+        - IsAutoDeployEnabled
+        - !Ref BeerLogApiDeployment
+        - !Ref BeerLogApiDeploymentManual
+      Variables:
+        Environment: !Ref Environment
+        DeploymentStrategy: !Ref ApiDeploymentStrategy
+        AutoDeploy: !Ref AutoDeployApiGateway
+        StackName: !Ref AWS::StackName
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-ApiStage
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: DeploymentStrategy
+          Value: !Ref ApiDeploymentStrategy
+
+  # Lambda Permission for API Gateway
   BeerLogLambdaInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -613,6 +672,18 @@ Outputs:
     Export:
       Name: !Sub ${AWS::StackName}-Environment
 
+  ApiDeploymentStrategy:
+    Description: 適用されたAPI Gatewayデプロイメント戦略
+    Value: !Ref ApiDeploymentStrategy
+    Export:
+      Name: !Sub ${AWS::StackName}-ApiDeploymentStrategy
+
+  AutoDeployApiGateway:
+    Description: API Gateway自動デプロイメント設定
+    Value: !Ref AutoDeployApiGateway
+    Export:
+      Name: !Sub ${AWS::StackName}-AutoDeployApiGateway
+
   DBEndpoint:
     Description: RDSエンドポイント
     Value: !GetAtt BeerLogDB.Endpoint.Address
@@ -636,6 +707,21 @@ Outputs:
     Value: !Sub 'https://${BeerLogApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${BeerLogApiStage}'
     Export:
       Name: !Sub ${AWS::StackName}-ApiGatewayEndpoint
+
+  ApiGatewayId:
+    Description: API Gateway ID
+    Value: !Ref BeerLogApiGateway
+    Export:
+      Name: !Sub ${AWS::StackName}-ApiGatewayId
+
+  ApiDeploymentId:
+    Description: API Gateway Deployment ID
+    Value: !If
+      - IsAutoDeployEnabled
+      - !Ref BeerLogApiDeployment
+      - !Ref BeerLogApiDeploymentManual
+    Export:
+      Name: !Sub ${AWS::StackName}-ApiDeploymentId
 
   LambdaFunctionName:
     Description: Lambda 関数名

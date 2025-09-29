@@ -160,6 +160,34 @@ aws cloudformation describe-stacks \
 aws cloudformation delete-stack --stack-name beerlog-dev-stack
 ```
 
+#### API Gateway デプロイメント管理
+
+```bash
+# デプロイメント状況確認
+cd infra/scripts && ./check-api-deployment.sh beerlog-dev-stack ap-northeast-1
+
+# 手動デプロイメント実行（緊急時・手動戦略時）
+cd infra/scripts && ./deploy-api-gateway.sh beerlog-dev-stack ap-northeast-1
+
+# 本番環境でのデプロイメント確認
+cd infra/scripts && ./check-api-deployment.sh beerlog-prod-stack ap-northeast-1
+
+# 本番環境での計画的手動デプロイ
+cd infra/scripts && ./deploy-api-gateway.sh beerlog-prod-stack ap-northeast-1 prod
+```
+
+**デプロイメント戦略による運用の違い:**
+
+- **自動デプロイメント戦略** (`AutoDeployApiGateway=true`):
+  - CloudFormation スタック更新時に API Gateway も自動デプロイ
+  - 手動デプロイスクリプトは緊急時のみ使用
+  - 開発・ステージング環境推奨
+
+- **手動デプロイメント戦略** (`AutoDeployApiGateway=false` または `ApiDeploymentStrategy=manual`):
+  - CloudFormation 更新後に手動でデプロイメント実行が必要
+  - 本番環境での制御された運用に適用
+  - デプロイタイミングの完全制御が可能
+
 ## 開発ノート
 
 ### 認証フロー
@@ -448,3 +476,9 @@ ALLOWED_ORIGINS="https://yourdomain.com,https://www.yourdomain.com"
   - Next.js ビルド確認 (`npm run build`)
   - テストカバレッジレポート生成
 ```
+
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
