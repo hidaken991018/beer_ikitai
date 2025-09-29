@@ -175,13 +175,13 @@ export function useBreweries() {
           limit: options?.limit || breweryState?.filters?.limit || 20,
         };
 
-        const response = await apiClientRef.current.get<{
-          breweries: Brewery[];
-          total: number;
-        }>('/breweries', params);
+        const response = await apiClientRef.current.get<ApiResponse<Brewery[]>>(
+          '/breweries',
+          params
+        );
 
         // Calculate distances and sort by distance
-        const breweriesWithDistance: BreweryWithDistance[] = response.data.breweries
+        const breweriesWithDistance: BreweryWithDistance[] = response.data
           .map((brewery: Brewery) => ({
             ...brewery,
             distance: calculateDistance(userLocation, {
