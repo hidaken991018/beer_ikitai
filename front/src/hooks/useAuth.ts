@@ -102,7 +102,7 @@ export function useAuth() {
 
           if (tokens.accessToken && tokens.idToken) {
             // Set API client token
-            apiClient.setIdToken(tokens.accessToken);
+            apiClient.setIdToken(tokens.idToken);
 
             dispatch(
               loginSuccess({
@@ -340,7 +340,7 @@ export function useAuth() {
 
         if (tokens.accessToken && tokens.idToken) {
           // Set API client token
-          apiClient.setIdToken(tokens.accessToken);
+          apiClient.setIdToken(tokens.idToken);
 
           dispatch(
             updateTokens({
