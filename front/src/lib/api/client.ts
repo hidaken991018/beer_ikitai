@@ -25,7 +25,7 @@ import { API_CONFIG, HTTP_STATUS, ERROR_MESSAGES } from '../constants';
  * });
  *
  * // 認証トークンの設定
- * client.setAccessToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...');
+ * client.setIdToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...');
  *
  * // GET リクエスト
  * const breweries = await client.get<Brewery[]>('/breweries');
@@ -61,7 +61,7 @@ export class ApiClient {
    * // カスタム設定でクライアントを作成
    * const client = new ApiClient({
    *   baseUrl: 'https://api.example.com',
-   *   accessToken: 'your-jwt-token'
+   *   idToken: 'your-jwt-token'
    * });
    * ```
    */
@@ -77,19 +77,19 @@ export class ApiClient {
    *
    * @description 以降のすべてのAPIリクエストでJWT認証ヘッダーとして使用されます。
    *
-   * @param token - JWT アクセストークン（null の場合は認証ヘッダーを削除）
+   * @param token - JWT IDトークン（null の場合は認証ヘッダーを削除）
    *
    * @example
    * ```typescript
    * // トークンを設定
-   * client.setAccessToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...');
+   * client.setIdToken('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...');
    *
    * // トークンを削除（ログアウト時など）
-   * client.setAccessToken(null);
+   * client.setIdToken(null);
    * ```
    */
-  setAccessToken(token: string | null) {
-    this.config.accessToken = token || undefined;
+  setIdToken(token: string | null) {
+    this.config.idToken = token || undefined;
   }
 
   /**
@@ -121,8 +121,8 @@ export class ApiClient {
       ...config.headers,
     };
 
-    if (this.config.accessToken) {
-      headers.Authorization = `Bearer ${this.config.accessToken}`;
+    if (this.config.idToken) {
+      headers.Authorization = this.config.idToken;
     }
 
     const requestInit: RequestInit = {
@@ -341,7 +341,7 @@ export class ApiClient {
  * const breweries = await apiClient.get<Brewery[]>('/breweries');
  *
  * // 認証が必要な場合はトークンを設定
- * apiClient.setAccessToken(accessToken);
+ * apiClient.setIdToken(idToken);
  * const profile = await apiClient.get<UserProfile>('/profile');
  * ```
  */

@@ -47,14 +47,14 @@ describe('ApiClient', () => {
     });
   });
 
-  describe('setAccessToken', () => {
-    it('sets access token', () => {
-      apiClient.setAccessToken('test-token');
+  describe('setIdToken', () => {
+    it('sets ID token', () => {
+      apiClient.setIdToken('test-token');
       // The token will be tested through requests
     });
 
     it('handles null token', () => {
-      apiClient.setAccessToken(null);
+      apiClient.setIdToken(null);
       // Should not throw
     });
   });
@@ -99,7 +99,7 @@ describe('ApiClient', () => {
 
     it('includes authorization header when token is set', async () => {
       const token = 'test-token';
-      apiClient.setAccessToken(token);
+      apiClient.setIdToken(token);
 
       (fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
@@ -113,7 +113,7 @@ describe('ApiClient', () => {
         'https://api.test.com/test',
         expect.objectContaining({
           headers: expect.objectContaining({
-            Authorization: `Bearer ${token}`,
+            Authorization: token,
           }),
         })
       );

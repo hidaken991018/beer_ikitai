@@ -333,15 +333,15 @@ export interface PaginatedResponse<T> {
  * ```typescript
  * const config: ApiClientConfig = {
  *   baseUrl: "https://api.mybeerlog.com",
- *   accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *   idToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  * };
  * ```
  */
 export interface ApiClientConfig {
   /** APIのベースURL（例: "https://api.mybeerlog.com"） */
   baseUrl: string;
-  /** 認証用のアクセストークン（JWT形式、任意） */
-  accessToken?: string;
+  /** 認証用のIDトークン（JWT形式、任意） */
+  idToken?: string;
 }
 
 /**
