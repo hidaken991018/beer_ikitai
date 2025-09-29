@@ -169,19 +169,19 @@ export function useBreweries() {
         dispatch(clearError());
 
         const params: Record<string, string | number> = {
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
+          lat: userLocation.latitude,
+          lng: userLocation.longitude,
           radius: options?.radius || breweryState?.filters?.radius || 5,
           limit: options?.limit || breweryState?.filters?.limit || 20,
         };
 
-        const response = await apiClientRef.current.get<ApiResponse<Brewery[]>>(
-          '/breweries/nearby',
-          params
-        );
+        const response = await apiClientRef.current.get<{
+          breweries: Brewery[];
+          total: number;
+        }>('/breweries', params);
 
         // Calculate distances and sort by distance
-        const breweriesWithDistance: BreweryWithDistance[] = response.data
+        const breweriesWithDistance: BreweryWithDistance[] = response.data.breweries
           .map((brewery: Brewery) => ({
             ...brewery,
             distance: calculateDistance(userLocation, {
