@@ -28,7 +28,7 @@ jobs:
         run: |
           sed -e 's|\${REPOSITORY}|${{ github.repository }}|g' \
               -e 's|\${ISSUE_NUMBER}|${{ github.event.issue.number }}|g' \
-              .github/prompts/plan-prompt.txt > ${{ runner.temp }}/plan-prompt-processed.md
+              .github/prompts/plan-prompt.md > ${{ runner.temp }}/plan-prompt-processed.md
 
       - name: Run plan
         uses: anthropics/claude-code-base-action@beta

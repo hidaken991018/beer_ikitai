@@ -29,7 +29,7 @@ jobs:
         run: |
           sed -e 's|\${REPOSITORY}|${{ github.repository }}|g' \
               -e 's|\${ISSUE_NUMBER}|${{ github.event.issue.number }}|g' \
-              .github/prompts/implementation-prompt.txt > ${{ runner.temp }}/implementation-prompt-processed.md
+              .github/prompts/implementation-prompt.md > ${{ runner.temp }}/implementation-prompt-processed.md
 
       - name: Run Implementation
         uses: anthropics/claude-code-base-action@beta
