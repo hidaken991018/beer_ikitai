@@ -102,7 +102,7 @@ export function useAuth() {
 
           if (tokens.accessToken && tokens.idToken) {
             // Set API client token
-            apiClient.setAccessToken(tokens.accessToken);
+            apiClient.setIdToken(tokens.accessToken);
 
             dispatch(
               loginSuccess({
@@ -311,7 +311,7 @@ export function useAuth() {
       await cognitoAuthService.logout();
 
       // Clear API client token
-      apiClient.setAccessToken(null);
+      apiClient.setIdToken(null);
 
       dispatch(logoutAction());
     } catch (error) {
@@ -340,7 +340,7 @@ export function useAuth() {
 
         if (tokens.accessToken && tokens.idToken) {
           // Set API client token
-          apiClient.setAccessToken(tokens.accessToken);
+          apiClient.setIdToken(tokens.accessToken);
 
           dispatch(
             updateTokens({
