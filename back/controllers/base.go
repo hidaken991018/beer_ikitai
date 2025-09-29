@@ -109,7 +109,8 @@ func (c *BaseController) GetCognitoSub() (string, error) {
 		"is_lambda":      c.isLambdaEnvironment(),
 		"request_method": c.Ctx.Request.Method,
 		"request_uri":    c.Ctx.Request.RequestURI,
-		"context":        c.Ctx.Request.Context(),
+		"Request":        c.Ctx.Request,
+		"context":        c.Ctx,
 	})
 
 	// 1. API Gateway Authorizer から設定されるヘッダーを確認
