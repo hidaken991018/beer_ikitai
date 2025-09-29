@@ -457,7 +457,9 @@ Resources:
 
   BeerLogApiDeployment:
     Type: AWS::ApiGateway::Deployment
-    DependsOn: BeerLogApiMethod
+    DependsOn: 
+      - BeerLogApiMethod
+      - BeerLogApiAuthorizer
     Properties:
       RestApiId: !Ref BeerLogApiGateway
       StageName: v1 # ダミー（ステージリソースで上書き）
@@ -482,13 +484,25 @@ Resources:
       ParentId: !GetAtt BeerLogApiGateway.RootResourceId
       PathPart: '{proxy+}'
 
+  # Cognito Authorizer
+  BeerLogApiAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      Name: !Sub BeerLog-${Environment}-CognitoAuthorizer
+      Type: COGNITO_USER_POOLS
+      IdentitySource: method.request.header.Authorization
+      RestApiId: !Ref BeerLogApiGateway
+      ProviderARNs:
+        - !GetAtt BeerLogCognitoUserPool.Arn
+
   BeerLogApiMethod:
     Type: AWS::ApiGateway::Method
     Properties:
       RestApiId: !Ref BeerLogApiGateway
       ResourceId: !Ref BeerLogApiResource
       HttpMethod: ANY
-      AuthorizationType: NONE
+      AuthorizationType: COGNITO_USER_POOLS
+      AuthorizerId: !Ref BeerLogApiAuthorizer
       Integration:
         IntegrationHttpMethod: POST
         Type: AWS_PROXY
@@ -628,3 +642,9 @@ Outputs:
     Value: !Ref BeerLogLambdaFunction
     Export:
       Name: !Sub ${AWS::StackName}-LambdaFunctionName
+
+  ApiAuthorizer:
+    Description: API Gateway Cognito Authorizer ID
+    Value: !Ref BeerLogApiAuthorizer
+    Export:
+      Name: !Sub ${AWS::StackName}-ApiAuthorizer
