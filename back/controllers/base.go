@@ -103,35 +103,64 @@ func (c *BaseController) HandleInternalError(err error) {
 
 // GetCognitoSub API GatewayからCognito Sub情報を取得する
 func (c *BaseController) GetCognitoSub() (string, error) {
+	// デバッグ用環境情報ログ
+	utils.LogDebug(c.Ctx.Request.Context(), "Starting Cognito Sub authentication process", map[string]interface{}{
+		"run_mode":      beego.BConfig.RunMode,
+		"is_lambda":     c.isLambdaEnvironment(),
+		"request_method": c.Ctx.Request.Method,
+		"request_uri":   c.Ctx.Request.RequestURI,
+	})
+
 	// 1. API Gateway Authorizer から設定されるヘッダーを確認
 	// Lambda Authorizerまたは Cognito Authorizer が設定するヘッダー
 	cognitoSub := c.getCognitoSubFromHeaders()
 	if cognitoSub != "" {
 		utils.LogDebug(c.Ctx.Request.Context(), "Cognito Sub obtained from API Gateway headers", map[string]interface{}{
-			"cognito_sub": cognitoSub,
+			"cognito_sub": c.maskSensitiveData(cognitoSub),
+			"method":      "api_gateway_headers",
 		})
 		return cognitoSub, nil
 	}
 
+	utils.LogDebug(c.Ctx.Request.Context(), "API Gateway headers check completed - no Cognito Sub found", nil)
+
 	// 2. 開発環境でのテストトークン処理
 	if beego.BConfig.RunMode == "dev" {
+		utils.LogDebug(c.Ctx.Request.Context(), "Attempting test token validation in dev environment", nil)
 		authHeader := c.Ctx.Request.Header.Get("Authorization")
 		if authHeader != "" {
 			parts := strings.Split(authHeader, " ")
+			utils.LogDebug(c.Ctx.Request.Context(), "Authorization header found", map[string]interface{}{
+				"header_parts_count": len(parts),
+				"auth_type":          parts[0],
+			})
 			if len(parts) == 2 && parts[0] == "Bearer" {
 				authManager := utils.GetTestAuthTokenManager()
 				if testCognitoSub, err := authManager.ValidateToken(parts[1]); err == nil {
 					utils.LogDebug(c.Ctx.Request.Context(), "Test token validated in dev environment", map[string]interface{}{
-						"cognito_sub": testCognitoSub,
+						"cognito_sub": c.maskSensitiveData(testCognitoSub),
+						"method":      "dev_test_token",
 					})
 					return testCognitoSub, nil
+				} else {
+					utils.LogDebug(c.Ctx.Request.Context(), "Test token validation failed", map[string]interface{}{
+						"error": err.Error(),
+					})
 				}
+			} else {
+				utils.LogDebug(c.Ctx.Request.Context(), "Invalid Authorization header format", nil)
 			}
+		} else {
+			utils.LogDebug(c.Ctx.Request.Context(), "No Authorization header found in dev environment", nil)
 		}
+	} else {
+		utils.LogDebug(c.Ctx.Request.Context(), "Skipping test token validation - not in dev environment", map[string]interface{}{
+			"run_mode": beego.BConfig.RunMode,
+		})
 	}
 
-	// 3. 認証情報が取得できない場合のエラー
-	utils.LogWarn(c.Ctx.Request.Context(), "Failed to obtain Cognito Sub from API Gateway")
+	// 3. 認証情報が取得できない場合のエラー（詳細情報付き）
+	c.logAuthenticationFailure()
 	return "", errors.New("authentication required: cognito sub not found")
 }
 
@@ -145,21 +174,119 @@ func (c *BaseController) getCognitoSubFromHeaders() string {
 		"X-User-Sub",         // カスタムヘッダー
 	}
 
+	utils.LogDebug(c.Ctx.Request.Context(), "Checking API Gateway Cognito headers", map[string]interface{}{
+		"target_headers": headers,
+	})
+
+	headerResults := make(map[string]string)
 	for _, header := range headers {
-		if value := c.Ctx.Request.Header.Get(header); value != "" {
+		value := c.Ctx.Request.Header.Get(header)
+		headerResults[header] = c.maskSensitiveData(value)
+		if value != "" {
+			utils.LogDebug(c.Ctx.Request.Context(), "Cognito Sub found in header", map[string]interface{}{
+				"header": header,
+				"value":  c.maskSensitiveData(value),
+			})
 			return value
 		}
 	}
 
+	utils.LogDebug(c.Ctx.Request.Context(), "Primary header check completed", map[string]interface{}{
+		"header_results": headerResults,
+	})
+
 	// Lambda環境での requestContext からの取得（追加の確認）
-	if c.Ctx.Request.Header.Get("X-Amzn-Requestid") != "" {
+	lambdaRequestId := c.Ctx.Request.Header.Get("X-Amzn-Requestid")
+	utils.LogDebug(c.Ctx.Request.Context(), "Checking Lambda environment headers", map[string]interface{}{
+		"lambda_request_id_exists": lambdaRequestId != "",
+		"lambda_request_id":        c.maskSensitiveData(lambdaRequestId),
+	})
+
+	if lambdaRequestId != "" {
 		// API Gateway Lambda プロキシ統合でのリクエストコンテキスト情報
-		if value := c.Ctx.Request.Header.Get("X-Amzn-Requestcontext-Authorizer-Claims-Sub"); value != "" {
+		contextHeader := "X-Amzn-Requestcontext-Authorizer-Claims-Sub"
+		value := c.Ctx.Request.Header.Get(contextHeader)
+		utils.LogDebug(c.Ctx.Request.Context(), "Lambda request context header check", map[string]interface{}{
+			"header":      contextHeader,
+			"value_found": value != "",
+			"value":       c.maskSensitiveData(value),
+		})
+		if value != "" {
 			return value
 		}
 	}
 
 	return ""
+}
+
+// isLambdaEnvironment Lambda環境で実行されているかを判定する
+func (c *BaseController) isLambdaEnvironment() bool {
+	return c.Ctx.Request.Header.Get("AWS_LAMBDA_FUNCTION_NAME") != "" || 
+		   c.Ctx.Request.Header.Get("X-Amzn-Requestid") != ""
+}
+
+// maskSensitiveData センシティブなデータをマスクする
+func (c *BaseController) maskSensitiveData(data string) string {
+	if data == "" {
+		return "<empty>"
+	}
+	if len(data) <= 8 {
+		return strings.Repeat("*", len(data))
+	}
+	return data[:4] + strings.Repeat("*", len(data)-8) + data[len(data)-4:]
+}
+
+// logAuthenticationFailure 認証失敗時の詳細情報をログ出力する
+func (c *BaseController) logAuthenticationFailure() {
+	// 利用可能な全ヘッダーを取得してログ出力
+	allHeaders := make(map[string]string)
+	for headerName, headerValues := range c.Ctx.Request.Header {
+		if len(headerValues) > 0 {
+			// 認証関連のヘッダーのみログに記録
+			if c.isAuthRelatedHeader(headerName) {
+				allHeaders[headerName] = c.maskSensitiveData(headerValues[0])
+			}
+		}
+	}
+
+	utils.LogWarn(c.Ctx.Request.Context(), "Failed to obtain Cognito Sub from API Gateway", map[string]interface{}{
+		"run_mode":         beego.BConfig.RunMode,
+		"is_lambda":        c.isLambdaEnvironment(),
+		"request_method":   c.Ctx.Request.Method,
+		"request_uri":      c.Ctx.Request.RequestURI,
+		"auth_headers":     allHeaders,
+		"header_count":     len(c.Ctx.Request.Header),
+		"has_auth_header":  c.Ctx.Request.Header.Get("Authorization") != "",
+	})
+}
+
+// isAuthRelatedHeader 認証関連のヘッダーかどうかを判定する
+func (c *BaseController) isAuthRelatedHeader(headerName string) bool {
+	authHeaders := []string{
+		"Authorization",
+		"X-Cognito-Sub",
+		"X-Amzn-Cognito-Sub", 
+		"X-Amz-User-Sub",
+		"X-User-Sub",
+		"X-Amzn-Requestid",
+		"X-Amzn-Requestcontext-Authorizer-Claims-Sub",
+		"X-Cognito-Groups",
+		"X-Amzn-Cognito-Groups",
+		"X-Amzn-Requestcontext-Authorizer-Claims-Cognito-Groups",
+		"AWS_LAMBDA_FUNCTION_NAME",
+	}
+	
+	headerLower := strings.ToLower(headerName)
+	for _, authHeader := range authHeaders {
+		if strings.ToLower(authHeader) == headerLower {
+			return true
+		}
+	}
+	
+	// X-Amzn- や X-Cognito- で始まるヘッダーも含める
+	return strings.HasPrefix(headerLower, "x-amzn-") || 
+		   strings.HasPrefix(headerLower, "x-cognito-") ||
+		   strings.Contains(headerLower, "auth")
 }
 
 // IsAdmin 管理者権限をチェックする
