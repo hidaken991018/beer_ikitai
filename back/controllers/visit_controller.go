@@ -141,6 +141,7 @@ func (c *VisitController) CheckIn() {
 // @Failure 401 {object} dto.ErrorResponse
 // @router /visits [get]
 func (c *VisitController) GetVisits() {
+	log.Println("GetVisits called arg:", c)
 	cognitoSub, err := c.GetCognitoSub()
 	utils.LogInfo(c.Ctx.Request.Context(), "GetVisits called by user1")
 	if err != nil {
