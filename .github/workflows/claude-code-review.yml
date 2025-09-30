@@ -39,14 +39,15 @@ jobs:
 
           # Direct prompt for automated review (no @claude mention needed)
           prompt: |
-            Please review this pull request and provide feedback on:
-            - Code quality and best practices
-            - Potential bugs or issues
-            - Performance considerations
-            - Security concerns
-            - Test coverage
+            以下の観点についてこのプルリクエストをレビューしフィードバックを提供してください:
+            - PRの全体的な目的と変更点の要約
+            - コードの品質とベストプラクティス
+            - 潜在的なバグや問題点
+            - パフォーマンスに関する考慮事項
+            - セキュリティ上の懸念事項
+            - テストカバレッジ
 
-            Be constructive and helpful in your feedback.
+            建設的で有用なフィードバックを提供してください。
           claude_args: |
             --model claude-sonnet-4-20250514
 
