@@ -1,6 +1,19 @@
 name: Deploy Backend
 
 on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'デプロイ環境'
+        required: true
+        type: choice
+        options:
+          - development
+          - production
+      branch:
+        description: 'デプロイするブランチ'
+        required: true
+        default: 'develop'
   push:
     branches: [main, develop]
     paths: ['back/**']
@@ -61,7 +74,9 @@ jobs:
 
   # 開発環境デプロイ
   deploy-dev:
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    if: |
+      (github.ref == 'refs/heads/develop' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && inputs.environment == 'development')
     needs: build
     runs-on: ubuntu-latest
     environment: development
@@ -111,7 +126,9 @@ jobs:
 
   # 本番環境デプロイ
   deploy-prod:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: |
+      (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && inputs.environment == 'production')
     needs: build
     runs-on: ubuntu-latest
     environment: production
