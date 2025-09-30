@@ -59,6 +59,7 @@ func NewVisitController() *VisitController {
 	}
 
 	controller := &VisitController{
+		BaseController:     BaseController{},
 		visitUsecase:       visitUsecase,
 		userProfileUsecase: userProfileUsecase,
 	}
