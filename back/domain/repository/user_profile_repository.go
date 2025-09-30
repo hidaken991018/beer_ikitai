@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"log"
 	"mybeerlog/domain/entity"
 	"mybeerlog/models"
 	"time"
@@ -29,6 +30,7 @@ func NewUserProfileRepository() UserProfileRepository {
 
 // GetByCognitoSub Cognito SUBでユーザープロファイルを取得する
 func (r *beegoUserProfileRepository) GetByCognitoSub(cognitoSub string) (*entity.UserProfile, error) {
+	log.Printf("GetByCognitoSub called with cognitoSub: %s", cognitoSub)
 	model := &models.UserProfile{}
 	err := r.orm.QueryTable("user_profile").Filter("cognito_sub", cognitoSub).One(model)
 	if err != nil {
@@ -83,6 +85,7 @@ func (r *beegoUserProfileRepository) Update(userProfile *entity.UserProfile) (*e
 
 // modelToEntity モデルからエンティティに変換する
 func (r *beegoUserProfileRepository) modelToEntity(model *models.UserProfile) (*entity.UserProfile, error) {
+	log.Printf("modelToEntity called with model: %+v", model)
 	return entity.NewUserProfileBuilder().
 		WithID(model.Id).
 		WithCognitoSub(model.CognitoSub).

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"errors"
+	"log"
 	"mybeerlog/domain/entity"
 	"mybeerlog/domain/repository"
 )
@@ -27,6 +28,7 @@ func NewUserProfileUsecase(repo repository.UserProfileRepository) UserProfileUse
 
 // GetProfile ユーザープロファイルを取得する
 func (u *userProfileUsecase) GetProfile(cognitoSub string) (*entity.UserProfile, error) {
+	log.Printf("GetProfile called with cognitoSub: %s", cognitoSub)
 	if cognitoSub == "" {
 		return nil, errors.New("cognito_sub is required")
 	}
