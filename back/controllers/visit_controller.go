@@ -6,6 +6,7 @@ import (
 	"mybeerlog/domain/usecase"
 	"mybeerlog/interfaces/dto"
 	"mybeerlog/interfaces/mapper"
+	"mybeerlog/utils"
 	"strconv"
 
 	"github.com/astaxie/beego"
@@ -114,6 +115,7 @@ func (c *VisitController) GetVisits() {
 		c.ErrorResponse(401, "Unauthorized", "UNAUTHORIZED")
 		return
 	}
+	utils.LogInfo(c.Ctx.Request.Context(), "GetVisits called by user")
 
 	// ユーザープロファイル取得
 	userProfile, err := c.userProfileUsecase.GetProfile(cognitoSub)
@@ -121,6 +123,8 @@ func (c *VisitController) GetVisits() {
 		c.ErrorResponse(404, "User profile not found", "PROFILE_NOT_FOUND")
 		return
 	}
+
+	utils.LogInfo(c.Ctx.Request.Context(), "completed user profile retrieval")
 
 	breweryID := c.GetIntQuery("brewery_id", 0)
 	limit := c.GetIntQuery("limit", 20)
