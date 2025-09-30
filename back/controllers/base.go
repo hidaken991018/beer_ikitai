@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"errors"
 	"mybeerlog/interfaces/dto"
 	"mybeerlog/utils"
@@ -109,11 +110,22 @@ func (c *BaseController) GetCognitoSub() (string, error) {
 		"is_lambda":      c.isLambdaEnvironment(),
 		"request_method": c.Ctx.Request.Method,
 		"request_uri":    c.Ctx.Request.RequestURI,
-		"Request":        c.Ctx.Request,
-		"context":        c.Ctx,
 	})
 
-	// 1. API Gateway Authorizer から設定されるヘッダーを確認
+	// 1. Lambda requestContext から Cognito Sub を取得 (最優先)
+	if c.isLambdaEnvironment() {
+		cognitoSub := c.getCognitoSubFromLambdaContext()
+		if cognitoSub != "" {
+			utils.LogDebug(c.Ctx.Request.Context(), "Cognito Sub obtained from Lambda requestContext", map[string]interface{}{
+				"cognito_sub": cognitoSub,
+				"method":      "lambda_request_context",
+			})
+			return cognitoSub, nil
+		}
+		utils.LogDebug(c.Ctx.Request.Context(), "Lambda requestContext check completed - no Cognito Sub found", nil)
+	}
+
+	// 2. API Gateway Authorizer から設定されるヘッダーを確認
 	// Lambda Authorizerまたは Cognito Authorizer が設定するヘッダー
 	cognitoSub := c.getCognitoSubFromHeaders()
 	if cognitoSub != "" {
@@ -126,7 +138,7 @@ func (c *BaseController) GetCognitoSub() (string, error) {
 
 	utils.LogDebug(c.Ctx.Request.Context(), "API Gateway headers check completed - no Cognito Sub found", nil)
 
-	// 2. 開発環境でのテストトークン処理
+	// 3. 開発環境でのテストトークン処理
 	if beego.BConfig.RunMode == "dev" {
 		utils.LogDebug(c.Ctx.Request.Context(), "Attempting test token validation in dev environment", nil)
 		authHeader := c.Ctx.Request.Header.Get("Authorization")
@@ -161,9 +173,114 @@ func (c *BaseController) GetCognitoSub() (string, error) {
 		})
 	}
 
-	// 3. 認証情報が取得できない場合のエラー（詳細情報付き）
+	// 4. 認証情報が取得できない場合のエラー（詳細情報付き）
 	c.logAuthenticationFailure()
 	return "", errors.New("authentication required: cognito sub not found")
+}
+
+// getCognitoSubFromLambdaContext Lambda requestContext からCognito Subを取得
+func (c *BaseController) getCognitoSubFromLambdaContext() string {
+	utils.LogDebug(c.Ctx.Request.Context(), "Attempting to get Cognito Sub from Lambda requestContext", nil)
+
+	// Lambda環境でのrequestContextの取得を試行
+	requestContext := c.getLambdaRequestContext()
+	if requestContext == nil {
+		utils.LogDebug(c.Ctx.Request.Context(), "Lambda requestContext not found", nil)
+		return ""
+	}
+
+	utils.LogDebug(c.Ctx.Request.Context(), "Lambda requestContext found", map[string]interface{}{
+		"requestContext_keys": getMapKeys(requestContext),
+	})
+
+	// requestContext.authorizer.claims.sub の取得
+	authorizer, ok := requestContext["authorizer"].(map[string]interface{})
+	if !ok {
+		utils.LogDebug(c.Ctx.Request.Context(), "No authorizer found in requestContext", nil)
+		return ""
+	}
+
+	utils.LogDebug(c.Ctx.Request.Context(), "Authorizer found in requestContext", map[string]interface{}{
+		"authorizer_keys": getMapKeys(authorizer),
+	})
+
+	// claims の取得
+	claims, ok := authorizer["claims"].(map[string]interface{})
+	if !ok {
+		utils.LogDebug(c.Ctx.Request.Context(), "No claims found in authorizer", nil)
+		return ""
+	}
+
+	utils.LogDebug(c.Ctx.Request.Context(), "Claims found in authorizer", map[string]interface{}{
+		"claims_keys": getMapKeys(claims),
+	})
+
+	// sub の取得
+	sub, ok := claims["sub"].(string)
+	if !ok {
+		utils.LogDebug(c.Ctx.Request.Context(), "No sub found in claims", map[string]interface{}{
+			"sub_type": getValueType(claims["sub"]),
+		})
+		return ""
+	}
+
+	utils.LogDebug(c.Ctx.Request.Context(), "Cognito Sub successfully extracted from Lambda requestContext", map[string]interface{}{
+		"cognito_sub": sub,
+	})
+
+	return sub
+}
+
+// getLambdaRequestContext Lambda Proxy統合のrequestContextを取得
+func (c *BaseController) getLambdaRequestContext() map[string]interface{} {
+	// beegoのHTTPリクエストからLambda特有の情報を取得する
+	// beegoでは直接Lambda eventにアクセスできないため、
+	// 特別なヘッダーまたはContextからrequestContextを取得する必要がある
+
+	// 方法1: X-Lambda-Request-Context ヘッダーから取得（カスタム実装が必要）
+	requestContextHeader := c.Ctx.Request.Header.Get("X-Lambda-Request-Context")
+	if requestContextHeader != "" {
+		var requestContext map[string]interface{}
+		if err := json.Unmarshal([]byte(requestContextHeader), &requestContext); err == nil {
+			utils.LogDebug(c.Ctx.Request.Context(), "RequestContext obtained from custom header", map[string]interface{}{
+				"method": "X-Lambda-Request-Context",
+			})
+			return requestContext
+		}
+		utils.LogDebug(c.Ctx.Request.Context(), "Failed to parse X-Lambda-Request-Context header", map[string]interface{}{
+			"error": err.Error(),
+		})
+	}
+
+	// 方法2: beego Contextから取得（カスタム実装が必要）
+	if lambdaContext := c.Ctx.Input.GetData("lambda_request_context"); lambdaContext != nil {
+		if requestContext, ok := lambdaContext.(map[string]interface{}); ok {
+			utils.LogDebug(c.Ctx.Request.Context(), "RequestContext obtained from beego context", map[string]interface{}{
+				"method": "beego_context",
+			})
+			return requestContext
+		}
+	}
+
+	utils.LogDebug(c.Ctx.Request.Context(), "No Lambda requestContext available", nil)
+	return nil
+}
+
+// getMapKeys map[string]interface{}のキー一覧を取得するヘルパー関数
+func getMapKeys(m map[string]interface{}) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// getValueType interface{}の型情報を取得するヘルパー関数
+func getValueType(v interface{}) string {
+	if v == nil {
+		return "nil"
+	}
+	return strings.ReplaceAll(strings.TrimPrefix(strings.TrimSuffix(strings.TrimPrefix(string(json.RawMessage(json.Marshal(v))), `"`), `"`), ""), " ", "_")
 }
 
 // getCognitoSubFromHeaders API Gatewayが設定する各種ヘッダーからCognito Subを取得
