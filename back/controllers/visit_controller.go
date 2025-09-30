@@ -24,47 +24,53 @@ type VisitController struct {
 
 // NewVisitController 新しい訪問コントローラーを作成する
 func NewVisitController() *VisitController {
-	log.Println("Initializing VisitController")
+	utils.LogInfo(context.Background(), "Initializing VisitController", nil)
+
+	// リポジトリの初期化（早期リターン）
+	userProfileRepo := repository.NewUserProfileRepository()
+	if userProfileRepo == nil {
+		utils.LogError(context.Background(), errors.New("failed to initialize UserProfileRepository"), "Initialization failed")
+		return nil
+	}
+
 	visitRepo := repository.NewVisitRepository()
 	if visitRepo == nil {
-		log.Println("Failed to initialize VisitRepository")
-	} else {
-		log.Println("VisitRepository created successfully")
+		utils.LogError(context.Background(), errors.New("failed to initialize VisitRepository"), "Initialization failed")
+		return nil
 	}
 
 	breweryRepo := repository.NewBreweryRepository()
 	if breweryRepo == nil {
-		log.Println("Failed to initialize BreweryRepository")
-	} else {
-		log.Println("BreweryRepository created successfully")
+		utils.LogError(context.Background(), errors.New("failed to initialize BreweryRepository"), "Initialization failed")
+		return nil
 	}
 
-	userProfileRepo := repository.NewUserProfileRepository()
-	if userProfileRepo == nil {
-		log.Println("Failed to initialize UserProfileRepository")
-	} else {
-		log.Println("UserProfileRepository created successfully")
+	// Usecaseの初期化（早期リターン）
+	userProfileUsecase := usecase.NewUserProfileUsecase(userProfileRepo)
+	if userProfileUsecase == nil {
+		utils.LogError(context.Background(), errors.New("failed to initialize UserProfileUsecase"), "Initialization failed")
+		return nil
 	}
 
 	visitUsecase := usecase.NewVisitUsecase(visitRepo, breweryRepo)
 	if visitUsecase == nil {
-		log.Println("Failed to initialize VisitUsecase")
-	} else {
-		log.Println("VisitUsecase created successfully")
+		utils.LogError(context.Background(), errors.New("failed to initialize VisitUsecase"), "Initialization failed")
+		return nil
 	}
 
-	userProfileUsecase := usecase.NewUserProfileUsecase(userProfileRepo)
-	if userProfileUsecase == nil {
-		log.Println("Failed to initialize UserProfileUsecase")
-	} else {
-		log.Println("UserProfileUsecase created successfully")
-	}
-
-	log.Println("VisitController initialized with usecases")
-	return &VisitController{
+	controller := &VisitController{
 		visitUsecase:       visitUsecase,
 		userProfileUsecase: userProfileUsecase,
 	}
+
+	utils.LogInfo(context.Background(), "VisitController initialized successfully", map[string]interface{}{
+		"usecases": map[string]bool{
+			"userProfile": userProfileUsecase != nil,
+			"visit":       visitUsecase != nil,
+		},
+	})
+
+	return controller
 }
 
 // CheckIn GPSを使用して醸造所にチェックインする
