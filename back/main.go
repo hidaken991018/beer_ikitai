@@ -88,7 +88,7 @@ func setupRoutes() {
 	// 訪問・チェックイン
 	visitController := controllers.NewVisitController()
 	beego.Router("/checkin", visitController, "post:CheckIn")
-	beego.Router("/visits", visitController, "get:GetVisits")
+	beego.Router("/visits", &controllers.VisitController{}, "get:GetVisits")
 	beego.Router("/visits/:visit_id", visitController, "get:GetVisit")
 }
 
