@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/astaxie/beego"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 )
 
 // BaseController 全てのコントローラーの基底クラス
@@ -103,14 +104,14 @@ func (c *BaseController) HandleInternalError(err error) {
 
 // GetCognitoSub API GatewayからCognito Sub情報を取得する
 func (c *BaseController) GetCognitoSub() (string, error) {
+	lc, _ := lambdacontext.FromContext(c.Ctx.Request.Context())
 	// デバッグ用環境情報ログ
 	utils.LogDebug(c.Ctx.Request.Context(), "Starting Cognito Sub authentication process", map[string]interface{}{
 		"run_mode":       beego.BConfig.RunMode,
 		"is_lambda":      c.isLambdaEnvironment(),
 		"request_method": c.Ctx.Request.Method,
 		"request_uri":    c.Ctx.Request.RequestURI,
-		"Request":        c.Ctx.Request,
-		"context":        c.Ctx,
+		"lambda_context": lc,
 	})
 
 	// 1. API Gateway Authorizer から設定されるヘッダーを確認
