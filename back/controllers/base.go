@@ -193,6 +193,8 @@ func (c *BaseController) GetCognitoSub() (string, error) {
 		"method": "jwt_extraction",
 	})
 
+	utils.LogInfo(c.Ctx.Request.Context(), "GetVisits called by user元")
+
 	return sub, nil
 }
 

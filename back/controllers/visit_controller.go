@@ -111,11 +111,12 @@ func (c *VisitController) CheckIn() {
 // @router /visits [get]
 func (c *VisitController) GetVisits() {
 	cognitoSub, err := c.GetCognitoSub()
+	utils.LogInfo(c.Ctx.Request.Context(), "GetVisits called by user1")
 	if err != nil {
 		c.ErrorResponse(401, "Unauthorized", "UNAUTHORIZED")
 		return
 	}
-	utils.LogInfo(c.Ctx.Request.Context(), "GetVisits called by user")
+	utils.LogInfo(c.Ctx.Request.Context(), "GetVisits called by user2")
 
 	// ユーザープロファイル取得
 	userProfile, err := c.userProfileUsecase.GetProfile(cognitoSub)
