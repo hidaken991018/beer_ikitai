@@ -1,7 +1,10 @@
 package controllers
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"mybeerlog/interfaces/dto"
 	"mybeerlog/utils"
 	"net/http"
@@ -109,12 +112,26 @@ func (c *BaseController) GetCognitoSub() (string, error) {
 		"is_lambda":      c.isLambdaEnvironment(),
 		"request_method": c.Ctx.Request.Method,
 		"request_uri":    c.Ctx.Request.RequestURI,
-		"Request":        c.Ctx.Request,
-		"context":        c.Ctx,
 	})
 
-	// 1. API Gateway Authorizer から設定されるヘッダーを確認
-	// Lambda Authorizerまたは Cognito Authorizer が設定するヘッダー
+	// 1. JWT トークンから直接 Cognito Sub を取得（本番環境での主要な方法）
+	authHeader := c.Ctx.Request.Header.Get("Authorization")
+	if authHeader != "" {
+		cognitoSub, err := c.getCognitoSubFromJWT(authHeader)
+		if err == nil && cognitoSub != "" {
+			utils.LogDebug(c.Ctx.Request.Context(), "Cognito Sub obtained from JWT token", map[string]interface{}{
+				"cognito_sub": cognitoSub,
+				"method":      "jwt_decode",
+			})
+			return cognitoSub, nil
+		} else if err != nil {
+			utils.LogDebug(c.Ctx.Request.Context(), "JWT decode failed", map[string]interface{}{
+				"error": err.Error(),
+			})
+		}
+	}
+
+	// 2. API Gateway Authorizer から設定されるヘッダーを確認（フォールバック）
 	cognitoSub := c.getCognitoSubFromHeaders()
 	if cognitoSub != "" {
 		utils.LogDebug(c.Ctx.Request.Context(), "Cognito Sub obtained from API Gateway headers", map[string]interface{}{
@@ -126,42 +143,39 @@ func (c *BaseController) GetCognitoSub() (string, error) {
 
 	utils.LogDebug(c.Ctx.Request.Context(), "API Gateway headers check completed - no Cognito Sub found", nil)
 
-	// 2. 開発環境でのテストトークン処理
-	if beego.BConfig.RunMode == "dev" {
+	// 3. 開発環境でのテストトークン処理
+	if beego.BConfig.RunMode == "dev" && authHeader != "" {
 		utils.LogDebug(c.Ctx.Request.Context(), "Attempting test token validation in dev environment", nil)
-		authHeader := c.Ctx.Request.Header.Get("Authorization")
-		if authHeader != "" {
-			parts := strings.Split(authHeader, " ")
-			utils.LogDebug(c.Ctx.Request.Context(), "Authorization header found", map[string]interface{}{
-				"header_parts_count": len(parts),
-				"auth_type":          parts[0],
-			})
-			if len(parts) == 2 && parts[0] == "Bearer" {
-				authManager := utils.GetTestAuthTokenManager()
-				if testCognitoSub, err := authManager.ValidateToken(parts[1]); err == nil {
-					utils.LogDebug(c.Ctx.Request.Context(), "Test token validated in dev environment", map[string]interface{}{
-						"cognito_sub": testCognitoSub,
-						"method":      "dev_test_token",
-					})
-					return testCognitoSub, nil
-				} else {
-					utils.LogDebug(c.Ctx.Request.Context(), "Test token validation failed", map[string]interface{}{
-						"error": err.Error(),
-					})
-				}
+		parts := strings.Split(authHeader, " ")
+		utils.LogDebug(c.Ctx.Request.Context(), "Authorization header found", map[string]interface{}{
+			"header_parts_count": len(parts),
+			"auth_type":          parts[0],
+		})
+		if len(parts) == 2 && parts[0] == "Bearer" {
+			authManager := utils.GetTestAuthTokenManager()
+			if testCognitoSub, err := authManager.ValidateToken(parts[1]); err == nil {
+				utils.LogDebug(c.Ctx.Request.Context(), "Test token validated in dev environment", map[string]interface{}{
+					"cognito_sub": testCognitoSub,
+					"method":      "dev_test_token",
+				})
+				return testCognitoSub, nil
 			} else {
-				utils.LogDebug(c.Ctx.Request.Context(), "Invalid Authorization header format", nil)
+				utils.LogDebug(c.Ctx.Request.Context(), "Test token validation failed", map[string]interface{}{
+					"error": err.Error(),
+				})
 			}
 		} else {
-			utils.LogDebug(c.Ctx.Request.Context(), "No Authorization header found in dev environment", nil)
+			utils.LogDebug(c.Ctx.Request.Context(), "Invalid Authorization header format", nil)
 		}
+	} else if beego.BConfig.RunMode == "dev" {
+		utils.LogDebug(c.Ctx.Request.Context(), "No Authorization header found in dev environment", nil)
 	} else {
 		utils.LogDebug(c.Ctx.Request.Context(), "Skipping test token validation - not in dev environment", map[string]interface{}{
 			"run_mode": beego.BConfig.RunMode,
 		})
 	}
 
-	// 3. 認証情報が取得できない場合のエラー（詳細情報付き）
+	// 4. 認証情報が取得できない場合のエラー（詳細情報付き）
 	c.logAuthenticationFailure()
 	return "", errors.New("authentication required: cognito sub not found")
 }
@@ -219,6 +233,87 @@ func (c *BaseController) getCognitoSubFromHeaders() string {
 	}
 
 	return ""
+}
+
+// getCognitoSubFromJWT Authorization ヘッダーの JWT トークンから Cognito Sub を取得する
+func (c *BaseController) getCognitoSubFromJWT(authHeader string) (string, error) {
+	// "Bearer " プレフィックスをチェック
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		return "", errors.New("invalid authorization header format")
+	}
+
+	// JWTトークンを取得
+	jwtToken := strings.TrimPrefix(authHeader, "Bearer ")
+	if jwtToken == "" {
+		return "", errors.New("empty JWT token")
+	}
+
+	// JWTトークンを "." で分割 (header.payload.signature)
+	parts := strings.Split(jwtToken, ".")
+	if len(parts) != 3 {
+		return "", errors.New("invalid JWT token format: expected 3 parts")
+	}
+
+	// ペイロード部分をBase64urlデコード
+	payload := parts[1]
+	
+	// Base64urlパディングを追加（必要に応じて）
+	if len(payload)%4 != 0 {
+		payload += strings.Repeat("=", 4-len(payload)%4)
+	}
+
+	// Base64urlデコード
+	decodedPayload, err := base64.URLEncoding.DecodeString(payload)
+	if err != nil {
+		utils.LogDebug(c.Ctx.Request.Context(), "JWT payload decode failed", map[string]interface{}{
+			"error":   err.Error(),
+			"payload": payload,
+		})
+		return "", errors.New("failed to decode JWT payload: " + err.Error())
+	}
+
+	// JSONパース
+	var claims map[string]interface{}
+	if err := json.Unmarshal(decodedPayload, &claims); err != nil {
+		utils.LogDebug(c.Ctx.Request.Context(), "JWT claims JSON parse failed", map[string]interface{}{
+			"error":   err.Error(),
+			"payload": string(decodedPayload),
+		})
+		return "", errors.New("failed to parse JWT claims: " + err.Error())
+	}
+
+	// "sub" クレームを取得
+	sub, exists := claims["sub"]
+	if !exists {
+		utils.LogDebug(c.Ctx.Request.Context(), "JWT sub claim not found", map[string]interface{}{
+			"claims": claims,
+		})
+		return "", errors.New("sub claim not found in JWT token")
+	}
+
+	// subを文字列型として取得
+	subStr, ok := sub.(string)
+	if !ok {
+		utils.LogDebug(c.Ctx.Request.Context(), "JWT sub claim is not a string", map[string]interface{}{
+			"sub_type":  fmt.Sprintf("%T", sub),
+			"sub_value": sub,
+		})
+		return "", errors.New("sub claim is not a string")
+	}
+
+	if subStr == "" {
+		return "", errors.New("sub claim is empty")
+	}
+
+	utils.LogDebug(c.Ctx.Request.Context(), "Successfully extracted Cognito Sub from JWT", map[string]interface{}{
+		"sub":            subStr,
+		"claims_count":   len(claims),
+		"has_iss":        claims["iss"] != nil,
+		"has_aud":        claims["aud"] != nil,
+		"has_exp":        claims["exp"] != nil,
+	})
+
+	return subStr, nil
 }
 
 // isLambdaEnvironment Lambda環境で実行されているかを判定する
