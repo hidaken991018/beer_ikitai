@@ -22,13 +22,14 @@ type VisitController struct {
 
 // NewVisitController 新しい訪問コントローラーを作成する
 func NewVisitController() *VisitController {
+	log.Println("Initializing VisitController")
 	visitRepo := repository.NewVisitRepository()
 	breweryRepo := repository.NewBreweryRepository()
 	userProfileRepo := repository.NewUserProfileRepository()
 
 	visitUsecase := usecase.NewVisitUsecase(visitRepo, breweryRepo)
 	userProfileUsecase := usecase.NewUserProfileUsecase(userProfileRepo)
-
+	log.Println("VisitController initialized with usecases")
 	return &VisitController{
 		visitUsecase:       visitUsecase,
 		userProfileUsecase: userProfileUsecase,
@@ -119,7 +120,7 @@ func (c *VisitController) GetVisits() {
 	}
 	utils.LogInfo(c.Ctx.Request.Context(), "GetVisits called by user2")
 	log.Printf("userProfileUsecase: %+v", c.userProfileUsecase)
-	utils.LogInfo(c.Ctx.Request.Context(), "userProfileUsecase", map[string]interface{}{"cognitoSub": c.userProfileUsecase})
+	utils.LogInfo(c.Ctx.Request.Context(), "userProfileUsecase", map[string]interface{}{"userProfileUsecase": c.userProfileUsecase})
 	// ユーザープロファイル取得
 	userProfile, err := c.userProfileUsecase.GetProfile(cognitoSub)
 	if err != nil {
