@@ -1,12 +1,12 @@
-name: Go Lint
+name: Backend Go Lint
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'back/**'
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'back/**'
 
@@ -17,33 +17,33 @@ jobs:
     defaults:
       run:
         working-directory: ./back
-    
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - uses: actions/setup-go@v4
-      with:
-        go-version: '1.21'
-        
-    - name: Cache Go modules
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-    
-    - name: Download dependencies
-      run: go mod download
-    
-    - name: Run golangci-lint
-      uses: golangci/golangci-lint-action@v3
-      with:
-        version: v1.54.2
-        working-directory: back
-        args: --timeout=5m
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.54.2
+          working-directory: back
+          args: --timeout=5m
 
   test:
     name: Test
@@ -51,29 +51,29 @@ jobs:
     defaults:
       run:
         working-directory: ./back
-    
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - uses: actions/setup-go@v4
-      with:
-        go-version: '1.21'
-        
-    - name: Cache Go modules
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cache/go-build
-          ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-    
-    - name: Download dependencies
-      run: go mod download
-    
-    - name: Run tests
-      run: go test -v ./...
-    
-    - name: Build
-      run: go build -v ./...
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Build
+        run: go build -v ./...

@@ -1,4 +1,4 @@
-name: Plan to PR
+name: Claude Code Plan to PR
 
 on:
   issues:

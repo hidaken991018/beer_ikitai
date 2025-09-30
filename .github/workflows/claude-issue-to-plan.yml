@@ -1,4 +1,4 @@
-name: Issue to Plan
+name: Claude Code Issue to Plan
 
 on:
   issues:
