@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"log"
 	"mybeerlog/domain/repository"
 	"mybeerlog/domain/usecase"
 	"mybeerlog/interfaces/dto"
@@ -117,7 +118,8 @@ func (c *VisitController) GetVisits() {
 		return
 	}
 	utils.LogInfo(c.Ctx.Request.Context(), "GetVisits called by user2")
-
+	log.Printf("userProfileUsecase: %+v", c.userProfileUsecase)
+	utils.LogInfo(c.Ctx.Request.Context(), "userProfileUsecase", map[string]interface{}{"cognitoSub": c.userProfileUsecase})
 	// ユーザープロファイル取得
 	userProfile, err := c.userProfileUsecase.GetProfile(cognitoSub)
 	if err != nil {
