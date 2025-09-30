@@ -24,16 +24,40 @@ type VisitController struct {
 func NewVisitController() *VisitController {
 	log.Println("Initializing VisitController")
 	visitRepo := repository.NewVisitRepository()
-	log.Println("VisitRepository initialized", visitRepo)
+	if visitRepo == nil {
+		log.Println("Failed to initialize VisitRepository")
+	} else {
+		log.Println("VisitRepository created successfully")
+	}
+
 	breweryRepo := repository.NewBreweryRepository()
-	log.Println("BreweryRepository initialized", breweryRepo)
+	if breweryRepo == nil {
+		log.Println("Failed to initialize BreweryRepository")
+	} else {
+		log.Println("BreweryRepository created successfully")
+	}
+
 	userProfileRepo := repository.NewUserProfileRepository()
-	log.Println("UserProfileRepository initialized", userProfileRepo)
+	if userProfileRepo == nil {
+		log.Println("Failed to initialize UserProfileRepository")
+	} else {
+		log.Println("UserProfileRepository created successfully")
+	}
 
 	visitUsecase := usecase.NewVisitUsecase(visitRepo, breweryRepo)
-	log.Println("VisitUsecase initialized", visitUsecase)
+	if visitUsecase == nil {
+		log.Println("Failed to initialize VisitUsecase")
+	} else {
+		log.Println("VisitUsecase created successfully")
+	}
+
 	userProfileUsecase := usecase.NewUserProfileUsecase(userProfileRepo)
-	log.Println("UserProfileUsecase initialized", userProfileUsecase)
+	if userProfileUsecase == nil {
+		log.Println("Failed to initialize UserProfileUsecase")
+	} else {
+		log.Println("UserProfileUsecase created successfully")
+	}
+
 	log.Println("VisitController initialized with usecases")
 	return &VisitController{
 		visitUsecase:       visitUsecase,
