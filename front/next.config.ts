@@ -19,16 +19,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-
-  // Proxy configuration for local development to resolve CORS issues
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'http://localhost:8080/:path*', // Beego backend
-      },
-    ];
-  },
 };
 
 export default nextConfig;
