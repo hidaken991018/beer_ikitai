@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"mybeerlog/domain/repository"
 	"mybeerlog/domain/usecase"
@@ -141,6 +143,31 @@ func (c *VisitController) CheckIn() {
 // @Failure 401 {object} dto.ErrorResponse
 // @router /visits [get]
 func (c *VisitController) GetVisits() {
+	if c == nil {
+		utils.LogError(context.Background(), errors.New("controller is nil"), "Controller initialization error")
+		return
+	}
+
+	// Usecaseのnullチェック
+	if c.userProfileUsecase == nil {
+		utils.LogError(c.Ctx.Request.Context(), errors.New("userProfileUsecase is nil"), "Usecase not initialized")
+		c.ErrorResponse(500, "Internal Server Error", "USECASE_NOT_INITIALIZED")
+		return
+	}
+
+	if c.visitUsecase == nil {
+		utils.LogError(c.Ctx.Request.Context(), errors.New("visitUsecase is nil"), "Usecase not initialized")
+		c.ErrorResponse(500, "Internal Server Error", "USECASE_NOT_INITIALIZED")
+		return
+	}
+
+	utils.LogInfo(c.Ctx.Request.Context(), "GetVisits called", map[string]interface{}{
+		"controller_status": "initialized",
+		"usecases_status": map[string]bool{
+			"userProfile": c.userProfileUsecase != nil,
+			"visit":       c.visitUsecase != nil,
+		},
+	})
 	log.Println("GetVisits called arg:", c)
 	cognitoSub, err := c.GetCognitoSub()
 	utils.LogInfo(c.Ctx.Request.Context(), "GetVisits called by user1")
