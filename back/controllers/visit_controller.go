@@ -24,11 +24,16 @@ type VisitController struct {
 func NewVisitController() *VisitController {
 	log.Println("Initializing VisitController")
 	visitRepo := repository.NewVisitRepository()
+	log.Println("VisitRepository initialized", visitRepo)
 	breweryRepo := repository.NewBreweryRepository()
+	log.Println("BreweryRepository initialized", breweryRepo)
 	userProfileRepo := repository.NewUserProfileRepository()
+	log.Println("UserProfileRepository initialized", userProfileRepo)
 
 	visitUsecase := usecase.NewVisitUsecase(visitRepo, breweryRepo)
+	log.Println("VisitUsecase initialized", visitUsecase)
 	userProfileUsecase := usecase.NewUserProfileUsecase(userProfileRepo)
+	log.Println("UserProfileUsecase initialized", userProfileUsecase)
 	log.Println("VisitController initialized with usecases")
 	return &VisitController{
 		visitUsecase:       visitUsecase,
