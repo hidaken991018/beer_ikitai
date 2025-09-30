@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/astaxie/beego"
-	"github.com/sirupsen/logrus"
 )
 
 // BaseController 全てのコントローラーの基底クラス
@@ -107,14 +106,9 @@ func (c *BaseController) HandleInternalError(err error) {
 
 // extractCognitoSubFromJWT JWT トークンから Cognito Sub を抽出する
 func (c *BaseController) extractCognitoSubFromJWT(authHeader string) (string, error) {
-	// "Bearer " プレフィックスを削除
-	token := strings.TrimPrefix(authHeader, "Bearer ")
-	if token == authHeader {
-		return "", fmt.Errorf("invalid authorization header format")
-	}
 
 	// JWT を '.' で分割（header.payload.signature）
-	parts := strings.Split(token, ".")
+	parts := strings.Split(authHeader, ".")
 	if len(parts) != 3 {
 		return "", fmt.Errorf("invalid JWT format: expected 3 parts, got %d", len(parts))
 	}
@@ -194,10 +188,10 @@ func (c *BaseController) GetCognitoSub() (string, error) {
 	}
 
 	// 成功ログを追加
-	utils.GetLogger().WithFields(logrus.Fields{
+	utils.LogInfo(c.Ctx.Request.Context(), "Successfully extracted Cognito Sub from JWT", map[string]interface{}{
 		"sub":    sub,
 		"method": "jwt_extraction",
-	}).Info("Successfully extracted Cognito Sub from JWT")
+	})
 
 	return sub, nil
 }
