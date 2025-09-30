@@ -54,6 +54,7 @@ jobs:
             mcp__github__update_pull_request,
             mcp__github__update_pull_request_branch,
             mcp__github__push_files,
+            mcp__github__get_file_contents
             mcp__awslabs.aws-documentation-mcp-server__get_aws_documentation,
             mcp__awslabs.aws-documentation-mcp-server__search_aws_documentation,
             mcp__context7__resolve-library-id,
