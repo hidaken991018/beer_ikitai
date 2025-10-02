@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"mybeerlog/domain/entity"
 	"mybeerlog/domain/repository"
 	"mybeerlog/domain/usecase"
 	"mybeerlog/interfaces/dto"
@@ -25,65 +24,65 @@ func NewBreweryController() *BreweryController {
 	}
 }
 
-// GetBreweries 醸造所の一覧を取得する
-// @Title Get Breweries
-// @Description Get list of breweries
-// @Param lat query float64 false "Latitude for location search"
-// @Param lng query float64 false "Longitude for location search"
-// @Param radius query float64 false "Search radius in km (default: 10)"
-// @Param limit query int false "Limit (default: 20, max: 100)"
-// @Param offset query int false "Offset (default: 0)"
-// @Success 200 {object} dto.BreweriesResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @router /breweries [get]
-func (c *BreweryController) GetBreweries() {
-	lat := c.GetFloatQuery("lat", 0)
-	lng := c.GetFloatQuery("lng", 0)
-	radius := c.GetFloatQuery("radius", 10.0)
-	limit := c.GetIntQuery("limit", 20)
-	offset := c.GetIntQuery("offset", 0)
+// // GetBreweries 醸造所の一覧を取得する
+// // @Title Get Breweries
+// // @Description Get list of breweries
+// // @Param lat query float64 false "Latitude for location search"
+// // @Param lng query float64 false "Longitude for location search"
+// // @Param radius query float64 false "Search radius in km (default: 10)"
+// // @Param limit query int false "Limit (default: 20, max: 100)"
+// // @Param offset query int false "Offset (default: 0)"
+// // @Success 200 {object} dto.BreweriesResponse
+// // @Failure 400 {object} dto.ErrorResponse
+// // @router /breweries [get]
+// func (c *BreweryController) GetBreweries() {
+// 	lat := c.GetFloatQuery("lat", 0)
+// 	lng := c.GetFloatQuery("lng", 0)
+// 	radius := c.GetFloatQuery("radius", 10.0)
+// 	limit := c.GetIntQuery("limit", 20)
+// 	offset := c.GetIntQuery("offset", 0)
 
-	// 認証チェック（認証済みユーザーのみ位置情報取得可能）
-	cognitoSub, err := c.GetCognitoSub()
-	isAuthenticated := err == nil && cognitoSub != ""
+// 	// 認証チェック（認証済みユーザーのみ位置情報取得可能）
+// 	cognitoSub, err := c.GetCognitoSub()
+// 	isAuthenticated := err == nil && cognitoSub != ""
 
-	var breweries []*entity.Brewery
-	var total int
+// 	var breweries []*entity.Brewery
+// 	var total int
 
-	if lat != 0 && lng != 0 {
-		// 位置情報による検索
-		breweries, total, err = c.breweryUsecase.GetBreweriesByLocation(lat, lng, radius, limit, offset)
-	} else {
-		// 全件取得
-		breweries, total, err = c.breweryUsecase.GetBreweries(limit, offset)
-	}
+// 	if lat != 0 && lng != 0 {
+// 		// 位置情報による検索
+// 		breweries, total, err = c.breweryUsecase.GetBreweriesByLocation(lat, lng, radius, limit, offset)
+// 	} else {
+// 		// 全件取得
+// 		breweries, total, err = c.breweryUsecase.GetBreweries(limit, offset)
+// 	}
 
-	if err != nil {
-		c.ErrorResponse(400, err.Error(), "FETCH_FAILED")
-		return
-	}
+// 	if err != nil {
+// 		c.ErrorResponse(400, err.Error(), "FETCH_FAILED")
+// 		return
+// 	}
 
-	var response interface{}
-	if isAuthenticated {
-		// 認証済みユーザー: フル情報
-		response = dto.BreweriesResponse{
-			Breweries: mapper.BreweryEntitiesToResponses(breweries),
-			Total:     total,
-		}
-	} else {
-		// ゲスト: 基本情報のみ
-		publicBreweries := mapper.BreweryEntitiesToPublicResponses(breweries)
-		response = struct {
-			Breweries []*dto.BreweryPublicResponse `json:"breweries"`
-			Total     int                          `json:"total"`
-		}{
-			Breweries: publicBreweries,
-			Total:     total,
-		}
-	}
+// 	var response interface{}
+// 	if isAuthenticated {
+// 		// 認証済みユーザー: フル情報
+// 		response = dto.BreweriesResponse{
+// 			Breweries: mapper.BreweryEntitiesToResponses(breweries),
+// 			Total:     total,
+// 		}
+// 	} else {
+// 		// ゲスト: 基本情報のみ
+// 		publicBreweries := mapper.BreweryEntitiesToPublicResponses(breweries)
+// 		response = struct {
+// 			Breweries []*dto.BreweryPublicResponse `json:"breweries"`
+// 			Total     int                          `json:"total"`
+// 		}{
+// 			Breweries: publicBreweries,
+// 			Total:     total,
+// 		}
+// 	}
 
-	c.JSONResponse(response)
-}
+// 	c.JSONResponse(response)
+// }
 
 // CreateBrewery 新しい醸造所を作成する（管理者のみ）
 // @Title Create Brewery

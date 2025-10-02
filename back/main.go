@@ -73,23 +73,24 @@ func setupMiddleware() {
 
 // setupRoutes ルーティングを設定する
 func setupRoutes() {
-	// ヘルスチェック
-	beego.Router("/health", &controllers.HealthController{})
+	// // ヘルスチェック
+	// beego.Router("/health", &controllers.HealthController{})
 
-	// ユーザープロファイル管理
-	userController := controllers.NewUserController()
-	beego.Router("/users/profile", userController, "get:GetProfile;post:CreateProfile;put:UpdateProfile")
+	// // ユーザープロファイル管理
+	// userController := controllers.NewUserController()
+	// beego.Router("/users/profile", userController, "get:GetProfile;post:CreateProfile;put:UpdateProfile")
 
 	// 醸造所管理
 	breweryController := controllers.NewBreweryController()
-	beego.Router("/breweries", breweryController, "get:GetBreweries;post:CreateBrewery")
+	beego.Router("/breweries", &controllers.GetBrewerisController{}, "get:GetBreweries")
+	beego.Router("/breweries", breweryController, "post:CreateBrewery")
 	beego.Router("/breweries/:brewery_id", breweryController, "get:GetBrewery")
 
-	// 訪問・チェックイン
-	visitController := controllers.NewVisitController()
-	beego.Router("/checkin", visitController, "post:CheckIn")
-	beego.Router("/visits", visitController, "get:GetVisits")
-	beego.Router("/visits/:visit_id", visitController, "get:GetVisit")
+	// // 訪問・チェックイン
+	// visitController := controllers.NewVisitController()
+	// beego.Router("/checkin", visitController, "post:CheckIn")
+	// beego.Router("/visits", visitController, "get:GetVisits")
+	// beego.Router("/visits/:visit_id", visitController, "get:GetVisit")
 }
 
 // Handler Lambda ハンドラー関数
