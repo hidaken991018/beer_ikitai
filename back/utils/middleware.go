@@ -140,13 +140,13 @@ func PanicRecoveryMiddleware(ctx *beegoCtx.Context) {
 // CORSMiddleware CORS対応ミドルウェア
 func CORSMiddleware(ctx *beegoCtx.Context) {
 	// 環境に応じたCORS設定
-	allowedOrigins := getAllowedOrigins()
-	origin := ctx.Request.Header.Get("Origin")
+	// allowedOrigins := getAllowedOrigins()
+	// origin := ctx.Request.Header.Get("Origin")
 
 	// オリジンチェック
-	if isOriginAllowed(origin, allowedOrigins) {
-		ctx.Output.Header("Access-Control-Allow-Origin", origin)
-	}
+	// if isOriginAllowed(origin, allowedOrigins) {
+	ctx.Output.Header("Access-Control-Allow-Origin", "*")
+	// }
 
 	ctx.Output.Header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
 	ctx.Output.Header("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Request-ID")
