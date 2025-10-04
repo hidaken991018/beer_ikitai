@@ -147,3 +147,9 @@ func SecurityHeadersMiddleware(ctx *beegoCtx.Context) {
 		ctx.Output.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 	}
 }
+
+// CORSMiddleware CORS設定ミドルウェア
+func CORSMiddleware(ctx *beegoCtx.Context) {
+	// NOTE: API GatewayでCORS設定を行うため、ここでは全オリジンを許可
+	ctx.Output.Header("Access-Control-Allow-Origin", "*")
+}
