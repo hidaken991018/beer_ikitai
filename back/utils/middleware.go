@@ -148,16 +148,16 @@ func CORSMiddleware(ctx *beegoCtx.Context) {
 	ctx.Output.Header("Access-Control-Allow-Origin", "*")
 	// }
 
-	ctx.Output.Header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
-	ctx.Output.Header("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Request-ID")
-	ctx.Output.Header("Access-Control-Allow-Credentials", "true")
-	ctx.Output.Header("Access-Control-Max-Age", "3600")
+	// ctx.Output.Header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+	// ctx.Output.Header("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Request-ID")
+	// ctx.Output.Header("Access-Control-Allow-Credentials", "true")
+	// ctx.Output.Header("Access-Control-Max-Age", "3600")
 
-	// プリフライトリクエストの処理
-	if ctx.Input.Method() == "OPTIONS" {
-		ctx.Output.SetStatus(http.StatusOK)
-		return
-	}
+	// // プリフライトリクエストの処理
+	// if ctx.Input.Method() == "OPTIONS" {
+	// 	ctx.Output.SetStatus(http.StatusOK)
+	// 	return
+	// }
 }
 
 // SecurityHeadersMiddleware セキュリティヘッダー設定ミドルウェア
