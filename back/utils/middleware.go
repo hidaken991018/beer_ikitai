@@ -9,8 +9,10 @@ import (
 	"mybeerlog/interfaces/dto"
 	"net/http"
 	"runtime"
+	"strings"
 	"time"
 
+	"github.com/astaxie/beego"
 	beegoCtx "github.com/astaxie/beego/context"
 	"github.com/sirupsen/logrus"
 )
@@ -135,6 +137,29 @@ func PanicRecoveryMiddleware(ctx *beegoCtx.Context) {
 	}()
 }
 
+// CORSMiddleware CORS対応ミドルウェア
+func CORSMiddleware(ctx *beegoCtx.Context) {
+	// 環境に応じたCORS設定
+	allowedOrigins := getAllowedOrigins()
+	origin := ctx.Request.Header.Get("Origin")
+
+	// オリジンチェック
+	if isOriginAllowed(origin, allowedOrigins) {
+		ctx.Output.Header("Access-Control-Allow-Origin", origin)
+	}
+
+	ctx.Output.Header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+	ctx.Output.Header("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Request-ID")
+	ctx.Output.Header("Access-Control-Allow-Credentials", "true")
+	ctx.Output.Header("Access-Control-Max-Age", "3600")
+
+	// プリフライトリクエストの処理
+	if ctx.Input.Method() == "OPTIONS" {
+		ctx.Output.SetStatus(http.StatusOK)
+		return
+	}
+}
+
 // SecurityHeadersMiddleware セキュリティヘッダー設定ミドルウェア
 func SecurityHeadersMiddleware(ctx *beegoCtx.Context) {
 	ctx.Output.Header("X-Content-Type-Options", "nosniff")
@@ -146,4 +171,57 @@ func SecurityHeadersMiddleware(ctx *beegoCtx.Context) {
 	if ctx.Request.Header.Get("X-Forwarded-Proto") == "https" || ctx.Request.TLS != nil {
 		ctx.Output.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 	}
+}
+
+// getAllowedOrigins 環境に応じた許可オリジンを取得
+func getAllowedOrigins() []string {
+	// 環境変数から許可オリジンを取得
+	allowedOriginsEnv := getEnvOrDefault("ALLOWED_ORIGINS", "")
+
+	if allowedOriginsEnv != "" {
+		// カンマ区切りで複数オリジンを指定可能
+		origins := []string{}
+		for _, origin := range strings.Split(allowedOriginsEnv, ",") {
+			origins = append(origins, strings.TrimSpace(origin))
+		}
+		return origins
+	}
+
+	// デフォルト設定（環境別）
+	runMode := beego.BConfig.RunMode
+	switch runMode {
+	case "dev":
+		return []string{
+			"http://localhost:3000",
+			"http://localhost:8080",
+			"http://127.0.0.1:3000",
+			"http://127.0.0.1:8080",
+		}
+	case "test":
+		return []string{
+			"http://localhost:3000",
+		}
+	case "prod":
+		// 本番環境では具体的なドメインを指定
+		return []string{
+			"https://yourdomain.com",
+			"https://www.yourdomain.com",
+		}
+	default:
+		return []string{}
+	}
+}
+
+// isOriginAllowed オリジンが許可されているかチェック
+func isOriginAllowed(origin string, allowedOrigins []string) bool {
+	if origin == "" {
+		return false
+	}
+
+	for _, allowed := range allowedOrigins {
+		if origin == allowed {
+			return true
+		}
+	}
+	return false
 }

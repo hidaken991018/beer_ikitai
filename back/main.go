@@ -69,6 +69,8 @@ func setupMiddleware() {
 	// 3. セキュリティヘッダーミドルウェア
 	beego.InsertFilter("*", beego.BeforeRouter, utils.SecurityHeadersMiddleware)
 
+	// 4. CORS ミドルウェア
+	beego.InsertFilter("*", beego.BeforeRouter, utils.CORSMiddleware)
 }
 
 // setupRoutes ルーティングを設定する
