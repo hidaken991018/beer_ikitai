@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"mybeerlog/controllers"
 	"mybeerlog/models"
 	"mybeerlog/utils"
@@ -28,9 +29,14 @@ func init() {
 	dbSSLMode := getEnvOrDefault("DB_SSLMODE", "disable")
 
 	// データベース接続設定
+
+	// ドライバーの登録
+	orm.RegisterDriver("postgres", orm.DRPostgres)
+
 	// sslmodeを環境変数で指定可能に
 	// 例: DB_SSLMODE=disable もしくは require など
 	dataSource := "user=" + dbUser + " password=" + dbPass + " dbname=" + dbName + " host=" + dbHost + " port=" + dbPort + " sslmode=" + dbSSLMode
+	fmt.Print("DataSource: ", dataSource, "\n")
 
 	err := orm.RegisterDataBase("default", "postgres", dataSource)
 	if err != nil {
