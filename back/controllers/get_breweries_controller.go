@@ -9,7 +9,8 @@ import (
 // GetBreweriesController APIのヘルスチェックを処理するコントローラー
 type GetBreweriesController struct {
 	BaseController
-	UserID int
+	UserID      int
+	breweryRepo repository.BreweryRepository
 }
 
 // GetBreweries 醸造所の一覧を取得する
@@ -31,8 +32,10 @@ func (c *GetBreweriesController) GetBreweries() {
 	limit := c.GetIntQuery("limit", 20)
 	offset := c.GetIntQuery("offset", 0)
 
-	r := repository.NewBreweryRepository()
-	repos, a, b := r.GetAll(limit, offset)
+	// r := repository.NewBreweryRepository()
+	// repos, a, b := r.GetAll(limit, offset)
+	c.breweryRepo = repository.NewBreweryRepository()
+	repos, a, b := c.breweryRepo.GetAll(limit, offset)
 	fmt.Println("repos", repos, a, b)
 
 	type Temp struct {
