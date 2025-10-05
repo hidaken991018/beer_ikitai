@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"mybeerlog/domain/repository"
 )
 
 // GetBreweriesController APIのヘルスチェックを処理するコントローラー
@@ -29,6 +30,10 @@ func (c *GetBreweriesController) GetBreweries() {
 	radius := c.GetFloatQuery("radius", 10.0)
 	limit := c.GetIntQuery("limit", 20)
 	offset := c.GetIntQuery("offset", 0)
+
+	r := repository.NewBreweryRepository()
+	repos, a, b := r.GetAll(limit, offset)
+	fmt.Println("repos", repos, a, b)
 
 	type Temp struct {
 		Lat    float64 `json:"lat"`
