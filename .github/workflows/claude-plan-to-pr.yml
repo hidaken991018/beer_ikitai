@@ -16,25 +16,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Substitute variables in prompt file
-        run: |
-          sed -e 's|\${REPOSITORY}|${{ github.repository }}|g' \
-              -e 's|\${ISSUE_NUMBER}|${{ github.event.issue.number }}|g' \
-              .github/prompts/implementation-prompt.md > ${{ runner.temp }}/implementation-prompt-processed.md
 
       - name: Run Implementation
         uses: anthropics/claude-code-base-action@beta
         with:
-          prompt_file: ${{ runner.temp }}/implementation-prompt-processed.md
+          prompt_direct: '/implementation ${{ github.repository }} ${{ github.event.issue.number }}'
           allowed_tools: |
             WebFetch,
             WebSearch,
@@ -55,8 +41,6 @@ jobs:
             mcp__github__update_pull_request_branch,
             mcp__github__push_files,
             mcp__github__get_file_contents,
-            mcp__awslabs.aws-documentation-mcp-server__get_aws_documentation,
-            mcp__awslabs.aws-documentation-mcp-server__search_aws_documentation,
             mcp__context7__resolve-library-id,
             mcp__context7__get-library-docs
           mcp_config: |
@@ -85,6 +69,7 @@ jobs:
             }
 
           timeout_minutes: '20'
+          max_turns: '10'
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
