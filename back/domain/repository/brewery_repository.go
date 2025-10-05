@@ -49,16 +49,16 @@ func (r *beegoBreweryRepository) GetAll(limit, offset int) ([]*entity.Brewery, i
 	fmt.Println("QuerySeter created:", qs)
 
 	// 総数取得
-	total, err := qs.Count()
-	if err != nil {
-		return nil, 0, err
-	}
+	// total, err := qs.Count()
+	// if err != nil {
+	// 	return nil, 0, err
+	// }
 
-	// ページネーション
-	_, err = qs.Limit(limit, offset).All(&models)
-	if err != nil {
-		return nil, 0, err
-	}
+	// // ページネーション
+	// _, err = qs.Limit(limit, offset).All(&models)
+	// if err != nil {
+	// 	return nil, 0, err
+	// }
 
 	entities := make([]*entity.Brewery, len(models))
 	fmt.Println("Start converting models to entities")
@@ -71,7 +71,7 @@ func (r *beegoBreweryRepository) GetAll(limit, offset int) ([]*entity.Brewery, i
 	}
 	fmt.Print("End converting models to entities")
 
-	return entities, int(total), nil
+	return entities, int(11), nil
 }
 
 // GetByLocation 位置情報で醸造所を検索する
