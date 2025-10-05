@@ -97,7 +97,7 @@ func (c *BreweryController) GetBreweries() {
 func (c *BreweryController) CreateBrewery() {
 	_, err := c.GetCognitoSub()
 	if err != nil {
-		c.ErrorResponse(404, "User profile not found", "PROFILE_NOT_FOUND")
+		c.ErrorResponse(400, "User profile not found", "PROFILE_NOT_FOUND")
 		return
 	}
 

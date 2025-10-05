@@ -52,7 +52,7 @@ func (c *VisitController) CheckIn() {
 	// ユーザープロファイル取得
 	userProfile, err := c.UserProfileUsecase.GetProfile(cognitoSub)
 	if err != nil {
-		c.ErrorResponse(404, "User profile not found", "PROFILE_NOT_FOUND")
+		c.ErrorResponse(400, "User profile not found", "PROFILE_NOT_FOUND")
 		return
 	}
 
@@ -118,7 +118,7 @@ func (c *VisitController) GetVisits() {
 	// ユーザープロファイル取得
 	userProfile, err := c.UserProfileUsecase.GetProfile(cognitoSub)
 	if err != nil {
-		c.ErrorResponse(404, "User profile not found", "PROFILE_NOT_FOUND")
+		c.ErrorResponse(400, "User profile not found", "PROFILE_NOT_FOUND")
 		return
 	}
 
@@ -159,7 +159,7 @@ func (c *VisitController) GetVisit() {
 	// ユーザープロファイル取得
 	userProfile, err := c.UserProfileUsecase.GetProfile(cognitoSub)
 	if err != nil {
-		c.ErrorResponse(404, "User profile not found", "PROFILE_NOT_FOUND")
+		c.ErrorResponse(400, "User profile not found", "PROFILE_NOT_FOUND")
 		return
 	}
 
