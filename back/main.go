@@ -85,7 +85,7 @@ func setupRoutes() {
 
 	// 醸造所管理
 	breweryController := controllers.NewBreweryController()
-	beego.Router("/breweries", &controllers.GetBrewerisController{}, "get:GetBreweries")
+	beego.Router("/breweries", &controllers.GetBreweriesController{}, "get:GetBreweries")
 	beego.Router("/breweries", breweryController, "post:CreateBrewery")
 	beego.Router("/breweries/:brewery_id", breweryController, "get:GetBrewery")
 

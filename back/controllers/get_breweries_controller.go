@@ -5,8 +5,8 @@ import (
 	"fmt"
 )
 
-// GetBrewerisController APIのヘルスチェックを処理するコントローラー
-type GetBrewerisController struct {
+// GetBreweriesController APIのヘルスチェックを処理するコントローラー
+type GetBreweriesController struct {
 	BaseController
 }
 
@@ -21,7 +21,7 @@ type GetBrewerisController struct {
 // @Success 200 {object} dto.BreweriesResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @router /breweries [get]
-func (c *GetBrewerisController) GetBreweries() {
+func (c *GetBreweriesController) GetBreweries() {
 	lat := c.GetFloatQuery("lat", 0)
 	lng := c.GetFloatQuery("lng", 0)
 	radius := c.GetFloatQuery("radius", 10.0)
