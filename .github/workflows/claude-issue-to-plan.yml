@@ -15,25 +15,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install uv
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Substitute variables in prompt file
-        run: |
-          sed -e 's|\${REPOSITORY}|${{ github.repository }}|g' \
-              -e 's|\${ISSUE_NUMBER}|${{ github.event.issue.number }}|g' \
-              .github/prompts/plan-prompt.md > ${{ runner.temp }}/plan-prompt-processed.md
 
       - name: Run plan
         uses: anthropics/claude-code-base-action@beta
         with:
-          prompt_file: ${{ runner.temp }}/plan-prompt-processed.md
+          prompt_direct: '/plan-prompt ${{ github.repository }} ${{ github.event.issue.number }}'
           allowed_tools: |
             WebFetch,
             WebSearch,
@@ -75,6 +61,7 @@ jobs:
             }
 
           timeout_minutes: '20'
+          max_turns: '10'
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
