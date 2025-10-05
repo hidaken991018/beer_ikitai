@@ -44,6 +44,12 @@ func init() {
 		new(models.Visit),
 	)
 
+	// テーブル自動作成
+	syncDBErr := orm.RunSyncdb("default", false, true)
+	if syncDBErr != nil {
+		utils.Logger.WithError(err).Fatal("Database sync failed")
+	}
+
 	// Lambda 環境では run.mode を production に設定
 	beego.BConfig.RunMode = beego.PROD
 
