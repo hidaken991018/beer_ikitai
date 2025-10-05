@@ -83,7 +83,7 @@ func setupMiddleware() {
 // setupRoutes ルーティングを設定する
 func setupRoutes() {
 	// // ヘルスチェック
-	// beego.Router("/health", &controllers.HealthController{})
+	beego.Router("/health", &controllers.HealthController{})
 
 	// // ユーザープロファイル管理
 	// userController := controllers.NewUserController()
