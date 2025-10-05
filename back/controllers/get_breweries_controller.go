@@ -13,6 +13,13 @@ type GetBreweriesController struct {
 	breweryRepo repository.BreweryRepository
 }
 
+func NewGetBreweriesController(userID int, breweryRepo repository.BreweryRepository) *GetBreweriesController {
+	return &GetBreweriesController{
+		UserID:      userID,
+		breweryRepo: breweryRepo,
+	}
+}
+
 // GetBreweries 醸造所の一覧を取得する
 // @Title Get Breweries
 // @Description Get list of breweries
@@ -34,7 +41,7 @@ func (c *GetBreweriesController) GetBreweries() {
 
 	// r := repository.NewBreweryRepository()
 	// repos, a, b := r.GetAll(limit, offset)
-	c.breweryRepo = repository.NewBreweryRepository()
+	// c.breweryRepo = repository.NewBreweryRepository()
 	repos, a, b := c.breweryRepo.GetAll(limit, offset)
 	fmt.Println("repos", repos, a, b)
 
