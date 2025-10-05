@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"mybeerlog/domain/entity"
 	"mybeerlog/models"
 	"time"
@@ -43,7 +44,9 @@ func (r *beegoBreweryRepository) GetByID(id int) (*entity.Brewery, error) {
 func (r *beegoBreweryRepository) GetAll(limit, offset int) ([]*entity.Brewery, int, error) {
 	var models []*models.Brewery
 
+	fmt.Println("GetAll called with limit:", limit, "offset:", offset)
 	qs := r.orm.QueryTable("brewery").OrderBy("-created_at")
+	fmt.Println("QuerySeter created:", qs)
 
 	// 総数取得
 	total, err := qs.Count()
