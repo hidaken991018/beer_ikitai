@@ -61,6 +61,7 @@ func (r *beegoBreweryRepository) GetAll(limit, offset int) ([]*entity.Brewery, i
 	}
 
 	entities := make([]*entity.Brewery, len(models))
+	fmt.Println("Start converting models to entities")
 	for i, model := range models {
 		entity, err := r.modelToEntity(model)
 		if err != nil {
@@ -68,6 +69,7 @@ func (r *beegoBreweryRepository) GetAll(limit, offset int) ([]*entity.Brewery, i
 		}
 		entities[i] = entity
 	}
+	fmt.Print("End converting models to entities")
 
 	return entities, int(total), nil
 }
