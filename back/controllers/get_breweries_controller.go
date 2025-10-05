@@ -8,6 +8,7 @@ import (
 // GetBreweriesController APIのヘルスチェックを処理するコントローラー
 type GetBreweriesController struct {
 	BaseController
+	UserID int
 }
 
 // GetBreweries 醸造所の一覧を取得する
@@ -21,6 +22,7 @@ type GetBreweriesController struct {
 // @Success 200 {object} dto.BreweriesResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @router /breweries [get]
+
 func (c *GetBreweriesController) GetBreweries() {
 	lat := c.GetFloatQuery("lat", 0)
 	lng := c.GetFloatQuery("lng", 0)
@@ -39,6 +41,7 @@ func (c *GetBreweriesController) GetBreweries() {
 	temp := Temp{Lat: lat, Lng: lng, Radius: radius, Limit: limit, Offset: offset}
 	t, _ := json.MarshalIndent(temp, "", "    ")
 	fmt.Println(string(t))
+	fmt.Println("UserId:", c.UserID)
 
 	// 認証チェック（認証済みユーザーのみ位置情報取得可能）
 	cognitoSub, _ := c.GetCognitoSub()
