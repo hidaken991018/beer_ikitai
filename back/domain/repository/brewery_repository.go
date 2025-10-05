@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/astaxie/beego/orm"
+	_ "github.com/lib/pq"
 )
 
 // BreweryRepository 醸造所のデータアクセスインターフェースを定義する
