@@ -46,13 +46,14 @@ func (r *beegoBreweryRepository) GetAll(limit, offset int) ([]*entity.Brewery, i
 
 	fmt.Println("GetAll called with limit:", limit, "offset:", offset)
 	qs := r.orm.QueryTable("brewery").OrderBy("-created_at")
-	fmt.Println("QuerySeter created:", qs)
+	fmt.Println("QuerySeter created")
 
 	// 総数取得
-	// total, err := qs.Count()
-	// if err != nil {
-	// 	return nil, 0, err
-	// }
+	total, err := qs.Count()
+	if err != nil {
+		fmt.Println("Error counting breweries:", err)
+		return nil, 0, err
+	}
 
 	// // ページネーション
 	// _, err = qs.Limit(limit, offset).All(&models)
@@ -71,7 +72,7 @@ func (r *beegoBreweryRepository) GetAll(limit, offset int) ([]*entity.Brewery, i
 	}
 	fmt.Print("End converting models to entities")
 
-	return entities, int(11), nil
+	return entities, int(total), nil
 }
 
 // GetByLocation 位置情報で醸造所を検索する
