@@ -50,6 +50,11 @@ func init() {
 		new(models.Visit),
 	)
 
+	syncDBErr := orm.RunSyncdb("default", false, true)
+	if syncDBErr != nil {
+		fmt.Println(syncDBErr)
+	}
+
 	// Lambda 環境では run.mode を production に設定
 	beego.BConfig.RunMode = beego.PROD
 
