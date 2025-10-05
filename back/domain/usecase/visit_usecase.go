@@ -9,8 +9,8 @@ import (
 
 // visitUsecase 訪問ユースケースの実装
 type visitUsecase struct {
-	visitRepo   repository.VisitRepository
-	breweryRepo repository.BreweryRepository
+	VisitRepo   repository.VisitRepository
+	BreweryRepo repository.BreweryRepository
 }
 
 // VisitUsecase 訪問のビジネスロジックインターフェースを定義する
@@ -23,8 +23,8 @@ type VisitUsecase interface {
 // NewVisitUsecase 新しい訪問ユースケースを作成する
 func NewVisitUsecase(visitRepo repository.VisitRepository, breweryRepo repository.BreweryRepository) VisitUsecase {
 	return &visitUsecase{
-		visitRepo:   visitRepo,
-		breweryRepo: breweryRepo,
+		VisitRepo:   visitRepo,
+		BreweryRepo: breweryRepo,
 	}
 }
 
@@ -35,7 +35,7 @@ func (v *visitUsecase) CheckIn(userProfileID, breweryID int, lat, lng, maxDistan
 	}
 
 	// 醸造所情報取得
-	brewery, err := v.breweryRepo.GetByID(breweryID)
+	brewery, err := v.BreweryRepo.GetByID(breweryID)
 	if err != nil {
 		return nil, errors.New("brewery not found")
 	}
@@ -50,7 +50,7 @@ func (v *visitUsecase) CheckIn(userProfileID, breweryID int, lat, lng, maxDistan
 	}
 
 	// 重複チェックイン防止（1時間以内の同一醸造所チェックイン禁止）
-	recent, _, err := v.visitRepo.GetByUserProfileAndBrewery(userProfileID, breweryID, 1, 0)
+	recent, _, err := v.VisitRepo.GetByUserProfileAndBrewery(userProfileID, breweryID, 1, 0)
 	if err == nil && len(recent) > 0 {
 		lastVisit := recent[0]
 		if time.Since(lastVisit.VisitedAt()) < time.Hour {
@@ -64,7 +64,7 @@ func (v *visitUsecase) CheckIn(userProfileID, breweryID int, lat, lng, maxDistan
 		return nil, err
 	}
 
-	createdVisit, err := v.visitRepo.Create(visit)
+	createdVisit, err := v.VisitRepo.Create(visit)
 	if err != nil {
 		return nil, err
 	}
@@ -89,10 +89,10 @@ func (v *visitUsecase) GetVisitHistory(userProfileID int, breweryID *int, limit,
 	}
 
 	if breweryID != nil && *breweryID > 0 {
-		return v.visitRepo.GetByUserProfileAndBrewery(userProfileID, *breweryID, limit, offset)
+		return v.VisitRepo.GetByUserProfileAndBrewery(userProfileID, *breweryID, limit, offset)
 	}
 
-	return v.visitRepo.GetByUserProfile(userProfileID, limit, offset)
+	return v.VisitRepo.GetByUserProfile(userProfileID, limit, offset)
 }
 
 // GetVisit 訪問を取得する
@@ -101,7 +101,7 @@ func (v *visitUsecase) GetVisit(id int, userProfileID int) (*entity.Visit, error
 		return nil, errors.New("invalid visit id or user profile id")
 	}
 
-	visit, err := v.visitRepo.GetByID(id)
+	visit, err := v.VisitRepo.GetByID(id)
 	if err != nil {
 		return nil, err
 	}

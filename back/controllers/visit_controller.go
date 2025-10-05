@@ -14,8 +14,8 @@ import (
 // VisitController 訪問関連のHTTPリクエストを処理するコントローラー
 type VisitController struct {
 	BaseController
-	visitUsecase       usecase.VisitUsecase
-	userProfileUsecase usecase.UserProfileUsecase
+	VisitUsecase       usecase.VisitUsecase
+	UserProfileUsecase usecase.UserProfileUsecase
 }
 
 // NewVisitController 新しい訪問コントローラーを作成する
@@ -28,8 +28,8 @@ func NewVisitController() *VisitController {
 	userProfileUsecase := usecase.NewUserProfileUsecase(userProfileRepo)
 
 	return &VisitController{
-		visitUsecase:       visitUsecase,
-		userProfileUsecase: userProfileUsecase,
+		VisitUsecase:       visitUsecase,
+		UserProfileUsecase: userProfileUsecase,
 	}
 }
 
@@ -50,7 +50,7 @@ func (c *VisitController) CheckIn() {
 	}
 
 	// ユーザープロファイル取得
-	userProfile, err := c.userProfileUsecase.GetProfile(cognitoSub)
+	userProfile, err := c.UserProfileUsecase.GetProfile(cognitoSub)
 	if err != nil {
 		c.ErrorResponse(404, "User profile not found", "PROFILE_NOT_FOUND")
 		return
@@ -68,7 +68,7 @@ func (c *VisitController) CheckIn() {
 		maxDistance = 100.0 // デフォルト100m
 	}
 
-	visit, err := c.visitUsecase.CheckIn(
+	visit, err := c.VisitUsecase.CheckIn(
 		userProfile.ID(),
 		request.BreweryID,
 		request.Latitude,
@@ -116,7 +116,7 @@ func (c *VisitController) GetVisits() {
 	}
 
 	// ユーザープロファイル取得
-	userProfile, err := c.userProfileUsecase.GetProfile(cognitoSub)
+	userProfile, err := c.UserProfileUsecase.GetProfile(cognitoSub)
 	if err != nil {
 		c.ErrorResponse(404, "User profile not found", "PROFILE_NOT_FOUND")
 		return
@@ -126,7 +126,7 @@ func (c *VisitController) GetVisits() {
 	limit := c.GetIntQuery("limit", 20)
 	offset := c.GetIntQuery("offset", 0)
 
-	visits, total, err := c.visitUsecase.GetVisitHistory(userProfile.ID(), &breweryID, limit, offset)
+	visits, total, err := c.VisitUsecase.GetVisitHistory(userProfile.ID(), &breweryID, limit, offset)
 	if err != nil {
 		c.ErrorResponse(400, err.Error(), "FETCH_FAILED")
 		return
@@ -157,7 +157,7 @@ func (c *VisitController) GetVisit() {
 	}
 
 	// ユーザープロファイル取得
-	userProfile, err := c.userProfileUsecase.GetProfile(cognitoSub)
+	userProfile, err := c.UserProfileUsecase.GetProfile(cognitoSub)
 	if err != nil {
 		c.ErrorResponse(404, "User profile not found", "PROFILE_NOT_FOUND")
 		return
@@ -170,7 +170,7 @@ func (c *VisitController) GetVisit() {
 		return
 	}
 
-	visit, err := c.visitUsecase.GetVisit(visitID, (userProfile.ID()))
+	visit, err := c.VisitUsecase.GetVisit(visitID, (userProfile.ID()))
 	if err != nil {
 		switch err.Error() {
 		case "access denied":

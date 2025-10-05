@@ -9,13 +9,13 @@ import (
 // TestController ローカル開発用のテストユーティリティを提供するコントローラー
 type TestController struct {
 	BaseController
-	authManager *utils.TestAuthTokenManager
+	AuthManager *utils.TestAuthTokenManager
 }
 
 // NewTestController 新しいTestControllerインスタンスを作成する
 func NewTestController() *TestController {
 	return &TestController{
-		authManager: utils.GetTestAuthTokenManager(),
+		AuthManager: utils.GetTestAuthTokenManager(),
 	}
 }
 
@@ -36,11 +36,11 @@ func (c *TestController) GenerateToken() {
 	// Cognito SUBをクエリパラメータから取得、なければデフォルト生成
 	cognitoSub := c.GetString("cognito_sub")
 	if cognitoSub == "" {
-		cognitoSub = c.authManager.GetDefaultTestCognitoSub()
+		cognitoSub = c.AuthManager.GetDefaultTestCognitoSub()
 	}
 
 	// テストトークン生成
-	token := c.authManager.GenerateToken(cognitoSub)
+	token := c.AuthManager.GenerateToken(cognitoSub)
 
 	c.JSONResponse(token)
 }
@@ -83,7 +83,7 @@ func (c *TestController) getCognitoSub() string {
 
 	// 開発環境ではテストトークンも受け入れる
 	if beego.BConfig.RunMode == "dev" {
-		if cognitoSub, err := c.authManager.ValidateToken(token); err == nil {
+		if cognitoSub, err := c.AuthManager.ValidateToken(token); err == nil {
 			return cognitoSub
 		}
 	}
@@ -115,7 +115,7 @@ func (c *TestController) RevokeToken() {
 		return
 	}
 
-	err := c.authManager.RevokeToken(token)
+	err := c.AuthManager.RevokeToken(token)
 	if err != nil {
 		c.ErrorResponse(400, err.Error(), "REVOKE_FAILED")
 		return
@@ -141,7 +141,7 @@ func (c *TestController) GetTokenInfo() {
 	}
 
 	response := map[string]interface{}{
-		"active_tokens": c.authManager.GetTokenCount(),
+		"active_tokens": c.AuthManager.GetTokenCount(),
 		"message":       "Token information retrieved successfully",
 	}
 	c.JSONResponse(response)

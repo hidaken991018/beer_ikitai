@@ -12,7 +12,7 @@ import (
 // BreweryController 醸造所関連のHTTPリクエストを処理するコントローラー
 type BreweryController struct {
 	BaseController
-	breweryUsecase usecase.BreweryUsecase
+	BreweryUsecase usecase.BreweryUsecase
 }
 
 // NewBreweryController 新しい醸造所コントローラーを作成する
@@ -21,7 +21,7 @@ func NewBreweryController() *BreweryController {
 	breweryUsecase := usecase.NewBreweryUsecase(breweryRepo)
 
 	return &BreweryController{
-		breweryUsecase: breweryUsecase,
+		BreweryUsecase: breweryUsecase,
 	}
 }
 
@@ -52,10 +52,10 @@ func (c *BreweryController) GetBreweries() {
 
 	if lat != 0 && lng != 0 {
 		// 位置情報による検索
-		breweries, total, err = c.breweryUsecase.GetBreweriesByLocation(lat, lng, radius, limit, offset)
+		breweries, total, err = c.BreweryUsecase.GetBreweriesByLocation(lat, lng, radius, limit, offset)
 	} else {
 		// 全件取得
-		breweries, total, err = c.breweryUsecase.GetBreweries(limit, offset)
+		breweries, total, err = c.BreweryUsecase.GetBreweries(limit, offset)
 	}
 
 	if err != nil {
@@ -113,7 +113,7 @@ func (c *BreweryController) CreateBrewery() {
 		return
 	}
 
-	brewery, err := c.breweryUsecase.CreateBrewery(
+	brewery, err := c.BreweryUsecase.CreateBrewery(
 		request.Name,
 		request.Address,
 		request.Description,
@@ -144,7 +144,7 @@ func (c *BreweryController) GetBrewery() {
 		return
 	}
 
-	brewery, err := c.breweryUsecase.GetBrewery(breweryID)
+	brewery, err := c.BreweryUsecase.GetBrewery(breweryID)
 	if err != nil {
 		c.ErrorResponse(404, "Brewery not found", "BREWERY_NOT_FOUND")
 		return

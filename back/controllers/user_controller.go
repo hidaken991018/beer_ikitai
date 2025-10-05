@@ -15,7 +15,7 @@ import (
 // UserController ユーザー関連のHTTPリクエストを処理するコントローラー
 type UserController struct {
 	BaseController
-	userProfileUsecase usecase.UserProfileUsecase
+	UserProfileUsecase usecase.UserProfileUsecase
 }
 
 // NewUserController 新しいユーザーコントローラーを作成する
@@ -24,7 +24,7 @@ func NewUserController() *UserController {
 	userProfileUsecase := usecase.NewUserProfileUsecase(userProfileRepo)
 
 	return &UserController{
-		userProfileUsecase: userProfileUsecase,
+		UserProfileUsecase: userProfileUsecase,
 	}
 }
 
@@ -41,7 +41,7 @@ func (c *UserController) GetProfile() {
 		return
 	}
 
-	profile, err := c.userProfileUsecase.GetProfile(cognitoSub)
+	profile, err := c.UserProfileUsecase.GetProfile(cognitoSub)
 	if err != nil {
 		c.HandleNotFound("User profile")
 		return
@@ -77,7 +77,7 @@ func (c *UserController) CreateProfile() {
 		return // バリデーションエラーは関数内で処理済み
 	}
 
-	profile, err := c.userProfileUsecase.CreateProfile(cognitoSub, request.DisplayName, request.IconURL)
+	profile, err := c.UserProfileUsecase.CreateProfile(cognitoSub, request.DisplayName, request.IconURL)
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
 			c.ErrorResponseDetailed(http.StatusConflict, "Profile already exists", err.Error(), dto.ErrorCodeProfileExists, nil)
@@ -122,7 +122,7 @@ func (c *UserController) UpdateProfile() {
 		return // バリデーションエラーは関数内で処理済み
 	}
 
-	profile, err := c.userProfileUsecase.UpdateProfile(cognitoSub, request.DisplayName, request.IconURL)
+	profile, err := c.UserProfileUsecase.UpdateProfile(cognitoSub, request.DisplayName, request.IconURL)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			c.HandleNotFound("User profile")

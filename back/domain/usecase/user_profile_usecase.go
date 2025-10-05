@@ -8,7 +8,7 @@ import (
 
 // userProfileUsecase ユーザープロファイルユースケースの実装
 type userProfileUsecase struct {
-	userProfileRepo repository.UserProfileRepository
+	UserProfileRepo repository.UserProfileRepository
 }
 
 // UserProfileUsecase ユーザープロファイルのビジネスロジックインターフェースを定義する
@@ -21,7 +21,7 @@ type UserProfileUsecase interface {
 // NewUserProfileUsecase 新しいユーザープロファイルユースケースを作成する
 func NewUserProfileUsecase(repo repository.UserProfileRepository) UserProfileUsecase {
 	return &userProfileUsecase{
-		userProfileRepo: repo,
+		UserProfileRepo: repo,
 	}
 }
 
@@ -31,7 +31,7 @@ func (u *userProfileUsecase) GetProfile(cognitoSub string) (*entity.UserProfile,
 		return nil, errors.New("cognito_sub is required")
 	}
 
-	return u.userProfileRepo.GetByCognitoSub(cognitoSub)
+	return u.UserProfileRepo.GetByCognitoSub(cognitoSub)
 }
 
 // CreateProfile ユーザープロファイルを作成する
@@ -41,7 +41,7 @@ func (u *userProfileUsecase) CreateProfile(cognitoSub, displayName, iconURL stri
 	}
 
 	// 既存プロファイルチェック
-	existing, _ := u.userProfileRepo.GetByCognitoSub(cognitoSub)
+	existing, _ := u.UserProfileRepo.GetByCognitoSub(cognitoSub)
 	if existing != nil {
 		return nil, errors.New("profile already exists")
 	}
@@ -55,12 +55,12 @@ func (u *userProfileUsecase) CreateProfile(cognitoSub, displayName, iconURL stri
 		return nil, err
 	}
 
-	return u.userProfileRepo.Create(profile)
+	return u.UserProfileRepo.Create(profile)
 }
 
 // UpdateProfile ユーザープロファイルを更新する
 func (u *userProfileUsecase) UpdateProfile(cognitoSub, displayName, iconURL string) (*entity.UserProfile, error) {
-	profile, err := u.userProfileRepo.GetByCognitoSub(cognitoSub)
+	profile, err := u.UserProfileRepo.GetByCognitoSub(cognitoSub)
 	if err != nil {
 		return nil, err
 	}
@@ -87,5 +87,5 @@ func (u *userProfileUsecase) UpdateProfile(cognitoSub, displayName, iconURL stri
 		return nil, err
 	}
 
-	return u.userProfileRepo.Update(updatedProfile)
+	return u.UserProfileRepo.Update(updatedProfile)
 }

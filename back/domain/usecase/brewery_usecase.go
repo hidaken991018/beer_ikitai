@@ -8,7 +8,7 @@ import (
 
 // breweryUsecase 醸造所ユースケースの実装
 type breweryUsecase struct {
-	breweryRepo repository.BreweryRepository
+	BreweryRepo repository.BreweryRepository
 }
 
 // BreweryUsecase 醸造所のビジネスロジックインターフェースを定義する
@@ -22,7 +22,7 @@ type BreweryUsecase interface {
 // NewBreweryUsecase 新しい醸造所ユースケースを作成する
 func NewBreweryUsecase(repo repository.BreweryRepository) BreweryUsecase {
 	return &breweryUsecase{
-		breweryRepo: repo,
+		BreweryRepo: repo,
 	}
 }
 
@@ -32,7 +32,7 @@ func (b *breweryUsecase) GetBrewery(id int) (*entity.Brewery, error) {
 		return nil, errors.New("invalid brewery id")
 	}
 
-	return b.breweryRepo.GetByID(id)
+	return b.BreweryRepo.GetByID(id)
 }
 
 // GetBreweries 全ての醸造所を取得する
@@ -47,7 +47,7 @@ func (b *breweryUsecase) GetBreweries(limit, offset int) ([]*entity.Brewery, int
 		offset = 0
 	}
 
-	return b.breweryRepo.GetAll(limit, offset)
+	return b.BreweryRepo.GetAll(limit, offset)
 }
 
 // GetBreweriesByLocation 位置情報で醸造所を検索する
@@ -68,7 +68,7 @@ func (b *breweryUsecase) GetBreweriesByLocation(lat, lng, radius float64, limit,
 		offset = 0
 	}
 
-	return b.breweryRepo.GetByLocation(lat, lng, radius*1000, limit, offset) // kmをmに変換
+	return b.BreweryRepo.GetByLocation(lat, lng, radius*1000, limit, offset) // kmをmに変換
 }
 
 // CreateBrewery 新しい醸造所を作成する
@@ -83,7 +83,7 @@ func (b *breweryUsecase) CreateBrewery(name, address, description string, lat, l
 		return nil, err
 	}
 
-	createdBrewery, err := b.breweryRepo.Create(brewery)
+	createdBrewery, err := b.BreweryRepo.Create(brewery)
 	if err != nil {
 		return nil, err
 	}
