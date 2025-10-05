@@ -92,7 +92,6 @@ func setupRoutes() {
 	beego.Router("/health", &controllers.HealthController{})
 
 	breweryRepo := repository.NewBreweryRepository()
-	geBreweriesController := controllers.NewGetBreweriesController(123, breweryRepo)
 
 	// // ユーザープロファイル管理
 	// userController := controllers.NewUserController()
@@ -100,7 +99,7 @@ func setupRoutes() {
 
 	// 醸造所管理
 	breweryController := controllers.NewBreweryController()
-	beego.Router("/breweries", geBreweriesController, "get:GetBreweries")
+	beego.Router("/breweries", &controllers.GetBreweriesController{UserID: 123, BreweryRepo: breweryRepo}, "get:GetBreweries")
 	beego.Router("/breweries", breweryController, "post:CreateBrewery")
 	beego.Router("/breweries/:brewery_id", breweryController, "get:GetBrewery")
 

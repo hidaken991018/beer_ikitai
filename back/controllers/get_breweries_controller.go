@@ -10,14 +10,7 @@ import (
 type GetBreweriesController struct {
 	BaseController
 	UserID      int
-	breweryRepo repository.BreweryRepository
-}
-
-func NewGetBreweriesController(userID int, breweryRepo repository.BreweryRepository) *GetBreweriesController {
-	return &GetBreweriesController{
-		UserID:      userID,
-		breweryRepo: breweryRepo,
-	}
+	BreweryRepo repository.BreweryRepository
 }
 
 // GetBreweries 醸造所の一覧を取得する
@@ -42,7 +35,7 @@ func (c *GetBreweriesController) GetBreweries() {
 	// r := repository.NewBreweryRepository()
 	// repos, a, b := r.GetAll(limit, offset)
 	// c.breweryRepo = repository.NewBreweryRepository()
-	repos, a, b := c.breweryRepo.GetAll(limit, offset)
+	repos, a, b := c.BreweryRepo.GetAll(limit, offset)
 	fmt.Println("repos", repos, a, b)
 
 	type Temp struct {
