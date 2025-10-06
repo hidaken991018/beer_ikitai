@@ -14,8 +14,11 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { apiClient } from '@/lib/api/client';
+import { cognitoAuthService } from '@/lib/auth/cognito';
 import { ROUTES, VALIDATION } from '@/lib/constants';
 import type { RegisterCredentials } from '@/types/auth';
+import type { UserProfileInput } from '@/types/api';
 
 export default function RegisterPage() {
   const { register, authState } = useAuthContext();
@@ -25,6 +28,7 @@ export default function RegisterPage() {
     confirmPassword: '',
     givenName: '',
     familyName: '',
+    displayName: '',
   });
   const [errors, setErrors] = useState<Partial<RegisterCredentials>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -65,8 +69,29 @@ export default function RegisterPage() {
       newErrors.familyName = '姓は50文字以下で入力してください';
     }
 
+    // Display name validation (optional)
+    if (formData.displayName && formData.displayName.length > 50) {
+      newErrors.displayName = '表示名は50文字以下で入力してください';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const generateDisplayName = (givenName?: string, familyName?: string, displayName?: string): string => {
+    // displayNameが指定されている場合はそれを使用
+    if (displayName && displayName.trim()) {
+      return displayName.trim();
+    }
+    
+    // displayNameが未指定の場合は、姓名から生成
+    const names = [familyName, givenName].filter(name => name && name.trim());
+    if (names.length > 0) {
+      return names.join('');
+    }
+    
+    // 姓名も未指定の場合はメールアドレスのローカル部を使用
+    return formData.email.split('@')[0];
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,7 +102,36 @@ export default function RegisterPage() {
     }
 
     try {
+      // 1. Cognito ユーザー登録
       await register(formData);
+      
+      // 2. 登録成功後、JWTトークンを取得してプロフィール作成
+      try {
+        const tokens = await cognitoAuthService.getTokens();
+        
+        if (tokens.idToken) {
+          // APIクライアントにトークンを設定
+          apiClient.setIdToken(tokens.idToken);
+          
+          // プロフィール作成API呼び出し
+          const displayName = generateDisplayName(
+            formData.givenName,
+            formData.familyName,
+            formData.displayName
+          );
+          
+          const profileData: UserProfileInput = {
+            displayName: displayName,
+          };
+          
+          await apiClient.post('/users/profile', profileData);
+          console.log('ユーザープロフィールが作成されました');
+        }
+      } catch (profileError) {
+        // プロフィール作成エラーは警告として扱う
+        console.warn('プロフィール作成に失敗しましたが、アカウント登録は完了しています:', profileError);
+      }
+      
       setIsSubmitted(true);
     } catch (error) {
       console.error('Registration failed:', error);
@@ -204,6 +258,22 @@ export default function RegisterPage() {
                     <p className='text-sm text-red-600'>{errors.familyName}</p>
                   )}
                 </div>
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='displayName'>表示名（任意）</Label>
+                <Input
+                  id='displayName'
+                  name='displayName'
+                  type='text'
+                  value={formData.displayName}
+                  onChange={handleInputChange}
+                  placeholder='例: ビールタロウ（未入力の場合は姓名から自動生成）'
+                  className={errors.displayName ? 'border-red-500' : ''}
+                />
+                {errors.displayName && (
+                  <p className='text-sm text-red-600'>{errors.displayName}</p>
+                )}
               </div>
 
               <div className='space-y-2'>
