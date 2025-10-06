@@ -17,8 +17,8 @@ import { Label } from '@/components/ui/label';
 import { apiClient } from '@/lib/api/client';
 import { cognitoAuthService } from '@/lib/auth/cognito';
 import { ROUTES, VALIDATION } from '@/lib/constants';
-import type { RegisterCredentials } from '@/types/auth';
 import type { UserProfileInput } from '@/types/api';
+import type { RegisterCredentials } from '@/types/auth';
 
 export default function RegisterPage() {
   const { register, authState } = useAuthContext();
@@ -78,18 +78,12 @@ export default function RegisterPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const generateDisplayName = (givenName?: string, familyName?: string, displayName?: string): string => {
+  const generateDisplayName = (displayName?: string): string => {
     // displayNameが指定されている場合はそれを使用
     if (displayName && displayName.trim()) {
       return displayName.trim();
     }
-    
-    // displayNameが未指定の場合は、姓名から生成
-    const names = [familyName, givenName].filter(name => name && name.trim());
-    if (names.length > 0) {
-      return names.join('');
-    }
-    
+
     // 姓名も未指定の場合はメールアドレスのローカル部を使用
     return formData.email.split('@')[0];
   };
@@ -104,34 +98,26 @@ export default function RegisterPage() {
     try {
       // 1. Cognito ユーザー登録
       await register(formData);
-      
+
       // 2. 登録成功後、JWTトークンを取得してプロフィール作成
       try {
         const tokens = await cognitoAuthService.getTokens();
-        
+
         if (tokens.idToken) {
           // APIクライアントにトークンを設定
           apiClient.setIdToken(tokens.idToken);
-          
-          // プロフィール作成API呼び出し
-          const displayName = generateDisplayName(
-            formData.givenName,
-            formData.familyName,
-            formData.displayName
-          );
-          
+
           const profileData: UserProfileInput = {
-            displayName: displayName,
+            displayName: generateDisplayName(formData.displayName)
           };
-          
+
           await apiClient.post('/users/profile', profileData);
-          console.log('ユーザープロフィールが作成されました');
         }
       } catch (profileError) {
         // プロフィール作成エラーは警告として扱う
         console.warn('プロフィール作成に失敗しましたが、アカウント登録は完了しています:', profileError);
       }
-      
+
       setIsSubmitted(true);
     } catch (error) {
       console.error('Registration failed:', error);
@@ -268,7 +254,7 @@ export default function RegisterPage() {
                   type='text'
                   value={formData.displayName}
                   onChange={handleInputChange}
-                  placeholder='例: ビールタロウ（未入力の場合は姓名から自動生成）'
+                  placeholder='例: ビールタロウ'
                   className={errors.displayName ? 'border-red-500' : ''}
                 />
                 {errors.displayName && (
