@@ -15,18 +15,25 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import ProfileSetupForm from '@/components/user/ProfileSetupForm';
+import { userProfileApi } from '@/lib/api/user';
 import { ROUTES, VALIDATION } from '@/lib/constants';
 import type { LoginCredentials } from '@/types/auth';
+import type { ProfileCreateForm } from '@/types/user';
+
+type PageState = 'login' | 'profile-setup' | 'redirecting';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, authState } = useAuthContext();
+  const [pageState, setPageState] = useState<PageState>('login');
   const [formData, setFormData] = useState<LoginCredentials>({
     email: '',
     password: '',
   });
   const [errors, setErrors] = useState<Partial<LoginCredentials>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   // Redirect to home if already logged in
   useEffect(() => {
@@ -34,6 +41,69 @@ export default function LoginPage() {
       router.push(ROUTES.home);
     }
   }, [authState, router]);
+
+  /**
+   * プロフィール存在確認処理
+   *
+   * @description ログイン成功後にプロフィールの存在を確認し、
+   * 存在しない場合はプロフィール作成画面を表示する
+   */
+  const checkUserProfile = async (): Promise<void> => {
+    try {
+      // プロフィール存在確認
+      await userProfileApi.getProfile();
+      
+      // プロフィールが存在する場合はホームページへリダイレクト
+      setPageState('redirecting');
+      router.push(ROUTES.home);
+    } catch (error: any) {
+      if (error?.status === 404) {
+        // プロフィールが存在しない場合はプロフィール作成画面へ
+        setPageState('profile-setup');
+      } else {
+        // その他のエラーの場合
+        console.error('プロフィール確認エラー:', error);
+        setProfileError(
+          'プロフィール情報の確認に失敗しました。再度ログインしてください。'
+        );
+        // エラー時はログイン画面に戻る
+        setPageState('login');
+      }
+    }
+  };
+
+  /**
+   * プロフィール作成処理
+   *
+   * @param profileData - 作成するプロフィールデータ
+   */
+  const handleProfileCreate = async (
+    profileData: ProfileCreateForm
+  ): Promise<void> => {
+    try {
+      setProfileError(null);
+      
+      // プロフィール作成
+      await userProfileApi.createProfile(profileData);
+      
+      // 作成成功後、ホームページへリダイレクト
+      setPageState('redirecting');
+      router.push(ROUTES.home);
+    } catch (error: any) {
+      console.error('プロフィール作成エラー:', error);
+      
+      if (error?.status === 409) {
+        setProfileError('プロフィールが既に存在します。');
+        // 既存の場合はホームページへリダイレクト
+        setPageState('redirecting');
+        router.push(ROUTES.home);
+      } else {
+        setProfileError(
+          error?.message || 'プロフィールの作成に失敗しました。'
+        );
+      }
+    }
+  };
 
   const validateForm = (): boolean => {
     const newErrors: Partial<LoginCredentials> = {};
@@ -62,9 +132,14 @@ export default function LoginPage() {
     }
 
     setIsSubmitting(true);
+    setProfileError(null);
+    
     try {
+      // ログイン実行
       await login(formData);
-      router.push(ROUTES.home);
+      
+      // ログイン成功後、プロフィール存在確認
+      await checkUserProfile();
     } catch (error) {
       console.error('Login failed:', error);
     } finally {
@@ -82,8 +157,19 @@ export default function LoginPage() {
     }
   };
 
-  // Show redirect message if already authenticated
-  if (authState.isAuthenticated && !authState.isLoading) {
+  // プロフィール作成画面を表示
+  if (pageState === 'profile-setup') {
+    return (
+      <ProfileSetupForm
+        onSubmit={handleProfileCreate}
+        isSubmitting={isSubmitting}
+        error={profileError}
+      />
+    );
+  }
+
+  // リダイレクト中の表示
+  if (pageState === 'redirecting' || (authState.isAuthenticated && !authState.isLoading)) {
     return (
       <div className='min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8'>
         <div className='max-w-md w-full space-y-8'>
@@ -101,6 +187,7 @@ export default function LoginPage() {
     );
   }
 
+  // ログイン画面の表示
   return (
     <div className='min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8'>
       <div className='max-w-md w-full space-y-8'>
@@ -149,9 +236,11 @@ export default function LoginPage() {
                 )}
               </div>
 
-              {authState.error && (
+              {(authState.error || profileError) && (
                 <div className='bg-red-50 border border-red-200 rounded-md p-3'>
-                  <p className='text-sm text-red-600'>{authState.error}</p>
+                  <p className='text-sm text-red-600'>
+                    {authState.error || profileError}
+                  </p>
                 </div>
               )}
 
