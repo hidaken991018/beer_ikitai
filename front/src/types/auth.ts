@@ -137,7 +137,8 @@ export interface LoginCredentials {
  *   password: "securePassword123",
  *   confirmPassword: "securePassword123",
  *   givenName: "太郎",
- *   familyName: "田中"
+ *   familyName: "田中",
+ *   displayName: "ビールタロウ"
  * };
  * ```
  */
@@ -148,6 +149,8 @@ export interface RegisterCredentials extends LoginCredentials {
   givenName?: string;
   /** 姓（任意） */
   familyName?: string;
+  /** 表示名（任意） */
+  displayName?: string;
 }
 
 /**
