@@ -214,6 +214,7 @@ export const ROUTES = {
   register: '/auth/register',
   confirmSignup: '/auth/confirm-signup',
   profile: '/profile',
+  profileCreate: '/profile/create',
   breweries: '/brewery',
   breweryDetail: (id: number) => `/brewery/${id}`,
   nearbyBreweries: '/brewery/nearby',
@@ -262,6 +263,8 @@ export const SUCCESS_MESSAGES = {
   logoutSuccess: 'ログアウトしました',
   /** ユーザーアカウント作成成功 */
   registerSuccess: 'アカウントを作成しました',
+  /** ユーザープロフィール作成成功 */
+  profileCreated: 'プロフィールを作成しました',
   /** ユーザープロフィール更新成功 */
   profileUpdated: 'プロフィールを更新しました',
   /** 醸造所チェックイン成功 */
