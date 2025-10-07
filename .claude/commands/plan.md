@@ -16,7 +16,12 @@
 1. mcp\_\_github\_\_get_issue を使用して issue の要件を理解する
 1. 最新の'develop'ブランチをチェックアウトしてプルする
 1. 実装に必要に応じて、MCP を介して context7 の知識を参照する
-1. issue に記述されている内容から実装計画を検討する。
+1. issue に記述されている内容から以下実装計画を検討する。
+   1. 記述内容の整理
+   2. 採用技術の変更追加
+      1. 既存の-技術スタックは`docs\architect\techstack.md`を確認すること
+   3. ファイル変更計画を作成（新規作成・修正・削除）
+   4. 実装ステップ
 1. 検討完了したら mcp\_\_github\_\_update_issue を使用して、issue の内容に検討内容を追記する。
 1. "ready-for-plan"ラベルを削除し、mcp\_\_github\_\_update_issue を使用して"planed"ラベルを追加する
 
