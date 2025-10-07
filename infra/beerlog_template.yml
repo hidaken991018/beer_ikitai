@@ -549,6 +549,119 @@ Resources:
       UserPoolId: !Ref BeerLogCognitoUserPool
       GenerateSecret: false
 
+  # S3バケット（アイコン画像用）
+  BeerLogIconImagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub beerlog-${Environment}-icon-images-${AWS::AccountId}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+            BucketKeyEnabled: true
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      NotificationConfiguration:
+        CloudWatchConfigurations: []
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET, PUT, POST, DELETE]
+            AllowedOrigins: ['*']
+            ExposedHeaders: ['ETag']
+            MaxAge: 3000
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-IconImagesBucket
+        - Key: Environment
+          Value: !Ref Environment
+
+  # Origin Access Control（OAC）- 新しい推奨方式
+  BeerLogIconImagesOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub BeerLog-${Environment}-IconImages-OAC
+        Description: !Sub 'Origin Access Control for BeerLog icon images (${Environment})'
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  # CloudFrontディストリビューション（アイコン画像用）
+  BeerLogIconImagesCloudFront:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: !Sub 'BeerLog Icon Images CloudFront Distribution (${Environment})'
+        DefaultRootObject: ''
+        Enabled: true
+        HttpVersion: http2
+        PriceClass: !FindInMap [EnvironmentConfig, !Ref Environment, CloudFrontPriceClass]
+        Origins:
+          - Id: !Sub ${BeerLogIconImagesBucket}-origin
+            DomainName: !GetAtt BeerLogIconImagesBucket.RegionalDomainName
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+            OriginAccessControlId: !GetAtt BeerLogIconImagesOAC.Id
+        DefaultCacheBehavior:
+          TargetOriginId: !Sub ${BeerLogIconImagesBucket}-origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD]
+          Compress: true
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # AWS Managed CachingOptimized
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 404
+            ResponsePagePath: '/404.html'
+            ErrorCachingMinTTL: 300
+          - ErrorCode: 404
+            ResponseCode: 404
+            ResponsePagePath: '/404.html'
+            ErrorCachingMinTTL: 300
+      Tags:
+        - Key: Name
+          Value: !Sub BeerLog-${Environment}-IconImagesCloudFront
+        - Key: Environment
+          Value: !Ref Environment
+
+  # S3バケットポリシー（CloudFront経由のみアクセス許可）
+  BeerLogIconImagesBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BeerLogIconImagesBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontServicePrincipal
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub ${BeerLogIconImagesBucket.Arn}/*
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${BeerLogIconImagesCloudFront}
+          - Sid: DenyDirectAccess
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource: 
+              - !GetAtt BeerLogIconImagesBucket.Arn
+              - !Sub ${BeerLogIconImagesBucket.Arn}/*
+            Condition:
+              StringNotEquals:
+                AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${BeerLogIconImagesCloudFront}
+              Bool:
+                aws:SecureTransport: 'false'
+
   # Systems Manager用のVPCエンドポイント
   SSMEndpoint:
     Type: AWS::EC2::VPCEndpoint
@@ -648,3 +761,27 @@ Outputs:
     Value: !Ref BeerLogApiAuthorizer
     Export:
       Name: !Sub ${AWS::StackName}-ApiAuthorizer
+
+  IconImagesBucketName:
+    Description: アイコン画像用S3バケット名
+    Value: !Ref BeerLogIconImagesBucket
+    Export:
+      Name: !Sub ${AWS::StackName}-IconImagesBucketName
+
+  IconImagesCloudFrontDomainName:
+    Description: アイコン画像用CloudFrontドメイン名
+    Value: !GetAtt BeerLogIconImagesCloudFront.DomainName
+    Export:
+      Name: !Sub ${AWS::StackName}-IconImagesCloudFrontDomainName
+
+  IconImagesCloudFrontURL:
+    Description: アイコン画像用CloudFront URL
+    Value: !Sub 'https://${BeerLogIconImagesCloudFront.DomainName}'
+    Export:
+      Name: !Sub ${AWS::StackName}-IconImagesCloudFrontURL
+
+  IconImagesOriginAccessControlId:
+    Description: アイコン画像用Origin Access Control ID
+    Value: !GetAtt BeerLogIconImagesOAC.Id
+    Export:
+      Name: !Sub ${AWS::StackName}-IconImagesOriginAccessControlId
