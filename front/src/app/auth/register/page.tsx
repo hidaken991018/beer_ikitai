@@ -22,7 +22,7 @@ type RegistrationStep = 'register' | 'email-sent' | 'confirming' | 'confirmed';
 export default function RegisterPage() {
   const { register, confirmSignUp, authState } = useAuthContext();
   const [currentStep, setCurrentStep] = useState<RegistrationStep>('register');
-  
+
   // 登録フォーム用の状態
   const [formData, setFormData] = useState<RegisterCredentials>({
     email: '',
@@ -32,7 +32,7 @@ export default function RegisterPage() {
     familyName: '',
   });
   const [errors, setErrors] = useState<Partial<RegisterCredentials>>({});
-  
+
   // 確認コード用の状態
   const [confirmationData, setConfirmationData] = useState<ConfirmSignUpInput>({
     email: '',
@@ -120,12 +120,12 @@ export default function RegisterPage() {
 
     try {
       await register(formData);
-      
+
       // 確認に必要な情報を保存
       localStorage.setItem('pending_confirmation_email', formData.email);
       setConfirmationData(prev => ({ ...prev, email: formData.email }));
-      
-      setCurrentStep('email-sent');
+
+      setCurrentStep('confirming');
     } catch (error) {
       console.error('Registration failed:', error);
     }
@@ -141,10 +141,10 @@ export default function RegisterPage() {
     setIsSubmitting(true);
     try {
       await confirmSignUp(confirmationData);
-      
+
       // Clear stored email after successful confirmation
       localStorage.removeItem('pending_confirmation_email');
-      
+
       setCurrentStep('confirmed');
     } catch (error) {
       console.error('Confirmation failed:', error);
@@ -178,10 +178,6 @@ export default function RegisterPage() {
     setCurrentStep('register');
     setConfirmationData({ email: '', confirmationCode: '' });
     setConfirmationErrors({});
-  };
-
-  const handleProceedToConfirm = () => {
-    setCurrentStep('confirming');
   };
 
   const handleResendCode = async () => {
@@ -253,6 +249,7 @@ export default function RegisterPage() {
                     onChange={handleConfirmationInputChange}
                     placeholder='例: user@example.com'
                     className={confirmationErrors.email ? 'border-red-500' : ''}
+                    disabled
                   />
                   {confirmationErrors.email && (
                     <p className='text-sm text-red-600'>{confirmationErrors.email}</p>
@@ -332,58 +329,6 @@ export default function RegisterPage() {
                       ログインページに戻る
                     </Link>
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // メール送信完了画面
-  if (currentStep === 'email-sent') {
-    return (
-      <div className='min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8'>
-        <div className='max-w-md w-full space-y-8'>
-          <Card>
-            <CardHeader className='space-y-1'>
-              <CardTitle className='text-2xl text-center'>
-                確認メールを送信しました
-              </CardTitle>
-              <CardDescription className='text-center'>
-                {formData.email} に確認メールを送信しました
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className='space-y-4'>
-                <p className='text-sm text-gray-600 text-center'>
-                  メールに記載されている確認コードを使用してアカウントを有効化してください。
-                </p>
-
-                <div className='text-center'>
-                  <Button onClick={handleProceedToConfirm} className='w-full'>
-                    確認コードを入力
-                  </Button>
-                </div>
-
-                <div className='text-center'>
-                  <button
-                    type='button'
-                    onClick={handleBackToRegister}
-                    className='text-sm text-gray-600 hover:text-gray-500'
-                  >
-                    登録画面に戻る
-                  </button>
-                </div>
-
-                <div className='text-center'>
-                  <Link
-                    href={ROUTES.login}
-                    className='text-sm text-gray-600 hover:text-gray-500'
-                  >
-                    ログインページに戻る
-                  </Link>
                 </div>
               </div>
             </CardContent>
