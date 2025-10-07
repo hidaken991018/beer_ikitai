@@ -212,7 +212,6 @@ export const ROUTES = {
   home: '/',
   login: '/auth/login',
   register: '/auth/register',
-  confirmSignup: '/auth/confirm-signup',
   profile: '/profile',
   breweries: '/brewery',
   breweryDetail: (id: number) => `/brewery/${id}`,
