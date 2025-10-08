@@ -23,13 +23,15 @@ jobs:
       pull-requests: write
       issues: write
       id-token: write
+      actions: read
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
         with:
-          prompt: |
-            **重要**質問に対して簡潔に回答してください。
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          claude_args: |
-            --model claude-sonnet-4-20250514
