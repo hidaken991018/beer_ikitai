@@ -457,7 +457,7 @@ Resources:
 
   BeerLogApiDeployment:
     Type: AWS::ApiGateway::Deployment
-    DependsOn: 
+    DependsOn:
       - BeerLogApiMethod
       - BeerLogApiAuthorizer
     Properties:
@@ -564,8 +564,6 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
-      NotificationConfiguration:
-        CloudWatchConfigurations: []
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders: ['*']
@@ -599,7 +597,8 @@ Resources:
         DefaultRootObject: ''
         Enabled: true
         HttpVersion: http2
-        PriceClass: !FindInMap [EnvironmentConfig, !Ref Environment, CloudFrontPriceClass]
+        PriceClass:
+          !FindInMap [EnvironmentConfig, !Ref Environment, CloudFrontPriceClass]
         Origins:
           - Id: !Sub ${BeerLogIconImagesBucket}-origin
             DomainName: !GetAtt BeerLogIconImagesBucket.RegionalDomainName
@@ -653,7 +652,7 @@ Resources:
             Effect: Deny
             Principal: '*'
             Action: s3:*
-            Resource: 
+            Resource:
               - !GetAtt BeerLogIconImagesBucket.Arn
               - !Sub ${BeerLogIconImagesBucket.Arn}/*
             Condition:
