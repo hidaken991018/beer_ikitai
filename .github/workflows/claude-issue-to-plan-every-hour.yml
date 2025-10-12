@@ -3,6 +3,7 @@ name: Claude Code Issue to Plan Every Hour
 on:
   schedule:
     - cron: '0 * * * *' # Runs at the top of every hour
+  workflow_dispatch:
 
 jobs:
   get-highest-priority-issue:
