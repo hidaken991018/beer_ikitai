@@ -11,7 +11,19 @@ const config: StorybookConfig = {
     '../src/**/*.mdx',
     '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'
   ],
-  addons: ['@storybook/addon-docs'],
+  addons: [
+    '@storybook/addon-docs',
+    '@storybook/addon-a11y',
+    {
+      name: '@storybook/addon-coverage',
+      options: {
+        istanbul: {
+          include: ['**/src/components/**'],
+          exclude: ['**/stories/**', '**/__tests__/**'],
+        }
+      }
+    }
+  ],
   docs: {
     defaultName: 'Documentation',
   },
