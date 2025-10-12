@@ -11,10 +11,7 @@ const config: StorybookConfig = {
     '../src/**/*.mdx',
     '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'
   ],
-  addons: [
-    '@storybook/addon-essentials',
-    '@storybook/addon-docs'
-  ],
+  addons: ['@storybook/addon-docs'],
   docs: {
     defaultName: 'Documentation',
   },
