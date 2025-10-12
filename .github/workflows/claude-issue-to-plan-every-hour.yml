@@ -24,7 +24,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              status: 'ready'
+              status: 'ready',
               labels: 'ready-for-plan-auto',
               sort: 'created',
               direction: 'asc', 
