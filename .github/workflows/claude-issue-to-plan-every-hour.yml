@@ -40,9 +40,9 @@ jobs:
               return issues.data[0].number.toString();
             }
 
-      - name: Check result
+      - name: Set result
         run: |
-          echo "Issue number: ${{ steps.get_issue.outputs.result }}"
+          echo "issue_number=${{ steps.get_issue.outputs.result }}" >> "$GITHUB_OUTPUT"
   check:
     runs-on: ubuntu-latest
     steps:
