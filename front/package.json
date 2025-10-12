@@ -13,7 +13,9 @@
     "test:ci": "jest --ci --coverage",
     "type-check": "tsc --noEmit",
     "format": "prettier --write .",
-    "check": "npm run type-check && npm run lint && npm test"
+    "check": "npm run type-check && npm run lint && npm test",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",
@@ -35,6 +37,9 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@storybook/addon-docs": "^8.6.14",
+    "@storybook/addon-essentials": "^8.6.14",
+    "@storybook/nextjs": "^8.6.14",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
@@ -50,7 +55,9 @@
     "jest": "^30.0.3",
     "jest-environment-jsdom": "^30.0.2",
     "prettier": "^3.4.2",
+    "storybook": "^8.6.14",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "webpack": "^5.101.2"
   }
 }
