@@ -43,14 +43,6 @@ jobs:
       - name: Set result
         run: |
           echo "issue_number=${{ steps.get_issue.outputs.result }}" >> "$GITHUB_OUTPUT"
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Check result
-        run: |
-          echo "Issue number: ${{ needs.get-highest-priority-issue.outputs }}"
 
   plan:
     needs: get-highest-priority-issue
