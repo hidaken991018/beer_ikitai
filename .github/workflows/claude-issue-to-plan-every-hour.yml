@@ -40,7 +40,9 @@ jobs:
 
       - name: Set issue number output
         id: set_issue_number
-        run: echo "issue_number=${{ steps.get_issue.outputs.issue_number }}" >> $GITHUB_OUTPUT
+        run: |
+          echo ${{ steps.get_issue.outputs.issue_number }}
+          echo "issue_number=${{ steps.get_issue.outputs.issue_number }}" >> $GITHUB_OUTPUT
   plan:
     runs-on: ubuntu-latest
     permissions:
