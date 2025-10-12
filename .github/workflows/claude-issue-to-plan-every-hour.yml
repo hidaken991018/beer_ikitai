@@ -41,6 +41,15 @@ jobs:
       - name: Check result
         run: |
           echo "Issue number: ${{ steps.get_issue.outputs.result }}"
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Check result
+        run: |
+          echo "Issue number: ${{ needs.get-highest-priority-issue.outputs.issue_number }}"
+
   plan:
     needs: get-highest-priority-issue
     if: needs.get-highest-priority-issue.outputs.issue_number != ''
