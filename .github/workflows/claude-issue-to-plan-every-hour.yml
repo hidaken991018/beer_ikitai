@@ -50,11 +50,11 @@ jobs:
         uses: actions/checkout@v4
       - name: Check result
         run: |
-          echo "Issue number: ${{ needs.get-highest-priority-issue.outputs.issue_number }}"
+          echo "Issue number: ${{ needs.get-highest-priority-issue.outputs }}"
 
   plan:
     needs: get-highest-priority-issue
-    if: needs.get-highest-priority-issue.outputs.issue_number != ''
+    if: needs.get-highest-priority-issue.outputs.issue_number != null
     runs-on: ubuntu-latest
     permissions:
       contents: read
