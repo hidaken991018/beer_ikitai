@@ -37,6 +37,8 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@storybook/addon-a11y": "^9.1.10",
+    "@storybook/addon-coverage": "^9.1.10",
     "@storybook/addon-docs": "^9.1.10",
     "@storybook/nextjs": "^9.1.10",
     "@tailwindcss/postcss": "^4",
