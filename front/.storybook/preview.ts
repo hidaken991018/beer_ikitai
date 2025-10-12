@@ -33,6 +33,30 @@ const preview: Preview = {
     layout: {
       centered: true,
     },
+    // Accessibility addon configuration
+    a11y: {
+      config: {
+        rules: [
+          {
+            // Enable specific accessibility rules
+            id: 'color-contrast',
+            enabled: true,
+          },
+          {
+            id: 'focus-visible',
+            enabled: true,
+          },
+          {
+            id: 'aria-*',
+            enabled: true,
+          },
+        ],
+      },
+      options: {
+        checks: { 'color-contrast': { options: { noScroll: true } } },
+        restoreScroll: true,
+      },
+    },
   },
 
   initialGlobals: {
