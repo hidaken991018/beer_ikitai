@@ -21,17 +21,25 @@ const preview: Preview = {
     },
     // Tailwind CSS v4ダークモード対応設定
     backgrounds: {
-      default: 'light',
-      values: [
-        { name: 'light', value: 'oklch(1 0 0)' }, // --background変数に対応
-        { name: 'dark', value: 'oklch(0.145 0 0)' }, // .dark背景色に対応
-      ],
+      options: {
+        light: // --background変数に対応
+        { name: 'light', value: 'oklch(1 0 0)' },
+
+        dark: // .dark背景色に対応
+        { name: 'dark', value: 'oklch(0.145 0 0)' }
+      }
     },
     // Tailwind CSS v4カスタムプロパティが正常に機能することを確認
     layout: {
       centered: true,
     },
   },
+
+  initialGlobals: {
+    backgrounds: {
+      value: 'light'
+    }
+  }
 };
 
 export default preview;
