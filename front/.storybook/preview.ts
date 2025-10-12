@@ -11,9 +11,25 @@ const preview: Preview = {
     },
     nextjs: {
       appDirectory: true,
+      // Next.js 15.3.4 App Router最適化設定
+      router: {
+        basePath: '',
+      },
     },
     docs: {
       defaultName: 'Documentation',
+    },
+    // Tailwind CSS v4ダークモード対応設定
+    backgrounds: {
+      default: 'light',
+      values: [
+        { name: 'light', value: 'oklch(1 0 0)' }, // --background変数に対応
+        { name: 'dark', value: 'oklch(0.145 0 0)' }, // .dark背景色に対応
+      ],
+    },
+    // Tailwind CSS v4カスタムプロパティが正常に機能することを確認
+    layout: {
+      centered: true,
     },
   },
 };
