@@ -33,16 +33,14 @@ jobs:
             });
 
             if (issues.data.length === 0) {
-              core.setOutput('issue_number', '');
+              return ''
             } else {
-              core.setOutput('issue_number', issues.data[0].number.toString());
+              return issues.data[0].number.toString();
             }
 
-      - name: Set issue number output
-        id: set_issue_number
+      - name: Check result
         run: |
-          echo ${{ steps.get_issue.outputs.issue_number }}
-          echo "issue_number=${{ steps.get_issue.outputs.issue_number }}" >> $GITHUB_OUTPUT
+          echo "Issue number: ${{ steps.get_issue.outputs.result }}"
   plan:
     runs-on: ubuntu-latest
     permissions:
