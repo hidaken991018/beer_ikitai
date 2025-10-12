@@ -1,0 +1,101 @@
+name: Claude Code Issue to Plan Every Hour
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Runs at the top of every hour
+
+jobs:
+  get-highest-priority-issue:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: read
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get highest priority issue
+        id: get_issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              status: 'ready'
+              labels: 'ready-for-plan-auto',
+              sort: 'created',
+              direction: 'asc', 
+              per_page: 1
+            });
+
+            if (issues.data.length === 0) {
+              core.setOutput('issue_number', '');
+            } else {
+              core.setOutput('issue_number', issues.data[0].number.toString());
+            }
+
+      - name: Set issue number output
+        id: set_issue_number
+        run: echo "issue_number=${{ steps.get_issue.outputs.issue_number }}" >> $GITHUB_OUTPUT
+  plan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run plan
+        uses: anthropics/claude-code-base-action@beta
+        with:
+          prompt: '/plan ${{ github.repository }} ${{ needs.get-highest-priority-issue.outputs.issue_number }}'
+          allowed_tools: |
+            WebFetch,
+            WebSearch,
+            Write,
+            Edit,
+            MultiEdit,
+            Read,
+            LS,
+            Glob,
+            Grep,
+            mcp__github__get_issue,
+            mcp__github__update_issue,
+            mcp__github__list_branches,
+            mcp__context7__resolve-library-id,
+            mcp__context7__get-library-docs
+          mcp_config: |
+            {
+              "mcpServers": {
+                "github": {
+                  "type": "http",
+                  "url": "https://api.githubcopilot.com/mcp/",
+                  "headers": {
+                    "Authorization": "Bearer ${{ secrets.CLAUDE_CODE_GITHUB_MCP_ACCESS_TOKEN }}"
+                  }
+                },
+                "context7": {
+                  "type": "sse",
+                  "url": "https://mcp.context7.com/sse"
+                }
+              },
+              "inputs": [
+                {
+                  "type": "promptString",
+                  "id": "github_mcp_pat",
+                  "description": "GitHub Personal Access Token",
+                  "password": true
+                }
+              ]
+            }
+
+          timeout_minutes: '20'
+          max_turns: '100'
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
