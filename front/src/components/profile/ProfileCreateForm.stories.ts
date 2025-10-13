@@ -7,7 +7,7 @@
  * @since v1.0.0
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/nextjs';
 import { action } from 'storybook/actions';
 import { within, userEvent, expect, fn } from 'storybook/test';
 
@@ -88,7 +88,8 @@ export const Default: Story = {
   parameters: {
     docs: {
       description: {
-        story: '基本的なフォーム表示状態です。すべてのフィールドが空で、エラーも表示されていません。',
+        story:
+          '基本的なフォーム表示状態です。すべてのフィールドが空で、エラーも表示されていません。',
       },
     },
   },

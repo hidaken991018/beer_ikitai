@@ -8,6 +8,7 @@
  */
 
 import { z } from 'zod';
+
 import { VALIDATION } from '@/lib/constants';
 
 /**
@@ -59,7 +60,7 @@ export const profileCreateSchema = z.object({
       message: `表示名は${VALIDATION.displayName.maxLength}文字以下で入力してください`,
     })
     .trim()
-    .refine((value) => value.length >= VALIDATION.displayName.minLength, {
+    .refine(value => value.length >= VALIDATION.displayName.minLength, {
       message: '表示名は必須です',
     }),
 });

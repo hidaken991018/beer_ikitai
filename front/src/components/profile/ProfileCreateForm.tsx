@@ -9,17 +9,16 @@
  * @since v1.0.0
  */
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
-import type { ProfileCreateFormProps } from '@/types/profile';
 import { profileCreateSchema, type ProfileCreateFormData, PROFILE_FORM_CONFIG } from '@/lib/validations/profile';
+import type { ProfileCreateFormProps } from '@/types/profile';
 
 /**
  * プロフィール作成フォーム コンポーネント
