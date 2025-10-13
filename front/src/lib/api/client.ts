@@ -7,7 +7,7 @@
  * @since v1.0.0
  */
 
-import type { ApiClientConfig, RequestConfig, ApiError } from '@/types/api';
+import type { ApiClientConfig, RequestConfig, ApiError, UserProfile, UserProfileInput, ApiResponse } from '@/types/api';
 
 import { API_CONFIG, HTTP_STATUS, ERROR_MESSAGES } from '../constants';
 
@@ -325,6 +325,100 @@ export class ApiClient {
   async delete<T>(url: string): Promise<T> {
     return this.makeRequest<T>({ method: 'DELETE', url });
   }
+
+  // ==============================================
+  // User Profile Specific Methods
+  // ==============================================
+
+  /**
+   * ユーザープロフィールを取得する
+   *
+   * @description 認証済みユーザーのプロフィール情報を取得します。
+   * プロフィールが存在しない場合は404エラーがスローされます。
+   *
+   * @returns ユーザープロフィール情報
+   * @throws {Error} 404: プロフィールが見つからない場合
+   * @throws {Error} 401: 認証エラーの場合
+   * @throws {Error} 500: サーバーエラーの場合
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   const profile = await apiClient.getUserProfile();
+   *   console.log('プロフィール:', profile.data);
+   * } catch (error) {
+   *   if (error.status === 404) {
+   *     console.log('プロフィールが存在しません');
+   *   }
+   * }
+   * ```
+   */
+  async getUserProfile(): Promise<ApiResponse<UserProfile>> {
+    return this.get<ApiResponse<UserProfile>>('/users/profile');
+  }
+
+  /**
+   * ユーザープロフィールを作成する
+   *
+   * @description 新しいユーザープロフィールを作成します。
+   * 既にプロフィールが存在する場合は409エラーがスローされます。
+   *
+   * @param data - プロフィール作成用データ
+   * @returns 作成されたプロフィール情報
+   * @throws {Error} 400: バリデーションエラーの場合
+   * @throws {Error} 401: 認証エラーの場合
+   * @throws {Error} 409: プロフィールが既に存在する場合
+   * @throws {Error} 500: サーバーエラーの場合
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   const newProfile = await apiClient.createUserProfile({
+   *     displayName: 'ビール太郎'
+   *   });
+   *   console.log('プロフィール作成成功:', newProfile.data);
+   * } catch (error) {
+   *   if (error.status === 409) {
+   *     console.log('プロフィールは既に存在します');
+   *   }
+   * }
+   * ```
+   */
+  async createUserProfile(data: UserProfileInput): Promise<ApiResponse<UserProfile>> {
+    return this.post<ApiResponse<UserProfile>>('/users/profile', data);
+  }
+
+  /**
+   * ユーザープロフィールを更新する
+   *
+   * @description 既存のユーザープロフィールを更新します。
+   * プロフィールが存在しない場合は404エラーがスローされます。
+   *
+   * @param data - プロフィール更新用データ（部分更新対応）
+   * @returns 更新されたプロフィール情報
+   * @throws {Error} 400: バリデーションエラーの場合
+   * @throws {Error} 401: 認証エラーの場合
+   * @throws {Error} 404: プロフィールが見つからない場合
+   * @throws {Error} 500: サーバーエラーの場合
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   const updatedProfile = await apiClient.updateUserProfile({
+   *     displayName: '新しい表示名',
+   *     iconUrl: 'https://example.com/avatar.jpg'
+   *   });
+   *   console.log('プロフィール更新成功:', updatedProfile.data);
+   * } catch (error) {
+   *   if (error.status === 404) {
+   *     console.log('プロフィールが存在しません');
+   *   }
+   * }
+   * ```
+   */
+  async updateUserProfile(data: UserProfileInput): Promise<ApiResponse<UserProfile>> {
+    return this.put<ApiResponse<UserProfile>>('/users/profile', data);
+  }
 }
 
 /**
@@ -342,7 +436,7 @@ export class ApiClient {
  *
  * // 認証が必要な場合はトークンを設定
  * apiClient.setIdToken(idToken);
- * const profile = await apiClient.get<UserProfile>('/profile');
+ * const profile = await apiClient.getUserProfile();
  * ```
  */
 export const apiClient = new ApiClient();
