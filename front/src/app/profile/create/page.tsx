@@ -60,6 +60,7 @@ export default function ProfileCreatePage() {
       // フォームデータをAPIタイプに直接使用
       const profileData: UserProfileInput = {
         display_name: data.displayName,
+        icon_url: "", // 現状、アイコンURLは空で送信
       };
 
       await createUserProfile(profileData);
