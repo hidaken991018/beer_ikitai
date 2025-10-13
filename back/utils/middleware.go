@@ -46,7 +46,7 @@ func RequestLoggingMiddleware(ctx *beegoCtx.Context) {
 	ctx.Request = ctx.Request.WithContext(reqCtx)
 
 	// リクエスト開始ログ
-	LogRequest(reqCtx, ctx.Request.Method, ctx.Request.URL.Path, ctx.Request.UserAgent(), string(ctx.Input.RequestBody))
+	LogRequest(reqCtx, ctx.Request.Method, ctx.Request.URL.Path, ctx.Request.UserAgent(), string(ctx.Input.RequestBody), string(ctx.Request.Body))
 
 	// リクエストボディログ
 	if ctx.Input.RequestBody != nil {

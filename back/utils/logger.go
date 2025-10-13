@@ -97,13 +97,14 @@ func GetRequestIDFromContext(ctx context.Context) string {
 }
 
 // LogRequest リクエスト開始時のログを出力する
-func LogRequest(ctx context.Context, method, path, userAgent, body string) {
+func LogRequest(ctx context.Context, method, path, userAgent, body, body2 string) {
 	WithRequestID(ctx).WithFields(logrus.Fields{
-		"method":     method,
-		"path":       path,
-		"body":       body,
-		"user_agent": userAgent,
-		"type":       "request_start",
+		"method":            method,
+		"path":              path,
+		"input.requestbody": body,
+		"request.body":      body2,
+		"user_agent":        userAgent,
+		"type":              "request_start",
 	}).Info("Request started")
 }
 
