@@ -8,6 +8,7 @@ import (
 	"mybeerlog/domain/usecase"
 	"mybeerlog/interfaces/dto"
 	"mybeerlog/interfaces/mapper"
+	"mybeerlog/interfaces/request"
 	"mybeerlog/utils"
 	"net/http"
 	"strings"
@@ -67,12 +68,8 @@ func (c *UserController) CreateProfile() {
 		return
 	}
 
-	var request dto.UserProfileRequest
-	request = dto.UserProfileRequest{
-		DisplayName: c.GetString("display_name"),
-	}
-
-	body := c.Ctx.Request.Body
+	var request request.CreateUserProfile
+	body := c.Ctx.Input.RequestBody
 	fmt.Println("c.Ctx.Input.RequestBody", body)
 	// unexpected end of JSON input の原因調査用
 
@@ -164,7 +161,7 @@ func (c *UserController) UpdateProfile() {
 		return
 	}
 
-	var request dto.UserProfileRequest
+	var request request.CreateUserProfile
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &request); err != nil {
 		c.HandleError(err, "Invalid request body", dto.ErrorCodeInvalidRequest, http.StatusBadRequest)
 		return
@@ -194,7 +191,7 @@ func (c *UserController) UpdateProfile() {
 }
 
 // validateUserProfileRequest ユーザープロファイルリクエストのバリデーション
-func (c *UserController) validateUserProfileRequest(request *dto.UserProfileRequest) error {
+func (c *UserController) validateUserProfileRequest(request *request.CreateUserProfile) error {
 	// DisplayName のバリデーション
 	if request.DisplayName == "" {
 		c.HandleValidationError("display_name", "Display name is required", "")
