@@ -50,12 +50,19 @@ func RequestLoggingMiddleware(ctx *beegoCtx.Context) {
 
 	// リクエストボディログ
 	if ctx.Input.RequestBody != nil {
-		body := ctx.Input.RequestBody
-		if len(body) > 0 {
-			WithRequestID(reqCtx).WithField("request_body", string(body)).Info("Request Body")
+		if len(ctx.Input.RequestBody) > 0 {
+			WithRequestID(reqCtx).WithField("Input.RequestBody", string(ctx.Input.RequestBody)).Info("Request Body")
 		}
 	} else {
 		WithRequestID(reqCtx).Info("Request Body is nil")
+	}
+
+	if ctx.Request.Body == nil {
+		WithRequestID(reqCtx).Info("ctx.Request.Body is nil")
+	} else {
+		WithRequestID(reqCtx).WithFields(logrus.Fields{
+			"Request.Body": ctx.Request.Body,
+		}).Info("Request started")
 	}
 
 	// リクエスト処理後のログ出力用に後処理を設定
