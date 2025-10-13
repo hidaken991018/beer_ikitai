@@ -299,12 +299,12 @@ export interface UpdateProfileInput {
  *   const handleLogin = async () => {
  *     try {
  *       await login({ email: "user@example.com", password: "password" });
- *       
+ *
  *       // ログイン後にプロフィール有無をチェック
  *       const hasProfile = await checkProfile();
  *       if (!hasProfile) {
  *         // プロフィール作成画面に遷移
- *         router.push('/profile/create');
+ *         router.push(ROUTES.profileCreate);
  *       }
  *     } catch (error) {
  *       console.error("ログインに失敗しました:", error);
@@ -314,11 +314,11 @@ export interface UpdateProfileInput {
  *   if (authState.isLoading || authState.isCheckingProfile) {
  *     return <div>処理中...</div>;
  *   }
- *   
+ *
  *   if (authState.isAuthenticated && authState.hasProfile === false) {
  *     return <div>プロフィール作成が必要です</div>;
  *   }
- *   
+ *
  *   if (authState.isAuthenticated) return <div>ログイン済み</div>;
  *   return <button onClick={handleLogin}>ログイン</button>;
  * };

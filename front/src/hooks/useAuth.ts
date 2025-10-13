@@ -60,11 +60,11 @@ import type {
  *         email: 'user@example.com',
  *         password: 'password123'
  *       });
- *       
+ *
  *       // ログイン後にプロフィール有無をチェック
  *       const hasProfile = await checkProfile();
  *       if (!hasProfile) {
- *         router.push('/profile/create');
+ *         router.push(ROUTES.profileCreate);
  *       }
  *       console.log('ログイン成功');
  *     } catch (error) {
@@ -328,7 +328,7 @@ export function useAuth() {
    * // ログイン後の自動チェック
    * const hasProfile = await checkProfile();
    * if (!hasProfile) {
-   *   router.push('/profile/create');
+   *   router.push(ROUTES.profileCreate);
    * }
    * ```
    */

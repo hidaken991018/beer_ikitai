@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { configureAmplify, validateAmplifyConfig } from '@/lib/auth/amplify';
 import authReducer from '@/store/slices/authSlice';
 import type { AuthContextType } from '@/types/auth';
+import { ROUTES } from '@/lib/constants';
 
 // Create Redux store
 const store = configureStore({
@@ -73,7 +74,7 @@ function AuthInitializer({ children }: AuthProviderProps) {
     const checkProfileAndRedirect = async () => {
       try {
         // Skip profile check if already on profile creation page
-        if (pathname === '/profile/create') {
+        if (pathname === ROUTES.profileCreate) {
           return;
         }
 
@@ -83,7 +84,7 @@ function AuthInitializer({ children }: AuthProviderProps) {
         // Redirect to profile creation if profile doesn't exist
         if (!hasProfile) {
           console.log('Profile not found, redirecting to /profile/create');
-          router.push('/profile/create');
+          router.push(ROUTES.profileCreate);
         }
       } catch (error) {
         console.error('Profile check failed:', error);
@@ -107,15 +108,15 @@ function AuthInitializer({ children }: AuthProviderProps) {
         auth.authState.isAuthenticated &&
         !auth.authState.isCheckingProfile &&
         (auth.authState.hasProfile === null || auth.authState.hasProfile === false) &&
-        pathname !== '/profile/create'
+        pathname !== ROUTES.profileCreate
       ) {
         try {
           const hasProfile = await auth.checkProfile();
-          
+
           // Redirect to profile creation if profile doesn't exist
           if (!hasProfile) {
             console.log('Profile not found after login, redirecting to /profile/create');
-            router.push('/profile/create');
+            router.push(ROUTES.profileCreate);
           }
         } catch (error) {
           console.error('Auto profile check failed:', error);
