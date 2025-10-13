@@ -48,6 +48,16 @@ func RequestLoggingMiddleware(ctx *beegoCtx.Context) {
 	// リクエスト開始ログ
 	LogRequest(reqCtx, ctx.Request.Method, ctx.Request.URL.Path, ctx.Request.UserAgent())
 
+	// リクエストボディログ
+	if ctx.Input.RequestBody != nil {
+		body := ctx.Input.RequestBody
+		if len(body) > 0 {
+			WithRequestID(reqCtx).WithField("request_body", string(body)).Info("Request Body")
+		}
+	} else {
+		WithRequestID(reqCtx).Info("Request Body is nil")
+	}
+
 	// リクエスト処理後のログ出力用に後処理を設定
 	rw := &responseWriter{
 		ResponseWriter: ctx.ResponseWriter.ResponseWriter,

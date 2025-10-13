@@ -69,15 +69,11 @@ func (c *UserController) CreateProfile() {
 	}
 
 	var request request.CreateUserProfile
-	body := c.Ctx.Input.RequestBody
-	fmt.Println("c.Ctx.Input.RequestBody", body)
-	// unexpected end of JSON input の原因調査用
 
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &request)
 	if err != nil {
 		// unexpected end of JSON input の原因調査用 ログ、リクエストボディ
 		// デバッグ情報を整形して出力
-
 		debugInfo := fmt.Sprintf(`
 === JSON Unmarshal エラー ===
 Error: %s
