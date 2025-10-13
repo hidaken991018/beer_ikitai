@@ -69,7 +69,7 @@ func (c *UserController) CreateProfile() {
 
 	var request dto.UserProfileRequest
 	// unexpected end of JSON input の原因調査用
-	er := c.Ctx.Input.Bind(&request, "body")
+	er := c.Ctx.Input.Bind(&request, "RequestBody")
 	if er != nil {
 		c.Ctx.WriteString(er.Error())
 		return
