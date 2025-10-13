@@ -12,6 +12,51 @@ import type { UserProfile, UserProfileInput, ApiResponse } from '@/types/api';
 import { apiClient } from './client';
 
 /**
+ * ユーザープロフィールの存在確認
+ *
+ * @description 認証済みユーザーのプロフィールが存在するかを確認します。
+ * 404エラーを正常な状態として扱い、プロフィール有無をboolean値で返します。
+ * 認証フローでのプロフィール自動チェックに使用されます。
+ *
+ * @returns プロフィール存在フラグ（true: 存在, false: 未作成）
+ * @throws {Error} 401: 認証エラーの場合
+ * @throws {Error} 500: サーバーエラーの場合
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   const hasProfile = await checkUserProfile();
+ *   if (hasProfile) {
+ *     console.log('プロフィールが存在します');
+ *   } else {
+ *     console.log('プロフィールを作成してください');
+ *     // プロフィール作成画面に遷移
+ *     router.push('/profile/create');
+ *   }
+ * } catch (error) {
+ *   console.error('プロフィールチェックに失敗:', error);
+ * }
+ * ```
+ */
+export async function checkUserProfile(): Promise<boolean> {
+  try {
+    await getUserProfile();
+    // プロフィール取得成功 = プロフィール存在
+    return true;
+  } catch (error: unknown) {
+    const apiError = error as Error & { status?: number };
+    
+    // 404エラーの場合はプロフィール未作成
+    if (apiError.status === 404) {
+      return false;
+    }
+    
+    // 404以外のエラーは再スロー
+    throw error;
+  }
+}
+
+/**
  * ユーザープロフィールを取得する
  *
  * @description 認証済みユーザーのプロフィール情報を取得します。
