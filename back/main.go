@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"mybeerlog/controllers"
 	"mybeerlog/models"
 	"mybeerlog/utils"
@@ -19,6 +20,7 @@ import (
 var beegoLambda *httpadapter.HandlerAdapter
 
 func init() {
+	fmt.Printf("CopyRequestBody: %v\n", beego.BConfig.CopyRequestBody)
 	// Lambda 環境変数からデータベース設定を取得
 	dbHost := getEnvOrDefault("DB_HOST", "localhost")
 	dbUser := getEnvOrDefault("DB_USER", "postgres")
@@ -118,6 +120,7 @@ func getEnvOrDefault(key, defaultValue string) string {
 }
 
 func main() {
+
 	// Lambda 環境かどうかをチェック
 	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
 		// Lambda 環境で実行
