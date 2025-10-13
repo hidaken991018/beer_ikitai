@@ -72,11 +72,8 @@ func (c *UserController) CreateProfile() {
 		DisplayName: c.GetString("display_name"),
 	}
 
-	body := c.Ctx.Input.RequestBody
+	body := c.Ctx.Request.Body
 	fmt.Println("c.Ctx.Input.RequestBody", body)
-	fmt.Println("len(c.Ctx.Input.RequestBody)", len(body))
-	fmt.Println("string(c.Ctx.Input.RequestBody)", string(body))
-	fmt.Println("c.GetString(\"display_name\")", c.GetString("display_name"))
 	// unexpected end of JSON input の原因調査用
 
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &request)
