@@ -213,6 +213,7 @@ export const ROUTES = {
   login: '/auth/login',
   register: '/auth/register',
   profile: '/profile',
+  profileCreate: '/profile/create',
   breweries: '/brewery',
   breweryDetail: (id: number) => `/brewery/${id}`,
   nearbyBreweries: '/brewery/nearby',

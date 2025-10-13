@@ -31,7 +31,7 @@ import { apiClient } from './client';
  *   } else {
  *     console.log('プロフィールを作成してください');
  *     // プロフィール作成画面に遷移
- *     router.push('/profile/create');
+ *     router.push(ROUTES.profileCreate);
  *   }
  * } catch (error) {
  *   console.error('プロフィールチェックに失敗:', error);
@@ -45,12 +45,12 @@ export async function checkUserProfile(): Promise<boolean> {
     return true;
   } catch (error: unknown) {
     const apiError = error as Error & { status?: number };
-    
+
     // 404エラーの場合はプロフィール未作成
     if (apiError.status === 404) {
       return false;
     }
-    
+
     // 404以外のエラーは再スロー
     throw error;
   }

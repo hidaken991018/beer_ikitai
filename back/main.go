@@ -19,6 +19,9 @@ import (
 var beegoLambda *httpadapter.HandlerAdapter
 
 func init() {
+	// CopyRequestBody を true に設定して、リクエストボディをコピー
+	// NOTE: `back\conf\app.conf`に設定したいところだが、なぜか設定が効かない、ここで設定　TODO: 要調査
+	beego.BConfig.CopyRequestBody = true
 	// Lambda 環境変数からデータベース設定を取得
 	dbHost := getEnvOrDefault("DB_HOST", "localhost")
 	dbUser := getEnvOrDefault("DB_USER", "postgres")

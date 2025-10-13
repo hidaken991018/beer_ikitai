@@ -77,9 +77,9 @@ export interface UserProfile {
  */
 export interface UserProfileInput {
   /** 更新する表示名 (任意) */
-  displayName?: string;
+  display_name?: string;
   /** 更新するプロフィール画像URL (任意) */
-  iconUrl?: string;
+  icon_url?: string;
 }
 
 /**

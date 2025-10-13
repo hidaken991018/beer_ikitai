@@ -23,7 +23,7 @@ import { VALIDATION } from '@/lib/constants';
  *
  * // フォームデータの検証
  * const result = profileCreateSchema.safeParse({
- *   display_name: "ビール太郎"
+ *   displayName: "ビール太郎"
  * });
  *
  * if (result.success) {
@@ -42,13 +42,13 @@ import { VALIDATION } from '@/lib/constants';
  * const form = useForm<ProfileCreateData>({
  *   resolver: zodResolver(profileCreateSchema),
  *   defaultValues: {
- *     display_name: ""
+ *     displayName: ""
  *   }
  * });
  * ```
  */
 export const profileCreateSchema = z.object({
-  display_name: z
+  displayName: z
     .string({
       required_error: '表示名は必須です',
       invalid_type_error: '表示名は文字列で入力してください',
@@ -75,13 +75,13 @@ export const profileCreateSchema = z.object({
  * ```typescript
  * // 自動的に型が推論される
  * const formData: ProfileCreateFormData = {
- *   display_name: "ビール太郎" // string型
+ *   displayName: "ビール太郎" // string型
  * };
  *
  * // フォームコンポーネントでの使用
  * const handleSubmit = (data: ProfileCreateFormData) => {
- *   // data.display_name は string型として推論される
- *   console.log(data.display_name);
+ *   // data.displayName は string型として推論される
+ *   console.log(data.displayName);
  * };
  * ```
  */
@@ -146,11 +146,11 @@ export const PROFILE_FORM_CONFIG = {
   reValidateMode: 'onChange' as const,
   /** デフォルト値 */
   defaultValues: {
-    display_name: '',
+    displayName: '',
   },
   /** フォームフィールド名 */
   fieldNames: {
-    displayName: 'display_name' as const,
+    displayName: 'displayName' as const,
   },
 } as const;
 
