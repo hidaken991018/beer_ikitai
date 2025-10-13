@@ -7,9 +7,9 @@ import { Provider } from 'react-redux';
 
 import { useAuth } from '@/hooks/useAuth';
 import { configureAmplify, validateAmplifyConfig } from '@/lib/auth/amplify';
+import { ROUTES } from '@/lib/constants';
 import authReducer from '@/store/slices/authSlice';
 import type { AuthContextType } from '@/types/auth';
-import { ROUTES } from '@/lib/constants';
 
 // Create Redux store
 const store = configureStore({

@@ -18,6 +18,7 @@ import { ProfileCreateForm } from '@/components/profile/ProfileCreateForm';
 import { createUserProfile } from '@/lib/api/userProfile';
 import { ROUTES, ERROR_MESSAGES } from '@/lib/constants';
 import type { ProfileCreateFormData } from '@/lib/validations/profile';
+import { UserProfileInput } from '@/types/api';
 
 // Force client-side rendering for this page
 export const dynamic = 'force-dynamic';
@@ -57,8 +58,8 @@ export default function ProfileCreatePage() {
 
     try {
       // フォームデータをAPIタイプに直接使用
-      const profileData = {
-        displayName: data.displayName,
+      const profileData: UserProfileInput = {
+        display_name: data.displayName,
       };
 
       await createUserProfile(profileData);
