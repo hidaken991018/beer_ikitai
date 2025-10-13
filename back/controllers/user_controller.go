@@ -67,6 +67,10 @@ func (c *UserController) CreateProfile() {
 	}
 
 	var request dto.UserProfileRequest
+	// unexpected end of JSON input の原因調査用
+	println("c.Ctx.Input", c.Ctx.Input)
+	println("c.Ctx.Input.RequestBody", c.Ctx.Input.RequestBody)
+	println("string(c.Ctx.Input.RequestBody)", string(c.Ctx.Input.RequestBody))
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &request); err != nil {
 		c.HandleError(err, "Invalid request body", dto.ErrorCodeInvalidRequest, http.StatusBadRequest)
 		return
