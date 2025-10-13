@@ -8,11 +8,10 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react';
-import { action } from '@storybook/addon-actions';
-import { within, userEvent, expect } from '@storybook/test';
+import { action } from 'storybook/actions';
+import { within, userEvent, expect, fn } from 'storybook/test';
 
 import { ProfileCreateForm } from './ProfileCreateForm';
-import type { ProfileCreateFormProps } from '@/types/profile';
 
 /**
  * Storybook メタデータ設定
@@ -68,7 +67,7 @@ const meta: Meta<typeof ProfileCreateForm> = {
     },
   },
   args: {
-    onSubmit: action('onSubmit'),
+    onSubmit: fn(),
     onCancel: action('onCancel'),
     isLoading: false,
     error: null,
@@ -106,13 +105,14 @@ export const WithValue: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const displayNameInput = canvas.getByPlaceholderText('ビール太郎');
-    
+
     await userEvent.type(displayNameInput, 'テストユーザー');
   },
   parameters: {
     docs: {
       description: {
-        story: 'フォームに「テストユーザー」が入力された状態です。ユーザーが実際に入力した際の表示を確認できます。',
+        story:
+          'フォームに「テストユーザー」が入力された状態です。ユーザーが実際に入力した際の表示を確認できます。',
       },
     },
   },
@@ -128,12 +128,13 @@ export const ValidationError: Story = {
   args: {},
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const displayNameInput = canvas.getByPlaceholderText('ビール太郎');
-    const submitButton = canvas.getByRole('button', { name: /プロフィールを作成/ });
-    
+    const submitButton = canvas.getByRole('button', {
+      name: /プロフィールを作成/,
+    });
+
     // 空の状態で送信してバリデーションエラーを発生させる
     await userEvent.click(submitButton);
-    
+
     // エラーメッセージが表示されることを確認
     const errorMessage = await canvas.findByText('表示名は必須です');
     expect(errorMessage).toBeInTheDocument();
@@ -141,7 +142,8 @@ export const ValidationError: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'バリデーションエラーが発生した状態です。必須フィールドが空の場合のエラー表示を確認できます。',
+        story:
+          'バリデーションエラーが発生した状態です。必須フィールドが空の場合のエラー表示を確認できます。',
       },
     },
   },
@@ -160,7 +162,8 @@ export const Loading: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'フォーム送信中のローディング状態です。ボタンが無効化され、ローディングインジケーターが表示されます。',
+        story:
+          'フォーム送信中のローディング状態です。ボタンが無効化され、ローディングインジケーターが表示されます。',
       },
     },
   },
@@ -174,12 +177,14 @@ export const Loading: Story = {
  */
 export const SubmitError: Story = {
   args: {
-    error: 'プロフィールの作成に失敗しました。しばらく時間をおいて再度お試しください。',
+    error:
+      'プロフィールの作成に失敗しました。しばらく時間をおいて再度お試しください。',
   },
   parameters: {
     docs: {
       description: {
-        story: 'API呼び出しでエラーが発生した状態です。エラーメッセージの表示スタイルとアクセシビリティを確認できます。',
+        story:
+          'API呼び出しでエラーが発生した状態です。エラーメッセージの表示スタイルとアクセシビリティを確認できます。',
       },
     },
   },
@@ -198,7 +203,8 @@ export const WithoutCancel: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'キャンセルボタンが表示されない状態です。onCancelプロパティを指定しない場合の表示です。',
+        story:
+          'キャンセルボタンが表示されない状態です。onCancelプロパティを指定しない場合の表示です。',
       },
     },
   },
@@ -215,22 +221,25 @@ export const TooLongDisplayName: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const displayNameInput = canvas.getByPlaceholderText('ビール太郎');
-    
+
     // 51文字の長い文字列を入力（最大50文字を超える）
     const longName = 'a'.repeat(51);
     await userEvent.type(displayNameInput, longName);
-    
+
     // フィールドからフォーカスを外してバリデーションを発生させる
     await userEvent.tab();
-    
+
     // エラーメッセージが表示されることを確認
-    const errorMessage = await canvas.findByText('表示名は50文字以下で入力してください');
+    const errorMessage = await canvas.findByText(
+      '表示名は50文字以下で入力してください'
+    );
     expect(errorMessage).toBeInTheDocument();
   },
   parameters: {
     docs: {
       description: {
-        story: '表示名が最大文字数（50文字）を超えた場合のバリデーションエラーです。',
+        story:
+          '表示名が最大文字数（50文字）を超えた場合のバリデーションエラーです。',
       },
     },
   },
@@ -247,14 +256,16 @@ export const Interactive: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     const displayNameInput = canvas.getByPlaceholderText('ビール太郎');
-    const submitButton = canvas.getByRole('button', { name: /プロフィールを作成/ });
-    
+    const submitButton = canvas.getByRole('button', {
+      name: /プロフィールを作成/,
+    });
+
     // 有効な表示名を入力
     await userEvent.type(displayNameInput, 'インタラクティブテストユーザー');
-    
+
     // 送信ボタンをクリック
     await userEvent.click(submitButton);
-    
+
     // onSubmitが呼ばれることを確認
     expect(args.onSubmit).toHaveBeenCalledWith({
       display_name: 'インタラクティブテストユーザー',
@@ -263,7 +274,8 @@ export const Interactive: Story = {
   parameters: {
     docs: {
       description: {
-        story: '完全なフォーム操作フローのテストです。入力からsubmitまでの一連の操作を自動実行します。',
+        story:
+          '完全なフォーム操作フローのテストです。入力からsubmitまでの一連の操作を自動実行します。',
       },
     },
   },
@@ -280,22 +292,23 @@ export const AccessibilityTest: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const displayNameInput = canvas.getByPlaceholderText('ビール太郎');
-    
+
     // フォーカス確認
     await userEvent.click(displayNameInput);
     expect(displayNameInput).toHaveFocus();
-    
+
     // ラベルとの関連付け確認
     const label = canvas.getByText('表示名 *');
     expect(label).toBeInTheDocument();
-    
+
     // ARIA属性の確認
     expect(displayNameInput).toHaveAttribute('aria-invalid', 'false');
   },
   parameters: {
     docs: {
       description: {
-        story: 'アクセシビリティ機能のテストです。ラベル関連付け、ARIA属性、フォーカス管理を確認します。',
+        story:
+          'アクセシビリティ機能のテストです。ラベル関連付け、ARIA属性、フォーカス管理を確認します。',
       },
     },
   },

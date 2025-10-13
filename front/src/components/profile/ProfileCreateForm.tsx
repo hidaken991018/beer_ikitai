@@ -199,7 +199,12 @@ export const ProfileCreateForm: React.FC<ProfileCreateFormProps> = ({
             <pre className="mt-2 whitespace-pre-wrap">
               {JSON.stringify(
                 {
-                  errors,
+                  errors: errors.display_name ? {
+                    display_name: {
+                      type: errors.display_name.type,
+                      message: errors.display_name.message,
+                    }
+                  } : {},
                   isSubmitting,
                   isDirty,
                   isLoading,
