@@ -69,6 +69,12 @@ func (c *UserController) CreateProfile() {
 
 	var request dto.UserProfileRequest
 	// unexpected end of JSON input の原因調査用
+	er := c.Ctx.Input.Bind(&request, "body")
+	if er != nil {
+		c.Ctx.WriteString(er.Error())
+		return
+	}
+	fmt.Printf("Bound request: %+v\n", request)
 
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &request); err != nil {
 		// unexpected end of JSON input の原因調査用 ログ、リクエストボディ
@@ -98,6 +104,7 @@ Headers:
 		)
 
 		fmt.Printf("Request Body (raw bytes): %v\n", c.Ctx.Input)
+		fmt.Printf("Request Body (raw bytes): %v\n", c.Ctx.Request.Body)
 		fmt.Printf("Request Body (string): %q\n", string(c.Ctx.Input.RequestBody))
 		fmt.Printf("Request Body length: %d\n", len(c.Ctx.Input.RequestBody))
 		fmt.Printf("Request Body is empty: %t\n", len(c.Ctx.Input.RequestBody) == 0)
