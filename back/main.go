@@ -20,9 +20,9 @@ import (
 var beegoLambda *httpadapter.HandlerAdapter
 
 func init() {
+	beego.BConfig.CopyRequestBody = true
 	fmt.Printf("CopyRequestBody: %v\n", beego.BConfig.CopyRequestBody)
 	fmt.Printf("beego.BConfig.RunMode: %v\n", beego.BConfig.RunMode)
-	fmt.Printf("beego.BConfig: %v\n", beego.BConfig)
 	// Lambda 環境変数からデータベース設定を取得
 	dbHost := getEnvOrDefault("DB_HOST", "localhost")
 	dbUser := getEnvOrDefault("DB_USER", "postgres")
@@ -53,9 +53,6 @@ func init() {
 	if syncDBErr != nil {
 		utils.Logger.WithError(err).Fatal("Database sync failed")
 	}
-
-	// Lambda 環境では run.mode を production に設定
-	beego.BConfig.RunMode = beego.PROD
 
 	// ミドルウェア設定
 	setupMiddleware()
