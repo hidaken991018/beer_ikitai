@@ -16,7 +16,7 @@ import { useAuthContext } from '@/components/auth/AuthProvider';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ProfileCreateForm } from '@/components/profile/ProfileCreateForm';
 import { createUserProfile } from '@/lib/api/userProfile';
-import { ROUTES, ERROR_MESSAGES, SUCCESS_MESSAGES } from '@/lib/constants';
+import { ROUTES, ERROR_MESSAGES } from '@/lib/constants';
 import type { ProfileCreateFormData } from '@/lib/validations/profile';
 
 // Force client-side rendering for this page
@@ -62,15 +62,15 @@ export default function ProfileCreatePage() {
       };
 
       await createUserProfile(profileData);
-      
+
       // プロフィール作成成功
       router.push(ROUTES.profile);
     } catch (err) {
       console.error('Profile creation failed:', err);
-      
+
       // エラータイプに応じたメッセージ設定
       const apiError = err as Error & { status?: number };
-      
+
       if (apiError.status === 409) {
         setError('プロフィールは既に存在します');
       } else if (apiError.status === 400) {
