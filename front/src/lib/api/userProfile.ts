@@ -8,6 +8,7 @@
  */
 
 import type { UserProfile, UserProfileInput, ApiResponse } from '@/types/api';
+
 import { apiClient } from './client';
 
 /**

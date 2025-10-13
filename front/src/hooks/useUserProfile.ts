@@ -11,13 +11,17 @@
 'use client';
 
 import { useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
-import { useSelector } from 'react-redux';
 
-import { getUserProfile, createUserProfile, updateUserProfile } from '@/lib/api/userProfile';
+import {
+  getUserProfile,
+  createUserProfile,
+  updateUserProfile,
+} from '@/lib/api/userProfile';
 import { selectAuth } from '@/store/slices/authSlice';
-import type { UserProfile, UserProfileInput, ApiResponse } from '@/types/api';
+import type { UserProfile, UserProfileInput } from '@/types/api';
 
 /**
  * プロフィール取得用フェッチャー関数
@@ -34,12 +38,12 @@ const profileFetcher = async (): Promise<UserProfile | null> => {
     return response.data;
   } catch (error: unknown) {
     const apiError = error as Error & { status?: number };
-    
+
     // 404エラーの場合はプロフィール未作成として null を返す
     if (apiError.status === 404) {
       return null;
     }
-    
+
     // 404以外のエラーは再スローして SWR のエラーハンドリングに委ねる
     throw error;
   }
@@ -167,7 +171,7 @@ export function useUserProfile() {
     profileFetcher,
     {
       // エラー時の再試行設定
-      shouldRetryOnError: (error) => {
+      shouldRetryOnError: error => {
         const apiError = error as Error & { status?: number };
         // 404エラーの場合は再試行しない（プロフィール未作成は正常状態）
         return apiError.status !== 404;
@@ -189,7 +193,7 @@ export function useUserProfile() {
     isMutating: isCreating,
     error: createError,
   } = useSWRMutation('/api/profile/create', createProfileMutator, {
-    onSuccess: (createdProfile) => {
+    onSuccess: createdProfile => {
       // 作成成功時にプロフィールキャッシュを更新
       refreshProfile(createdProfile, { revalidate: false });
     },
@@ -206,7 +210,7 @@ export function useUserProfile() {
     isMutating: isUpdating,
     error: updateError,
   } = useSWRMutation('/api/profile/update', updateProfileMutator, {
-    onSuccess: (updatedProfile) => {
+    onSuccess: updatedProfile => {
       // 更新成功時にプロフィールキャッシュを更新
       refreshProfile(updatedProfile, { revalidate: false });
     },
@@ -221,10 +225,10 @@ export function useUserProfile() {
   const hasProfile = useCallback((): boolean | null => {
     // ローディング中は判定不可
     if (isLoading) return null;
-    
+
     // 404以外のエラーがある場合は判定不可
     if (error && error.status !== 404) return null;
-    
+
     // プロフィールデータの存在を判定
     return profile !== null;
   }, [profile, isLoading, error]);
@@ -247,13 +251,13 @@ export function useUserProfile() {
   const getError = useCallback((): (Error & { status?: number }) | null => {
     // 404エラー以外の取得エラー
     if (error && error.status !== 404) return error;
-    
+
     // 作成エラー
     if (createError) return createError as Error & { status?: number };
-    
+
     // 更新エラー
     if (updateError) return updateError as Error & { status?: number };
-    
+
     return null;
   }, [error, createError, updateError]);
 
@@ -270,17 +274,17 @@ export function useUserProfile() {
   return {
     // プロフィールデータ
     profile,
-    
+
     // 状態フラグ
     hasProfile: hasProfile(),
     isLoading: isLoadingProfile(),
     error: getError(),
-    
+
     // プロフィール操作
     createProfile,
     updateProfile,
     refreshProfile: forceRefresh,
-    
+
     // 個別状態（詳細制御用）
     isCreating,
     isUpdating,
