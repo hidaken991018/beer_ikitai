@@ -50,9 +50,9 @@ func RequestLoggingMiddleware(ctx *beegoCtx.Context) {
 
 	// リクエストボディログ
 	if ctx.Input.RequestBody != nil {
-		if len(ctx.Input.RequestBody) > 0 {
-			WithRequestID(reqCtx).WithField("Input.RequestBody", string(ctx.Input.RequestBody)).Info("Request Body")
-		}
+		WithRequestID(reqCtx).WithFields(logrus.Fields{
+			"Input.RequestBody": ctx.Input.RequestBody,
+		}).Info("Request Body")
 	} else {
 		WithRequestID(reqCtx).Info("Request Body is nil")
 	}
