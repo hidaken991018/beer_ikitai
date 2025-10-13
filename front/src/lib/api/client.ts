@@ -342,7 +342,7 @@ export class ApiClient {
  *
  * // 認証が必要な場合はトークンを設定
  * apiClient.setIdToken(idToken);
- * const profile = await apiClient.get<UserProfile>('/profile');
+ * const profile = await apiClient.getUserProfile();
  * ```
  */
 export const apiClient = new ApiClient();
