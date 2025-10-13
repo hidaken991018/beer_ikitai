@@ -11,18 +11,18 @@
  * プロフィール作成フォームのデータ型
  *
  * @description プロフィール作成時のフォーム入力データの型定義です。
- * display_nameのみを含み、Phase-2の要件に対応しています。
+ * displayNameのみを含み、Phase-2の要件に対応しています。
  *
  * @example
  * ```typescript
  * const formData: ProfileCreateData = {
- *   display_name: "ビール太郎"
+ *   displayName: "ビール太郎"
  * };
  * ```
  */
 export interface ProfileCreateData {
   /** ユーザーの表示名 (1-50文字) */
-  display_name: string;
+  displayName: string;
 }
 
 /**

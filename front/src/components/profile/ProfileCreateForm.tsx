@@ -125,20 +125,20 @@ export const ProfileCreateForm: React.FC<ProfileCreateFormProps> = ({
               type="text"
               placeholder="ビール太郎"
               disabled={isFormDisabled}
-              aria-invalid={!!errors.display_name}
+              aria-invalid={!!errors.displayName}
               aria-describedby={
-                errors.display_name ? `${PROFILE_FORM_CONFIG.fieldNames.displayName}-error` : undefined
+                errors.displayName ? `${PROFILE_FORM_CONFIG.fieldNames.displayName}-error` : undefined
               }
               {...register(PROFILE_FORM_CONFIG.fieldNames.displayName)}
-              className={errors.display_name ? 'border-red-500 focus:border-red-500' : ''}
+              className={errors.displayName ? 'border-red-500 focus:border-red-500' : ''}
             />
-            {errors.display_name && (
+            {errors.displayName && (
               <p
                 id={`${PROFILE_FORM_CONFIG.fieldNames.displayName}-error`}
                 className="text-sm text-red-500"
                 role="alert"
               >
-                {errors.display_name.message}
+                {errors.displayName.message}
               </p>
             )}
           </div>
@@ -198,10 +198,10 @@ export const ProfileCreateForm: React.FC<ProfileCreateFormProps> = ({
             <pre className="mt-2 whitespace-pre-wrap">
               {JSON.stringify(
                 {
-                  errors: errors.display_name ? {
-                    display_name: {
-                      type: errors.display_name.type,
-                      message: errors.display_name.message,
+                  errors: errors.displayName ? {
+                    displayName: {
+                      type: errors.displayName.type,
+                      message: errors.displayName.message,
                     }
                   } : {},
                   isSubmitting,
