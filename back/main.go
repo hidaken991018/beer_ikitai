@@ -21,6 +21,7 @@ var beegoLambda *httpadapter.HandlerAdapter
 
 func init() {
 	fmt.Printf("CopyRequestBody: %v\n", beego.BConfig.CopyRequestBody)
+	fmt.Printf("beego.BConfig.RunMode: %v\n", beego.BConfig.RunMode)
 	// Lambda 環境変数からデータベース設定を取得
 	dbHost := getEnvOrDefault("DB_HOST", "localhost")
 	dbUser := getEnvOrDefault("DB_USER", "postgres")

@@ -91,14 +91,11 @@ Headers:
 `,
 			err.Error(),
 			err,
-			c.Ctx.Request.Body,
-			c.Ctx.Request.Body,
 			c.Ctx.Input.Header("Content-Type"),
 			c.Ctx.Input.Header("Content-Length"),
 		)
 
 		fmt.Printf("Request Body (raw bytes): %v\n", c.Ctx.Input)
-		fmt.Printf("Request Body (raw bytes): %v\n", c.Ctx.Request.Body)
 		fmt.Printf("Request Body (string): %q\n", string(c.Ctx.Input.RequestBody))
 		fmt.Printf("Request Body length: %d\n", len(c.Ctx.Input.RequestBody))
 		fmt.Printf("Request Body is empty: %t\n", len(c.Ctx.Input.RequestBody) == 0)
