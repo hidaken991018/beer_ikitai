@@ -68,6 +68,11 @@ func (c *UserController) CreateProfile() {
 	}
 
 	var request dto.UserProfileRequest
+	request = dto.UserProfileRequest{
+		DisplayName: c.GetString("display_name"),
+	}
+
+	fmt.Println("request", request)
 	// unexpected end of JSON input の原因調査用
 
 	err := json.Unmarshal(c.Ctx.Input.RequestBody, &request)
