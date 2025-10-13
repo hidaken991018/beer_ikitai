@@ -12,6 +12,9 @@ const initialState: AuthState = {
   idToken: null,
   refreshToken: null,
   error: null,
+  hasProfile: null,
+  isCheckingProfile: false,
+  profileError: null,
 };
 
 const authSlice = createSlice({
@@ -52,6 +55,10 @@ const authSlice = createSlice({
       state.idToken = null;
       state.refreshToken = null;
       state.error = null;
+      // Profile state reset
+      state.hasProfile = null;
+      state.isCheckingProfile = false;
+      state.profileError = null;
     },
 
     // Authentication error
@@ -99,6 +106,43 @@ const authSlice = createSlice({
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
     },
+
+    // Profile check start
+    profileCheckStart: state => {
+      state.isCheckingProfile = true;
+      state.profileError = null;
+    },
+
+    // Profile check success (profile exists)
+    profileCheckSuccess: state => {
+      state.hasProfile = true;
+      state.isCheckingProfile = false;
+      state.profileError = null;
+    },
+
+    // Profile check not found (profile does not exist)
+    profileCheckNotFound: state => {
+      state.hasProfile = false;
+      state.isCheckingProfile = false;
+      state.profileError = null;
+    },
+
+    // Profile check error
+    profileCheckError: (state, action: PayloadAction<string>) => {
+      state.hasProfile = null;
+      state.isCheckingProfile = false;
+      state.profileError = action.payload;
+    },
+
+    // Clear profile error
+    clearProfileError: state => {
+      state.profileError = null;
+    },
+
+    // Set profile status (for manual update)
+    setProfileStatus: (state, action: PayloadAction<boolean>) => {
+      state.hasProfile = action.payload;
+    },
   },
 });
 
@@ -111,6 +155,12 @@ export const {
   updateTokens,
   clearError,
   setLoading,
+  profileCheckStart,
+  profileCheckSuccess,
+  profileCheckNotFound,
+  profileCheckError,
+  clearProfileError,
+  setProfileStatus,
 } = authSlice.actions;
 
 export default authSlice.reducer;
@@ -125,3 +175,11 @@ export const selectAccessToken = (state: { auth: AuthState }) =>
 export const selectIsLoading = (state: { auth: AuthState }) =>
   state.auth.isLoading;
 export const selectError = (state: { auth: AuthState }) => state.auth.error;
+
+// Profile selectors
+export const selectHasProfile = (state: { auth: AuthState }) =>
+  state.auth.hasProfile;
+export const selectIsCheckingProfile = (state: { auth: AuthState }) =>
+  state.auth.isCheckingProfile;
+export const selectProfileError = (state: { auth: AuthState }) =>
+  state.auth.profileError;
