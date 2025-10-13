@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"mybeerlog/domain/repository"
 	"mybeerlog/domain/usecase"
 	"mybeerlog/interfaces/dto"
@@ -72,6 +73,44 @@ func (c *UserController) CreateProfile() {
 	println("c.Ctx.Input.RequestBody", c.Ctx.Input.RequestBody)
 	println("string(c.Ctx.Input.RequestBody)", string(c.Ctx.Input.RequestBody))
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &request); err != nil {
+		// unexpected end of JSON input の原因調査用 ログ、リクエストボディ
+		// デバッグ情報を整形して出力
+		debugInfo := fmt.Sprintf(`
+=== JSON Unmarshal エラー ===
+Error: %s
+Error Type: %T
+
+Request Body:
+  Length: %d bytes
+  Is Empty: %v
+  String: %q
+  Hex: %x
+
+Headers:
+  Content-Type: %s
+  Content-Length: %s
+`,
+			err.Error(),
+			err,
+			len(c.Ctx.Input.RequestBody),
+			len(c.Ctx.Input.RequestBody) == 0,
+			string(c.Ctx.Input.RequestBody),
+			c.Ctx.Input.RequestBody,
+			c.Ctx.Input.Header("Content-Type"),
+			c.Ctx.Input.Header("Content-Length"),
+		)
+
+		// より詳細なエラー情報
+		if jsonErr, ok := err.(*json.SyntaxError); ok {
+			debugInfo += fmt.Sprintf("\nSyntax Error:\n  Offset: %d\n", jsonErr.Offset)
+		}
+		if jsonErr, ok := err.(*json.UnmarshalTypeError); ok {
+			debugInfo += fmt.Sprintf("\nType Error:\n  Field: %s\n  Expected: %v\n", jsonErr.Field, jsonErr.Type)
+		}
+
+		debugInfo += "================================\n"
+		println(debugInfo)
+
 		c.HandleError(err, "Invalid request body", dto.ErrorCodeInvalidRequest, http.StatusBadRequest)
 		return
 	}
