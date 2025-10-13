@@ -67,7 +67,7 @@ func (c *UserController) CreateProfile() {
 		return
 	}
 
-	var request dto.UserProfileRequest
+	request := &dto.UserProfileRequest{}
 	// unexpected end of JSON input の原因調査用
 	er := c.Ctx.Input.Bind(&request, "RequestBody")
 	if er != nil {
@@ -125,7 +125,7 @@ Headers:
 	}
 
 	// バリデーション
-	if err := c.validateUserProfileRequest(&request); err != nil {
+	if err := c.validateUserProfileRequest(request); err != nil {
 		return // バリデーションエラーは関数内で処理済み
 	}
 
