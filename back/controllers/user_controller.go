@@ -69,13 +69,11 @@ func (c *UserController) CreateProfile() {
 
 	var request dto.UserProfileRequest
 	// unexpected end of JSON input の原因調査用
-	println("c.Ctx.Input", c.Ctx.Input)
-	println("c.Ctx.Request", c.Ctx.Request)
-	println("c.Ctx.Input.RequestBody", c.Ctx.Input.RequestBody)
-	println("string(c.Ctx.Input.RequestBody)", string(c.Ctx.Input.RequestBody))
+
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &request); err != nil {
 		// unexpected end of JSON input の原因調査用 ログ、リクエストボディ
 		// デバッグ情報を整形して出力
+
 		debugInfo := fmt.Sprintf(`
 === JSON Unmarshal エラー ===
 Error: %s
@@ -93,13 +91,16 @@ Headers:
 `,
 			err.Error(),
 			err,
-			len(c.Ctx.Input.RequestBody),
-			len(c.Ctx.Input.RequestBody) == 0,
-			string(c.Ctx.Input.RequestBody),
-			c.Ctx.Input.RequestBody,
+			c.Ctx.Request.Body,
+			c.Ctx.Request.Body,
 			c.Ctx.Input.Header("Content-Type"),
 			c.Ctx.Input.Header("Content-Length"),
 		)
+
+		fmt.Printf("Request Body (raw bytes): %v\n", c.Ctx.Input)
+		fmt.Printf("Request Body (string): %q\n", string(c.Ctx.Input.RequestBody))
+		fmt.Printf("Request Body length: %d\n", len(c.Ctx.Input.RequestBody))
+		fmt.Printf("Request Body is empty: %t\n", len(c.Ctx.Input.RequestBody) == 0)
 
 		// より詳細なエラー情報
 		if jsonErr, ok := err.(*json.SyntaxError); ok {
