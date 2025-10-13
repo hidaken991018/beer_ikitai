@@ -31,6 +31,7 @@ jobs:
             LS,
             Glob,
             Grep,
+            Bash
             mcp__github__get_issue,
             mcp__github__create_branch,
             mcp__github__create_pull_request,

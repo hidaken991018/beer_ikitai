@@ -23,7 +23,13 @@
    4. 採用技術の変更追加
       1. 既存の-技術スタックは`docs\architect\techstack.md`を確認すること
    5. ファイル変更計画を作成（新規作成・修正・削除）
-   6. 実装ステップ
+   6. 対象コンポーネントの明確化
+      1. フロント：`/front`配下
+      2. バック：`/back`配下
+      3. インフラ：`infra`配下
+      4. その他：上記以外
+   7. 実装ステップ
+      1. フロントの場合、まず設計`docs\architect`の修正、次にコンポーネント+Storybook の作成を実施する
 1. 検討完了したら mcp\_\_github\_\_update_issue を使用して、issue の内容に検討内容を追記する。
 1. "ready-for-plan" or "ready-for-plan-auto"ラベルを削除し、mcp\_\_github\_\_update_issue を使用して"planed"ラベルを追加する
 
