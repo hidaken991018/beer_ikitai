@@ -54,11 +54,11 @@ export interface CognitoUser {
  * 認証状態管理型
  *
  * @description アプリケーション全体の認証状態を管理する Redux state です。
- * ログイン状態、トークン、エラー情報を含みます。
+ * ログイン状態、トークン、エラー情報、プロフィール状態を含みます。
  *
  * @example
  * ```typescript
- * // ログイン済み状態
+ * // ログイン済み・プロフィール作成済み状態
  * const loggedInState: AuthState = {
  *   isAuthenticated: true,
  *   isLoading: false,
@@ -66,7 +66,24 @@ export interface CognitoUser {
  *   accessToken: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
  *   idToken: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
  *   refreshToken: "eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAifQ...",
- *   error: null
+ *   error: null,
+ *   hasProfile: true,
+ *   isCheckingProfile: false,
+ *   profileError: null
+ * };
+ *
+ * // ログイン済み・プロフィール未作成状態
+ * const noProfileState: AuthState = {
+ *   isAuthenticated: true,
+ *   isLoading: false,
+ *   user: { sub: "...", email: "user@example.com", ... },
+ *   accessToken: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+ *   idToken: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+ *   refreshToken: "eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAifQ...",
+ *   error: null,
+ *   hasProfile: false,
+ *   isCheckingProfile: false,
+ *   profileError: null
  * };
  *
  * // 未ログイン状態
@@ -77,7 +94,10 @@ export interface CognitoUser {
  *   accessToken: null,
  *   idToken: null,
  *   refreshToken: null,
- *   error: null
+ *   error: null,
+ *   hasProfile: null,
+ *   isCheckingProfile: false,
+ *   profileError: null
  * };
  * ```
  */
@@ -96,6 +116,12 @@ export interface AuthState {
   refreshToken: string | null;
   /** 認証エラーメッセージ（エラーなしの場合はnull） */
   error: string | null;
+  /** プロフィール存在フラグ（null: 未チェック, true: 存在, false: 未作成） */
+  hasProfile: boolean | null;
+  /** プロフィールチェック処理中フラグ */
+  isCheckingProfile: boolean;
+  /** プロフィール関連エラーメッセージ（エラーなしの場合はnull） */
+  profileError: string | null;
 }
 
 /**
@@ -268,17 +294,31 @@ export interface UpdateProfileInput {
  * @example
  * ```tsx
  * const MyComponent = () => {
- *   const { authState, login, logout } = useAuthContext();
+ *   const { authState, login, logout, checkProfile } = useAuthContext();
  *
  *   const handleLogin = async () => {
  *     try {
  *       await login({ email: "user@example.com", password: "password" });
+ *       
+ *       // ログイン後にプロフィール有無をチェック
+ *       const hasProfile = await checkProfile();
+ *       if (!hasProfile) {
+ *         // プロフィール作成画面に遷移
+ *         router.push('/profile/create');
+ *       }
  *     } catch (error) {
  *       console.error("ログインに失敗しました:", error);
  *     }
  *   };
  *
- *   if (authState.isLoading) return <div>認証処理中...</div>;
+ *   if (authState.isLoading || authState.isCheckingProfile) {
+ *     return <div>処理中...</div>;
+ *   }
+ *   
+ *   if (authState.isAuthenticated && authState.hasProfile === false) {
+ *     return <div>プロフィール作成が必要です</div>;
+ *   }
+ *   
  *   if (authState.isAuthenticated) return <div>ログイン済み</div>;
  *   return <button onClick={handleLogin}>ログイン</button>;
  * };
@@ -307,6 +347,8 @@ export interface AuthContextType {
   logout: () => Promise<void>;
   /** 認証状態の更新（トークンリフレッシュ） */
   refreshAuth: () => Promise<void>;
+  /** プロフィール有無チェック */
+  checkProfile: () => Promise<boolean>;
   /** エラー状態のクリア */
   clearError: () => void;
 }
