@@ -13,6 +13,7 @@ import { useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { apiClient } from '@/lib/api/client';
+import { checkUserProfile } from '@/lib/api/userProfile';
 import { cognitoAuthService } from '@/lib/auth/cognito';
 import {
   authStart,
@@ -23,6 +24,11 @@ import {
   updateTokens,
   clearError,
   setLoading,
+  profileCheckStart,
+  profileCheckSuccess,
+  profileCheckNotFound,
+  profileCheckError,
+  clearProfileError,
   selectAuth,
 } from '@/store/slices/authSlice';
 import type {
@@ -46,7 +52,7 @@ import type {
  * @example
  * ```tsx
  * const LoginForm = () => {
- *   const { authState, login, logout } = useAuth();
+ *   const { authState, login, logout, checkProfile } = useAuth();
  *
  *   const handleLogin = async () => {
  *     try {
@@ -54,14 +60,24 @@ import type {
  *         email: 'user@example.com',
  *         password: 'password123'
  *       });
+ *       
+ *       // ログイン後にプロフィール有無をチェック
+ *       const hasProfile = await checkProfile();
+ *       if (!hasProfile) {
+ *         router.push('/profile/create');
+ *       }
  *       console.log('ログイン成功');
  *     } catch (error) {
  *       console.error('ログイン失敗:', error);
  *     }
  *   };
  *
- *   if (authState.isLoading) {
- *     return <div>認証中...</div>;
+ *   if (authState.isLoading || authState.isCheckingProfile) {
+ *     return <div>処理中...</div>;
+ *   }
+ *
+ *   if (authState.isAuthenticated && authState.hasProfile === false) {
+ *     return <div>プロフィール作成が必要です</div>;
  *   }
  *
  *   if (authState.isAuthenticated) {
@@ -299,6 +315,45 @@ export function useAuth() {
   );
 
   /**
+   * プロフィール存在確認関数
+   *
+   * @description 認証済みユーザーのプロフィールが作成済みかどうかを確認します。
+   * 認証完了後の自動チェックや手動でのプロフィール状態確認に使用します。
+   *
+   * @returns プロフィール存在フラグ（true: 作成済み、false: 未作成）
+   * @throws プロフィールチェック失敗時にエラーをスロー
+   *
+   * @example
+   * ```typescript
+   * // ログイン後の自動チェック
+   * const hasProfile = await checkProfile();
+   * if (!hasProfile) {
+   *   router.push('/profile/create');
+   * }
+   * ```
+   */
+  const checkProfile = useCallback(async (): Promise<boolean> => {
+    try {
+      dispatch(profileCheckStart());
+
+      const hasProfile = await checkUserProfile();
+
+      if (hasProfile) {
+        dispatch(profileCheckSuccess());
+      } else {
+        dispatch(profileCheckNotFound());
+      }
+
+      return hasProfile;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Profile check failed';
+      dispatch(profileCheckError(message));
+      throw error;
+    }
+  }, [dispatch]);
+
+  /**
    * ユーザーログアウト関数
    *
    * @description ユーザーをログアウトし、ローカル状態をクリアします。
@@ -374,6 +429,16 @@ export function useAuth() {
     dispatch(clearError());
   }, [dispatch]);
 
+  /**
+   * プロフィールエラークリア関数
+   *
+   * @description プロフィール関連のエラー状態をクリアします。
+   * エラーメッセージを非表示にする際に使用します。
+   */
+  const clearProfileErr = useCallback(() => {
+    dispatch(clearProfileError());
+  }, [dispatch]);
+
   return {
     // State
     authState,
@@ -388,6 +453,8 @@ export function useAuth() {
     updateProfile,
     logout,
     refreshAuth,
+    checkProfile,
     clearError: clearAuthError,
+    clearProfileError: clearProfileErr,
   };
 }
