@@ -20,7 +20,6 @@ import (
 var beegoLambda *httpadapter.HandlerAdapter
 
 func init() {
-	beego.BConfig.CopyRequestBody = true
 	fmt.Printf("CopyRequestBody: %v\n", beego.BConfig.CopyRequestBody)
 	fmt.Printf("beego.BConfig.RunMode: %v\n", beego.BConfig.RunMode)
 	// Lambda 環境変数からデータベース設定を取得
