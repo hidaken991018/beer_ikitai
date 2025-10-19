@@ -46,7 +46,7 @@ jobs:
 
   plan:
     needs: get-highest-priority-issue
-    if: needs.get-highest-priority-issue.outputs.issue_number != null && needs.get-highest-priority-issue.outputs.issue_number != ''
+    if: needs.get-highest-priority-issue.outputs.issue_number != null && needs.get-highest-priority-issue.outputs.issue_number != '""'
     runs-on: ubuntu-latest
     permissions:
       contents: read
