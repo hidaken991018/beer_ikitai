@@ -22,17 +22,13 @@ from diagrams import Diagram, Cluster, Edge
 from diagrams.aws.compute import Lambda, EC2
 from diagrams.aws.database import RDS
 from diagrams.aws.network import (
-    VPC, InternetGateway, ELB, APIGateway, Route53,
-    VPCEndpoint, NATGateway
+    InternetGateway, APIGateway, Endpoint,CloudFront, NATGateway
 )
 from diagrams.aws.security import (
-    SecurityGroup, IAMRole, SecretsManager, Cognito
+    IAM, SecretsManager, Cognito
 )
 from diagrams.aws.storage import S3
 from diagrams.aws.general import General
-from diagrams.aws.devtools import CloudFormation
-from diagrams.aws.integration import SQS
-from diagrams.aws.analytics import CloudFront
 
 
 def ensure_output_directory():
@@ -63,45 +59,11 @@ def create_overall_architecture():
         users = General("Users")
         
         with Cluster("AWS Cloud"):
-            # DNS and Entry Point
-            with Cluster("DNS & CDN"):
-                cloudfront = CloudFront("CloudFront\n(Icon Images)")
-                
-            with Cluster("VPC (10.0.0.0/16)"):
-                # Internet Gateway
-                igw = InternetGateway("Internet Gateway")
-                
-                with Cluster("Public Subnets"):
-                    with Cluster("AZ-A (10.0.1.0/24)"):
-                        vpc_endpoint_pub_a = VPCEndpoint("S3 Gateway\nEndpoint")
-                    
-                    with Cluster("AZ-B (10.0.2.0/24)"):
-                        vpc_endpoint_pub_b = General("Public Subnet B\n(Future use)")
-                
-                with Cluster("Private Subnets"):
-                    with Cluster("AZ-A (10.0.11.0/24)"):
-                        # Lambda Function
-                        lambda_func = Lambda("API Handler\nLambda")
-                        
-                        # EC2 Instance
-                        ec2_instance = EC2("Management\nEC2 Instance")
-                        
-                        # VPC Endpoints for private subnets
-                        ssm_endpoint = VPCEndpoint("SSM\nEndpoints")
-                        
-                    with Cluster("AZ-B (10.0.12.0/24)"):
-                        # Database
-                        with Cluster("RDS Multi-AZ"):
-                            rds_primary = RDS("PostgreSQL\nPrimary")
-                            rds_standby = RDS("PostgreSQL\nStandby")
-                
-                # Security Groups
-                with Cluster("Security"):
-                    lambda_sg = SecurityGroup("Lambda/DB\nSecurity Group")
-                    ec2_sg = SecurityGroup("EC2\nSecurity Group")
-            
-            # External AWS Services
+            # Internet Gateway
+            igw = InternetGateway("Internet Gateway")
+                        # External AWS Services
             with Cluster("AWS Managed Services"):
+                cloudfront = CloudFront("CloudFront\n(Icon Images)")
                 # API Gateway
                 api_gateway = APIGateway("API Gateway\nREST API")
                 
@@ -114,16 +76,42 @@ def create_overall_architecture():
                 # Secrets Manager
                 secrets = SecretsManager("DB Secrets\nManager")
                 
-                # IAM Roles
-                with Cluster("IAM Roles"):
-                    lambda_role = IAMRole("Lambda\nExecution Role")
-                    ec2_role = IAMRole("EC2\nInstance Role")
+                # IAM
+                iam = IAM("IAM")
+
+            with Cluster("VPC (10.0.0.0/16)"):
+                # Interface&Gateway Endpoints
+                vpc_endpoint = Endpoint("vpc-endpoint")
+                
+                with Cluster("Public Subnets"):
+                    # NAT Gateway
+                    nat_gw_a = NATGateway("NAT Gateway")
+            
+                with Cluster("Private Subnets"):
+                    # Lambda Function
+                    lambda_func = Lambda("API Handler\nLambda")
+                    
+                    # EC2 Instance
+                    ec2_instance = EC2("EC2 Instance")
+                    
+                    # Database
+                    rds_primary = RDS("PostgreSQL\nPrimary")
+                    rds_standby = RDS("PostgreSQL\nStandby")
+                
+                # Security Groups
+                with Cluster("Security"):
+                    lambda_sg = Cluster("Lambda/DB\nSecurity Group")
+                    ec2_sg = Cluster("EC2\nSecurity Group")
+            
+
         
         # Connections
-        users >> cloudfront
+        users >> igw
+        igw >> cloudfront
         cloudfront >> s3_bucket
         
-        users >> api_gateway
+        users >> igw
+        igw >> api_gateway
         api_gateway >> Edge(label="Cognito Auth") >> cognito
         api_gateway >> Edge(label="Lambda Proxy") >> lambda_func
         
@@ -134,8 +122,11 @@ def create_overall_architecture():
         ec2_instance >> Edge(label="Admin Access") >> rds_primary
         
         # VPC Endpoints connections
-        lambda_func >> ssm_endpoint
-        ec2_instance >> ssm_endpoint
+        ec2_instance >> vpc_endpoint
+        ec2_instance >> nat_gw_a
+        lambda_func >> nat_gw_a
+        
+        nat_gw_a >> igw        
         
         # Security associations
         lambda_func - lambda_sg
@@ -143,190 +134,7 @@ def create_overall_architecture():
         rds_primary - lambda_sg
 
 
-def create_network_architecture():
-    """Create detailed network architecture diagram."""
-    output_dir = ensure_output_directory()
-    
-    with Diagram(
-        "My Beer Log - Network Architecture",
-        filename=f"{output_dir}/beer_log_network_architecture",
-        show=False,
-        direction="TB",
-        graph_attr={
-            "fontsize": "45",
-            "bgcolor": "white",
-            "pad": "1.0"
-        }
-    ):
-        with Cluster("VPC (10.0.0.0/16)"):
-            igw = InternetGateway("Internet Gateway")
-            
-            with Cluster("Availability Zone A"):
-                with Cluster("Public Subnet A\n(10.0.1.0/24)"):
-                    public_rt_a = General("Public Route Table")
-                    s3_gateway = VPCEndpoint("S3 Gateway\nEndpoint")
-                
-                with Cluster("Private Subnet A\n(10.0.11.0/24)"):
-                    private_rt_a = General("Private Route Table")
-                    lambda_a = Lambda("Lambda Function")
-                    ec2_a = EC2("EC2 Instance")
-                    
-                    # Interface Endpoints
-                    ssm_endpoint_a = VPCEndpoint("SSM")
-                    ssmmsg_endpoint_a = VPCEndpoint("SSM Messages")
-                    ec2msg_endpoint_a = VPCEndpoint("EC2 Messages")
-            
-            with Cluster("Availability Zone B"):
-                with Cluster("Public Subnet B\n(10.0.2.0/24)"):
-                    public_rt_b = General("Public Route Table")
-                
-                with Cluster("Private Subnet B\n(10.0.12.0/24)"):
-                    private_rt_b = General("Private Route Table")
-                    rds_primary = RDS("RDS Primary")
-                    rds_standby = RDS("RDS Standby")
-        
-        # Route connections
-        igw >> Edge(label="0.0.0.0/0") >> public_rt_a
-        igw >> Edge(label="0.0.0.0/0") >> public_rt_b
-        
-        # VPC Endpoint connections
-        lambda_a >> ssm_endpoint_a
-        lambda_a >> ssmmsg_endpoint_a
-        ec2_a >> ec2msg_endpoint_a
-        
-        # Database connections
-        lambda_a >> Edge(label="DB Access") >> rds_primary
-        ec2_a >> Edge(label="Admin Access") >> rds_primary
-        rds_primary - Edge(label="Multi-AZ", style="dashed") - rds_standby
-
-
-def create_security_architecture():
-    """Create security and access control diagram."""
-    output_dir = ensure_output_directory()
-    
-    with Diagram(
-        "My Beer Log - Security Architecture",
-        filename=f"{output_dir}/beer_log_security_architecture",
-        show=False,
-        direction="LR",
-        graph_attr={
-            "fontsize": "45",
-            "bgcolor": "white",
-            "pad": "1.0"
-        }
-    ):
-        # External user
-        user = General("Application User")
-        
-        with Cluster("Authentication & Authorization"):
-            cognito = Cognito("Cognito User Pool")
-            api_gateway = APIGateway("API Gateway\nwith Cognito Authorizer")
-        
-        with Cluster("VPC Security"):
-            with Cluster("Security Groups"):
-                lambda_sg = SecurityGroup("Lambda/DB SG\n- Port 5432 (VPC only)\n- HTTPS outbound")
-                ec2_sg = SecurityGroup("EC2 SG\n- HTTPS (VPC only)\n- Outbound all")
-            
-            with Cluster("IAM Roles & Policies"):
-                lambda_role = IAMRole("Lambda Role\n- VPC access\n- Logs\n- Secrets access")
-                ec2_role = IAMRole("EC2 Role\n- SSM access\n- CloudWatch\n- S3 read-only")
-        
-        with Cluster("Data Protection"):
-            secrets = SecretsManager("Secrets Manager\n- DB credentials\n- Auto-rotation")
-            s3_encrypted = S3("S3 Bucket\n- AES256 encryption\n- Private access only")
-            
-        with Cluster("Compute Resources"):
-            lambda_func = Lambda("Lambda Function")
-            ec2_instance = EC2("EC2 Instance")
-            rds_db = RDS("RDS PostgreSQL\n- Encrypted storage\n- Private subnet only")
-        
-        # Security flow
-        user >> Edge(label="JWT Token") >> cognito
-        cognito >> Edge(label="Verified Identity") >> api_gateway
-        api_gateway >> Edge(label="Authorized Request") >> lambda_func
-        
-        # IAM associations
-        lambda_func - lambda_role
-        ec2_instance - ec2_role
-        
-        # Security Group associations
-        lambda_func - lambda_sg
-        ec2_instance - ec2_sg
-        rds_db - lambda_sg
-        
-        # Secrets access
-        lambda_func >> Edge(label="Get DB Credentials") >> secrets
-        secrets >> Edge(label="Secure Connection") >> rds_db
-
-
-def create_data_flow_architecture():
-    """Create data flow and API architecture diagram."""
-    output_dir = ensure_output_directory()
-    
-    with Diagram(
-        "My Beer Log - Data Flow Architecture",
-        filename=f"{output_dir}/beer_log_data_flow_architecture",
-        show=False,
-        direction="TB",
-        graph_attr={
-            "fontsize": "45",
-            "bgcolor": "white",
-            "pad": "1.0"
-        }
-    ):
-        # Client applications
-        with Cluster("Client Applications"):
-            web_app = General("Next.js Web App\n(AWS Amplify)")
-            mobile_app = General("Mobile App\n(Future)")
-        
-        # API Layer
-        with Cluster("API Layer"):
-            api_gateway = APIGateway("API Gateway")
-            cognito_auth = Cognito("Cognito Authorizer")
-        
-        # Application Layer
-        with Cluster("Application Layer"):
-            lambda_func = Lambda("Go Lambda Function\n(Beego Framework)")
-            
-            with Cluster("Business Logic"):
-                brewery_service = General("Brewery\nUse Cases")
-                user_service = General("User Profile\nUse Cases")
-                visit_service = General("Visit\nUse Cases")
-        
-        # Data Layer
-        with Cluster("Data Layer"):
-            with Cluster("Database"):
-                rds_db = RDS("PostgreSQL RDS\n- User Profiles\n- Breweries\n- Visits")
-            
-            with Cluster("File Storage"):
-                s3_storage = S3("S3 Bucket\n- Brewery Icons\n- User Images")
-                cloudfront_cdn = CloudFront("CloudFront CDN\n- Image Delivery")
-        
-        # External Services
-        with Cluster("External APIs"):
-            maps_api = General("Maps API\n(GPS Services)")
-        
-        # Data flow connections
-        web_app >> Edge(label="HTTPS Requests") >> api_gateway
-        mobile_app >> Edge(label="HTTPS Requests") >> api_gateway
-        
-        api_gateway >> Edge(label="Auth Check") >> cognito_auth
-        api_gateway >> Edge(label="Proxy Request") >> lambda_func
-        
-        lambda_func >> brewery_service
-        lambda_func >> user_service
-        lambda_func >> visit_service
-        
-        brewery_service >> Edge(label="CRUD Operations") >> rds_db
-        user_service >> Edge(label="CRUD Operations") >> rds_db
-        visit_service >> Edge(label="CRUD Operations") >> rds_db
-        
-        lambda_func >> Edge(label="Image Upload") >> s3_storage
-        s3_storage >> Edge(label="CDN Distribution") >> cloudfront_cdn
-        cloudfront_cdn >> Edge(label="Optimized Delivery") >> web_app
-        
-        lambda_func >> Edge(label="Location Services") >> maps_api
-
+      
 
 def main():
     """Generate all infrastructure diagrams."""
@@ -335,23 +143,12 @@ def main():
     try:
         print("1. Creating overall architecture diagram...")
         create_overall_architecture()
-        
-        print("2. Creating network architecture diagram...")
-        create_network_architecture()
-        
-        print("3. Creating security architecture diagram...")
-        create_security_architecture()
-        
-        print("4. Creating data flow architecture diagram...")
-        create_data_flow_architecture()
+
         
         print("\nDiagrams generated successfully!")
         print("Output location: docs/architect/diagrams/")
         print("\nGenerated files:")
         print("- beer_log_overall_architecture.png")
-        print("- beer_log_network_architecture.png") 
-        print("- beer_log_security_architecture.png")
-        print("- beer_log_data_flow_architecture.png")
         
     except Exception as e:
         print(f"Error generating diagrams: {e}")

@@ -19,12 +19,7 @@
 
 ## インフラ・ホスティング
 
-- AWS
-  - フロントエンド：S3, CloudFront
-  - バックエンド：API Gateway + Lambda
-  - DB：RDS
-  - 認証：Cognito
-  - IaC：Cloudformation
+- AWS(詳細：`docs\architect\infrastructure-diagrams.md`)
 - Docker（開発・本番環境用コンテナ）
 
 ## CI/CD・運用
