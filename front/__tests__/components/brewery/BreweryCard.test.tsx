@@ -75,8 +75,8 @@ const mockBrewery: Brewery = {
   description: 'A great test brewery with excellent beers',
   latitude: 35.6762,
   longitude: 139.6503,
-  createdAt: '2024-01-15T10:30:00Z',
-  updatedAt: '2024-01-15T10:30:00Z',
+  created_at: '2024-01-15T10:30:00Z',
+  updated_at: '2024-01-15T10:30:00Z',
 };
 
 describe('BreweryCard Component', () => {

@@ -118,9 +118,9 @@ export default function BreweryDetailPage() {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(lat1 * (Math.PI / 180)) *
-        Math.cos(lat2 * (Math.PI / 180)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   };
@@ -128,11 +128,11 @@ export default function BreweryDetailPage() {
   const distance =
     userLocation && brewery
       ? calculateDistance(
-          userLocation.latitude,
-          userLocation.longitude,
-          brewery.latitude,
-          brewery.longitude
-        )
+        userLocation.latitude,
+        userLocation.longitude,
+        brewery.latitude,
+        brewery.longitude
+      )
       : null;
 
   const formatDistance = (distanceKm: number): string => {
@@ -284,11 +284,11 @@ export default function BreweryDetailPage() {
                   </div>
                   <div>
                     <span className='font-semibold'>登録日:</span>{' '}
-                    {formatDate(brewery.createdAt)}
+                    {formatDate(brewery.created_at)}
                   </div>
                   <div>
                     <span className='font-semibold'>更新日:</span>{' '}
-                    {formatDate(brewery.updatedAt)}
+                    {formatDate(brewery.updated_at)}
                   </div>
                 </div>
               </CardContent>
