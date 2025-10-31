@@ -4,8 +4,8 @@ import { MapPin, Navigation, TrendingUp, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
+import { useSelector } from 'react-redux';
 
-import { useAuthContext } from '@/components/auth/AuthProvider';
 import { BreweryCard } from '@/components/brewery/BreweryCard';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
@@ -14,12 +14,13 @@ import { useBreweries } from '@/hooks/useBreweries';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { ROUTES, APP_CONFIG } from '@/lib/constants';
 
+
 // Force client-side rendering for this page
 export const dynamic = 'force-dynamic';
 
 export default function HomePage() {
   const router = useRouter();
-  const { authState } = useAuthContext();
+  const authState = useSelector((state: any) => state.auth);
   const {
     breweryState,
     fetchBreweries,
@@ -254,22 +255,22 @@ export default function HomePage() {
               {recentBreweries.map(brewery => {
                 const distance = userLocation
                   ? (() => {
-                      const R = 6371; // Earth's radius in km
-                      const dLat =
-                        (brewery.latitude - userLocation.latitude) *
-                        (Math.PI / 180);
-                      const dLon =
-                        (brewery.longitude - userLocation.longitude) *
-                        (Math.PI / 180);
-                      const a =
-                        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                        Math.cos(userLocation.latitude * (Math.PI / 180)) *
-                          Math.cos(brewery.latitude * (Math.PI / 180)) *
-                          Math.sin(dLon / 2) *
-                          Math.sin(dLon / 2);
-                      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                      return R * c;
-                    })()
+                    const R = 6371; // Earth's radius in km
+                    const dLat =
+                      (brewery.latitude - userLocation.latitude) *
+                      (Math.PI / 180);
+                    const dLon =
+                      (brewery.longitude - userLocation.longitude) *
+                      (Math.PI / 180);
+                    const a =
+                      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(userLocation.latitude * (Math.PI / 180)) *
+                      Math.cos(brewery.latitude * (Math.PI / 180)) *
+                      Math.sin(dLon / 2) *
+                      Math.sin(dLon / 2);
+                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                    return R * c;
+                  })()
                   : undefined;
 
                 return (

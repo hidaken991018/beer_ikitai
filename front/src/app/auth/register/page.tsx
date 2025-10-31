@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 
-import { useAuthContext } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -14,13 +14,16 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/hooks/useAuth';
 import { ROUTES, VALIDATION } from '@/lib/constants';
 import type { RegisterCredentials, ConfirmSignUpInput } from '@/types/auth';
+
 
 type RegistrationStep = 'register' | 'email-sent' | 'confirming' | 'confirmed';
 
 export default function RegisterPage() {
-  const { register, confirmSignUp, authState } = useAuthContext();
+  const { register, confirmSignUp } = useAuth();
+  const authState = useSelector((state: any) => state.auth);
   const [currentStep, setCurrentStep] = useState<RegistrationStep>('register');
 
   // 登録フォーム用の状態

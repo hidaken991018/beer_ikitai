@@ -13,8 +13,8 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 
-import { useAuthContext } from '@/components/auth/AuthProvider';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +27,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/hooks/useAuth';
 import { useBreweries } from '@/hooks/useBreweries';
 import { ROUTES } from '@/lib/constants';
 
@@ -35,7 +36,8 @@ export const dynamic = 'force-dynamic';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { authState, logout } = useAuthContext();
+  const { logout } = useAuth()
+  const authState = useSelector((state: any) => state.auth);
   const { breweryState, fetchVisits, fetchBreweries } = useBreweries();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -98,10 +100,10 @@ export default function ProfilePage() {
     const joinDate =
       breweryState?.visits?.length > 0
         ? new Date(
-            Math.min(
-              ...breweryState?.visits.map(v => new Date(v.visitedAt).getTime())
-            )
+          Math.min(
+            ...breweryState?.visits.map(v => new Date(v.visitedAt).getTime())
           )
+        )
         : null;
 
     return {

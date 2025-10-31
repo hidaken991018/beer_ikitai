@@ -2,7 +2,7 @@
 
 import { configureStore } from '@reduxjs/toolkit';
 import { useRouter, usePathname } from 'next/navigation';
-import React, { createContext, useContext, useEffect, ReactNode } from 'react';
+import React, { useEffect, ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
 import { useAuth } from '@/hooks/useAuth';
@@ -10,7 +10,6 @@ import { configureAmplify, validateAmplifyConfig } from '@/lib/auth/amplify';
 import { ROUTES } from '@/lib/constants';
 import authReducer from '@/store/slices/authSlice';
 import breweryReducer from '@/store/slices/brewerySlice';
-import type { AuthContextType } from '@/types/auth';
 
 // Create Redux store
 const store = configureStore({
@@ -28,9 +27,6 @@ const store = configureStore({
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
-
-// Auth context for easier access
-const AuthContext = createContext<AuthContextType | null>(null);
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -134,7 +130,7 @@ function AuthInitializer({ children }: AuthProviderProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.authState.isAuthenticated, auth.authState.isLoading, pathname]);
 
-  return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
+  return children;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
@@ -143,15 +139,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       <AuthInitializer>{children}</AuthInitializer>
     </Provider>
   );
-}
-
-// Hook to use auth context
-export function useAuthContext() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuthContext must be used within an AuthProvider');
-  }
-  return context;
 }
 
 // Export store for testing and advanced usage

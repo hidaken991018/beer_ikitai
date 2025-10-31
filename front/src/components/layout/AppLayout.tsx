@@ -1,17 +1,19 @@
 'use client';
 
 import React from 'react';
+import { useSelector } from 'react-redux';
 
-import { useAuthContext } from '@/components/auth/AuthProvider';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { authState, logout } = useAuthContext();
+  const { logout } = useAuth();
+  const authState = useSelector((state: any) => state.auth);
 
   return (
     <>

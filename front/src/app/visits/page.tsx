@@ -3,8 +3,8 @@
 import { Calendar, MapPin, Search, Filter, Clock, Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 
-import { useAuthContext } from '@/components/auth/AuthProvider';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,7 +25,7 @@ export const fetchCache = 'force-no-store';
 
 export default function VisitsPage() {
   const router = useRouter();
-  const { authState } = useAuthContext();
+  const { authState } = useSelector((state: any) => state.auth);
   const { breweryState, fetchVisits, fetchBreweries } = useBreweries();
 
   const [searchQuery, setSearchQuery] = useState('');

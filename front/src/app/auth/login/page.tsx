@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 
-import { useAuthContext } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,12 +15,14 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/hooks/useAuth';
 import { ROUTES, VALIDATION } from '@/lib/constants';
 import type { LoginCredentials } from '@/types/auth';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, authState } = useAuthContext();
+  const { login } = useAuth();
+  const authState = useSelector((state: any) => state.auth);
   const [formData, setFormData] = useState<LoginCredentials>({
     email: '',
     password: '',

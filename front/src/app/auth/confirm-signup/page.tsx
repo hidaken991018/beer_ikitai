@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 
-import { useAuthContext } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,12 +15,15 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/lib/constants';
 import type { ConfirmSignUpInput } from '@/types/auth';
 
 export default function ConfirmSignupPage() {
   const searchParams = useSearchParams();
-  const { confirmSignUp, authState } = useAuthContext();
+  const { confirmSignUp } = useAuth();
+  const authState = useSelector((state: any) => state.auth);
+
   const [formData, setFormData] = useState<ConfirmSignUpInput>({
     email: '',
     confirmationCode: '',
@@ -33,7 +36,7 @@ export default function ConfirmSignupPage() {
   useEffect(() => {
     const emailFromUrl = searchParams.get('email');
     const emailFromStorage = localStorage.getItem('pending_confirmation_email');
-    
+
     if (emailFromUrl) {
       setFormData(prev => ({ ...prev, email: emailFromUrl }));
     } else if (emailFromStorage) {
@@ -72,10 +75,10 @@ export default function ConfirmSignupPage() {
     setIsSubmitting(true);
     try {
       await confirmSignUp(formData);
-      
+
       // Clear stored email after successful confirmation
       localStorage.removeItem('pending_confirmation_email');
-      
+
       setIsConfirmed(true);
     } catch (error) {
       console.error('Confirmation failed:', error);

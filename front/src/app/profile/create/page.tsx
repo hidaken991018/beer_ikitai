@@ -11,14 +11,15 @@
 
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 
-import { useAuthContext } from '@/components/auth/AuthProvider';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ProfileCreateForm } from '@/components/profile/ProfileCreateForm';
 import { createUserProfile } from '@/lib/api/userProfile';
 import { ROUTES, ERROR_MESSAGES } from '@/lib/constants';
 import type { ProfileCreateFormData } from '@/lib/validations/profile';
 import { UserProfileInput } from '@/types/api';
+
 
 // Force client-side rendering for this page
 export const dynamic = 'force-dynamic';
@@ -32,7 +33,7 @@ export const dynamic = 'force-dynamic';
  */
 export default function ProfileCreatePage() {
   const router = useRouter();
-  const { authState } = useAuthContext();
+  const { authState } = useSelector((state: any) => state.auth);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
