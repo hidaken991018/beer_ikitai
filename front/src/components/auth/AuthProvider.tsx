@@ -9,12 +9,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { configureAmplify, validateAmplifyConfig } from '@/lib/auth/amplify';
 import { ROUTES } from '@/lib/constants';
 import authReducer from '@/store/slices/authSlice';
+import breweryReducer from '@/store/slices/brewerySlice';
 import type { AuthContextType } from '@/types/auth';
 
 // Create Redux store
 const store = configureStore({
   reducer: {
     auth: authReducer,
+    brewery: breweryReducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
