@@ -135,11 +135,12 @@ export function useBreweries() {
         if (params?.limit) queryParams.limit = params.limit;
         if (params?.search) queryParams.search = params.search;
 
+        // NOTE：暫定対処　適切な型定義をすべき
         const response = await apiClientRef.current.get<
-          PaginatedResponse<Brewery>
+          ApiResponse<{ breweries: Brewery[] }>
         >('/breweries', queryParams);
 
-        dispatch(setBreweries(response.data));
+        dispatch(setBreweries(response.data.breweries || []));
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'Failed to fetch breweries';
@@ -400,10 +401,11 @@ export function useBreweries() {
         if (params?.page) queryParams.page = params.page;
         if (params?.limit) queryParams.limit = params.limit;
 
+        // NOTE：暫定対処　適切な型定義をすべき
         const response = await apiClientRef.current.get<
-          PaginatedResponse<Visit>
+          ApiResponse<{ visits: Visit[] }>
         >('/visits', queryParams);
-        dispatch(setVisits(response.data));
+        dispatch(setVisits(response.data.visits || []));
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'Failed to fetch visits';

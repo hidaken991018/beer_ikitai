@@ -116,9 +116,9 @@ export interface Brewery {
   /** GPS経度座標 (-180.0 ～ 180.0) */
   longitude: number;
   /** 登録日時 (ISO 8601形式) */
-  createdAt: string;
+  created_at: string;
   /** 最終更新日時 (ISO 8601形式) */
-  updatedAt: string;
+  updated_at: string;
 }
 
 /**
@@ -275,6 +275,8 @@ export interface ApiResponse<T> {
   data: T;
   /** 追加のメッセージ（任意） */
   message?: string;
+  request_id: string;
+  timestamp: string;
 }
 
 /**
