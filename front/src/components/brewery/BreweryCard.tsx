@@ -135,7 +135,7 @@ export function BreweryCard({
         <div className='flex justify-between items-center w-full text-xs text-muted-foreground'>
           <div className='flex items-center'>
             <Clock className='h-3 w-3 mr-1' />
-            登録日: {formatDate(brewery.createdAt)}
+            登録日: {formatDate(brewery.created_at)}
           </div>
           <div>ID: {brewery.id}</div>
         </div>
@@ -235,7 +235,7 @@ export function BreweryCardCompact({
               )}
               <div className='flex items-center'>
                 <Clock className='h-3 w-3 mr-1' />
-                {new Date(brewery.createdAt).toLocaleDateString('ja-JP')}
+                {new Date(brewery.created_at).toLocaleDateString('ja-JP')}
               </div>
             </div>
           </div>
