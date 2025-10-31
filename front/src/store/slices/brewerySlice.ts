@@ -94,6 +94,8 @@ const brewerySlice = createSlice({
     // Current brewery
     setCurrentBrewery: (state, action: PayloadAction<Brewery | null>) => {
       state.currentBrewery = action.payload;
+      state.isLoading = false;
+      state.error = null;
     },
 
     // Nearby breweries

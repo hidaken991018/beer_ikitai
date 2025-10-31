@@ -176,24 +176,24 @@ export function useBreweries() {
           limit: options?.limit || breweryState?.filters?.limit || 20,
         };
 
-        const response = await apiClientRef.current.get<ApiResponse<Brewery[]>>(
-          '/breweries',
-          params
-        );
+        const response = await apiClientRef.current.get<
+          ApiResponse<{ breweries: Brewery[] }>
+        >('/breweries', params);
 
         // Calculate distances and sort by distance
-        const breweriesWithDistance: BreweryWithDistance[] = response.data
-          .map((brewery: Brewery) => ({
-            ...brewery,
-            distance: calculateDistance(userLocation, {
-              latitude: brewery.latitude,
-              longitude: brewery.longitude,
-            }),
-          }))
-          .sort(
-            (a: BreweryWithDistance, b: BreweryWithDistance) =>
-              (a.distance || 0) - (b.distance || 0)
-          );
+        const breweriesWithDistance: BreweryWithDistance[] =
+          response.data.breweries
+            .map((brewery: Brewery) => ({
+              ...brewery,
+              distance: calculateDistance(userLocation, {
+                latitude: brewery.latitude,
+                longitude: brewery.longitude,
+              }),
+            }))
+            .sort(
+              (a: BreweryWithDistance, b: BreweryWithDistance) =>
+                (a.distance || 0) - (b.distance || 0)
+            );
 
         dispatch(setNearbyBreweries(breweriesWithDistance));
         dispatch(setLastLocation(userLocation));
@@ -225,6 +225,7 @@ export function useBreweries() {
         const response = await apiClientRef.current.get<ApiResponse<Brewery>>(
           `/breweries/${id}`
         );
+        console.log('Fetched brewery:', response.data);
         dispatch(setCurrentBrewery(response.data));
       } catch (error) {
         const message =
