@@ -7,6 +7,7 @@ import (
 	"mybeerlog/domain/usecase"
 	"mybeerlog/interfaces/dto"
 	"mybeerlog/interfaces/mapper"
+	"strconv"
 )
 
 // BreweryController 醸造所関連のHTTPリクエストを処理するコントローラー
@@ -138,13 +139,19 @@ func (c *BreweryController) CreateBrewery() {
 // @Failure 404 {object} dto.ErrorResponse
 // @router /breweries/:brewery_id [get]
 func (c *BreweryController) GetBrewery() {
-	breweryID := c.GetIntQuery("brewery_id", 0)
-	if breweryID <= 0 {
+
+	breweryID := c.Ctx.Input.Param(":brewery_id")
+	id, err := strconv.Atoi(breweryID)
+	if err != nil {
+		c.ErrorResponse(400, "Invalid Brewery ID", "INVALID_BREWERY_ID")
+		return
+	}
+	if id <= 0 {
 		c.ErrorResponse(400, "Brewery ID is required", "INVALID_BREWERY_ID")
 		return
 	}
 
-	brewery, err := c.BreweryUsecase.GetBrewery(breweryID)
+	brewery, err := c.BreweryUsecase.GetBrewery(id)
 	if err != nil {
 		c.ErrorResponse(404, "Brewery not found", "BREWERY_NOT_FOUND")
 		return
