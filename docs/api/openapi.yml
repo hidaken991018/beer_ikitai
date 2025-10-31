@@ -196,16 +196,35 @@ components:
         - longitude
 
     CheckinResponse:
+      allOf:
+        - $ref: '#/components/schemas/BasesResponse'
+        - type: object
+      properties:
+        data:
+          type: object
+          properties:
+            visit:
+              $ref: '#/components/schemas/Visit'
+          required:
+            - visit
+
+    BasesResponse:
       type: object
       properties:
-        visit:
-          $ref: '#/components/schemas/Visit'
         message:
           type: string
-          description: チェックイン結果メッセージ
+          description: メッセージ
+        request_id:
+          type: string
+          description: リクエストID
+        timestamp:
+          type: string
+          format: date-time
+          description: レスポンス生成日時
       required:
-        - visit
         - message
+        - request_id
+        - timestamp
 
 paths:
   /health:
@@ -375,15 +394,20 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  breweries:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Brewery'
-                  total:
-                    type: integer
-                    description: 総件数
+                allOf:
+                  - $ref: '#/components/schemas/BasesResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          breweries:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Brewery'
+                          total:
+                            type: integer
+                            description: 総件数
                 required:
                   - breweries
                   - total
@@ -404,7 +428,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BreweryInput'
+              allOf:
+                - $ref: '#/components/schemas/BasesResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/BreweryInput'
+
       responses:
         '201':
           description: 醸造所登録成功
@@ -450,7 +480,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Brewery'
+                allOf:
+                  - $ref: '#/components/schemas/BasesResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Brewery'
         '404':
           description: 醸造所が見つかりません
           content:
@@ -534,18 +569,20 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  visits:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Visit'
-                  total:
-                    type: integer
-                    description: 総件数
-                required:
-                  - visits
-                  - total
+                allOf:
+                  - $ref: '#/components/schemas/BasesResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          visits:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Visit'
+                          total:
+                            type: integer
+                            description: 総件数
         '401':
           description: 認証が必要です
           content:
@@ -572,7 +609,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Visit'
+                allOf:
+                  - $ref: '#/components/schemas/BasesResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Visit'
         '401':
           description: 認証が必要です
           content:
