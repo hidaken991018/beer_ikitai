@@ -7,12 +7,12 @@ import { AppLayout } from '@/components/layout/AppLayout';
 
 
 // Mock AuthProvider
-jest.mock('@/components/auth/AuthProvider', () => ({
-  useAuthContext: () => ({
-    authState: { isAuthenticated: false },
-    logout: jest.fn(),
-  }),
-}));
+// jest.mock('@/components/auth/AuthProvider', () => ({
+//   useAuthContext: () => ({
+//     authState: { isAuthenticated: false },
+//     logout: jest.fn(),
+//   }),
+// }));
 
 // Mock Header component
 jest.mock('@/components/layout/Header', () => ({
