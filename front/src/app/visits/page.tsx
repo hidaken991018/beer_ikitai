@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { useBreweries } from '@/hooks/useBreweries';
 import { ROUTES } from '@/lib/constants';
+import { AuthState } from '@/types/auth';
 
 // Force client-side rendering for this page
 export const dynamic = 'force-dynamic';
@@ -25,7 +26,7 @@ export const fetchCache = 'force-no-store';
 
 export default function VisitsPage() {
   const router = useRouter();
-  const { authState } = useSelector((state: any) => state.auth);
+  const authState: AuthState = useSelector((state: any) => state.auth);
   const { breweryState, fetchVisits, fetchBreweries } = useBreweries();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -166,7 +167,7 @@ export default function VisitsPage() {
     router.push(ROUTES.breweryDetail(breweryId));
   };
 
-  if (!authState.isAuthenticated) {
+  if (!authState?.isAuthenticated) {
     return null; // Will redirect to login
   }
 

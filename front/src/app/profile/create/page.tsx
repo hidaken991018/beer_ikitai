@@ -100,7 +100,7 @@ export default function ProfileCreatePage() {
   };
 
   // 未認証時は何も表示しない（リダイレクト処理中）
-  if (!authState.isAuthenticated) {
+  if (!authState?.isAuthenticated) {
     return null;
   }
 

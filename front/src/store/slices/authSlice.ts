@@ -1,5 +1,3 @@
-'use client';
-
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import type { AuthState, CognitoUser } from '@/types/auth';

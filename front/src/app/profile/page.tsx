@@ -30,6 +30,7 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/useAuth';
 import { useBreweries } from '@/hooks/useBreweries';
 import { ROUTES } from '@/lib/constants';
+import { AuthState } from '@/types/auth';
 
 // Force client-side rendering for this page
 export const dynamic = 'force-dynamic';
@@ -37,7 +38,7 @@ export const dynamic = 'force-dynamic';
 export default function ProfilePage() {
   const router = useRouter();
   const { logout } = useAuth()
-  const authState = useSelector((state: any) => state.auth);
+  const authState: AuthState = useSelector((state: any) => state.auth);
   const { breweryState, fetchVisits, fetchBreweries } = useBreweries();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -146,7 +147,7 @@ export default function ProfilePage() {
     });
   };
 
-  if (!authState.isAuthenticated) {
+  if (!authState?.isAuthenticated) {
     return null; // Will redirect to login
   }
 
