@@ -7,7 +7,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 
 
 // Mock AuthProvider
-// jest.mock('@/components/auth/AuthProvider', () => ({
+// jest.mock('@/store/store', () => ({
 //   useAuthContext: () => ({
 //     authState: { isAuthenticated: false },
 //     logout: jest.fn(),
@@ -38,7 +38,7 @@ jest.mock('@/components/layout/Footer', () => ({
 describe('AppLayout Component', () => {
   it('renders children content', () => {
     render(
-      <Provider store={jest.requireActual('@/components/auth/AuthProvider').store}>
+      <Provider store={jest.requireActual('@/store/store').store}>
         <AppLayout>
           <div>Test Content</div>
         </AppLayout>
@@ -50,7 +50,7 @@ describe('AppLayout Component', () => {
 
   it('renders header component', () => {
     render(
-      <Provider store={jest.requireActual('@/components/auth/AuthProvider').store}>
+      <Provider store={jest.requireActual('@/store/store').store}>
         <AppLayout>
           <div>Content</div>
         </AppLayout>
@@ -63,7 +63,7 @@ describe('AppLayout Component', () => {
 
   it('renders footer component', () => {
     render(
-      <Provider store={jest.requireActual('@/components/auth/AuthProvider').store}>
+      <Provider store={jest.requireActual('@/store/store').store}>
         <AppLayout>
           <div>Content</div>
         </AppLayout>
@@ -76,7 +76,7 @@ describe('AppLayout Component', () => {
 
   it('renders main content area with correct classes', () => {
     render(
-      <Provider store={jest.requireActual('@/components/auth/AuthProvider').store}>
+      <Provider store={jest.requireActual('@/store/store').store}>
         <AppLayout>
           <div data-testid='test-content'>Test Content</div>
         </AppLayout>
@@ -95,12 +95,12 @@ describe('AppLayout Component', () => {
       logout: jest.fn(),
     }));
 
-    jest.doMock('@/components/auth/AuthProvider', () => ({
+    jest.doMock('@/store/store', () => ({
       useAuthContext: mockUseAuthContext,
     }));
 
     render(
-      <Provider store={jest.requireActual('@/components/auth/AuthProvider').store}>
+      <Provider store={jest.requireActual('@/store/store').store}>
         <AppLayout>
           <div>Content</div>
         </AppLayout>
@@ -112,7 +112,7 @@ describe('AppLayout Component', () => {
 
   it('contains all layout sections in correct order', () => {
     render(
-      <Provider store={jest.requireActual('@/components/auth/AuthProvider').store}>
+      <Provider store={jest.requireActual('@/store/store').store}>
         <AppLayout>
           <div data-testid='main-content'>Main Content</div>
         </AppLayout>
@@ -129,7 +129,7 @@ describe('AppLayout Component', () => {
 
   it('renders with multiple children', () => {
     render(
-      <Provider store={jest.requireActual('@/components/auth/AuthProvider').store}>
+      <Provider store={jest.requireActual('@/store/store').store}>
         <AppLayout>
           <div>First Child</div>
           <div>Second Child</div>
@@ -145,7 +145,7 @@ describe('AppLayout Component', () => {
 
   it('renders with complex nested content', () => {
     render(
-      <Provider store={jest.requireActual('@/components/auth/AuthProvider').store}>
+      <Provider store={jest.requireActual('@/store/store').store}>
         <AppLayout>
           <div>
             <h1>Page Title</h1>

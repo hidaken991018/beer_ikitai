@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 
 import './globals.css';
-import { AuthProvider } from '@/components/auth/AuthProvider';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
 import { APP_CONFIG } from '@/lib/constants';
+import { OverrideProvider } from '@/store/OverrideProvider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,7 +33,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <ErrorBoundary>
-          <AuthProvider>{children}</AuthProvider>
+          <OverrideProvider>{children}</OverrideProvider>
         </ErrorBoundary>
       </body>
     </html>

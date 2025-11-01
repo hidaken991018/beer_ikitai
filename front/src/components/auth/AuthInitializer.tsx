@@ -1,38 +1,18 @@
 'use client';
 
-import { configureStore } from '@reduxjs/toolkit';
 import { useRouter, usePathname } from 'next/navigation';
-import React, { useEffect, ReactNode } from 'react';
-import { Provider } from 'react-redux';
+import { useEffect, ReactNode } from 'react';
 
 import { useAuth } from '@/hooks/useAuth';
 import { configureAmplify, validateAmplifyConfig } from '@/lib/auth/amplify';
 import { ROUTES } from '@/lib/constants';
-import authReducer from '@/store/slices/authSlice';
-import breweryReducer from '@/store/slices/brewerySlice';
-
-// Create Redux store
-const store = configureStore({
-  reducer: {
-    auth: authReducer,
-    brewery: breweryReducer,
-  },
-  middleware: getDefaultMiddleware =>
-    getDefaultMiddleware({
-      serializableCheck: {
-        ignoredActions: ['persist/PERSIST'],
-      },
-    }),
-});
+import { store } from '@/store/store';
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
 
-function AuthInitializer({ children }: AuthProviderProps) {
+export function AuthInitializer({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -132,14 +112,3 @@ function AuthInitializer({ children }: AuthProviderProps) {
 
   return children;
 }
-
-export function AuthProvider({ children }: AuthProviderProps) {
-  return (
-    <Provider store={store}>
-      <AuthInitializer>{children}</AuthInitializer>
-    </Provider>
-  );
-}
-
-// Export store for testing and advanced usage
-export { store };
