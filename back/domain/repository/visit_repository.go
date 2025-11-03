@@ -168,6 +168,7 @@ func (r *visitRepository) entityToModel(e *entity.Visit) *models.Visit {
 		VisitedAt: e.VisitedAt(),
 	}
 
+	// UserProfileは必須フィールドなので、エンティティがない場合はIDのみ設定
 	if e.UserProfile() != nil {
 		visit.UserProfile = &models.UserProfile{
 			Id:          e.UserProfile().ID(),
@@ -177,7 +178,14 @@ func (r *visitRepository) entityToModel(e *entity.Visit) *models.Visit {
 			CreatedAt:   e.UserProfile().CreatedAt(),
 			UpdatedAt:   e.UserProfile().UpdatedAt(),
 		}
+	} else if e.UserProfileID() > 0 {
+		// UserProfileエンティティがない場合はIDのみ設定
+		visit.UserProfile = &models.UserProfile{
+			Id: e.UserProfileID(),
+		}
 	}
+
+	// Breweryは必須フィールドなので、エンティティがない場合はIDのみ設定
 	if e.Brewery() != nil {
 		visit.Brewery = &models.Brewery{
 			Id:          e.Brewery().ID(),
@@ -188,6 +196,11 @@ func (r *visitRepository) entityToModel(e *entity.Visit) *models.Visit {
 			Longitude:   e.Brewery().Longitude(),
 			CreatedAt:   e.Brewery().CreatedAt(),
 			UpdatedAt:   e.Brewery().UpdatedAt(),
+		}
+	} else if e.BreweryID() > 0 {
+		// Breweryエンティティがない場合はIDのみ設定
+		visit.Brewery = &models.Brewery{
+			Id: e.BreweryID(),
 		}
 	}
 

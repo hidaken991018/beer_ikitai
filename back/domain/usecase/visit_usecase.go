@@ -8,8 +8,9 @@ import (
 
 // visitUsecase 訪問ユースケースの実装
 type visitUsecase struct {
-	VisitRepo   repository.VisitRepository
-	BreweryRepo repository.BreweryRepository
+	VisitRepo       repository.VisitRepository
+	BreweryRepo     repository.BreweryRepository
+	UserProfileRepo repository.UserProfileRepository
 }
 
 // VisitUsecase 訪問のビジネスロジックインターフェースを定義する
@@ -20,10 +21,11 @@ type VisitUsecase interface {
 }
 
 // NewVisitUsecase 新しい訪問ユースケースを作成する
-func NewVisitUsecase(visitRepo repository.VisitRepository, breweryRepo repository.BreweryRepository) VisitUsecase {
+func NewVisitUsecase(visitRepo repository.VisitRepository, breweryRepo repository.BreweryRepository, userProfileRepo repository.UserProfileRepository) VisitUsecase {
 	return &visitUsecase{
-		VisitRepo:   visitRepo,
-		BreweryRepo: breweryRepo,
+		VisitRepo:       visitRepo,
+		BreweryRepo:     breweryRepo,
+		UserProfileRepo: userProfileRepo,
 	}
 }
 
@@ -34,6 +36,12 @@ func (v *visitUsecase) CheckIn(userProfileID, breweryID int, lat, lng, maxDistan
 	}
 	if breweryID <= 0 {
 		return nil, errors.New("invalid brewery id")
+	}
+
+	// ユーザープロファイル情報取得
+	userProfile, err := v.UserProfileRepo.GetByID(userProfileID)
+	if err != nil {
+		return nil, errors.New("user profile not found")
 	}
 
 	// 醸造所情報取得
@@ -61,8 +69,11 @@ func (v *visitUsecase) CheckIn(userProfileID, breweryID int, lat, lng, maxDistan
 	// 	}
 	// }
 
-	// 訪問記録作成
-	visit, err := entity.NewVisit(userProfileID, breweryID)
+	// 訪問記録作成（UserProfileとBreweryのエンティティを含む）
+	visit, err := entity.NewVisitBuilder().
+		WithUserProfile(userProfile).
+		WithBrewery(brewery).
+		Build()
 	if err != nil {
 		return nil, err
 	}

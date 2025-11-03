@@ -24,7 +24,7 @@ func NewVisitController() *VisitController {
 	breweryRepo := repository.NewBreweryRepository()
 	userProfileRepo := repository.NewUserProfileRepository()
 
-	visitUsecase := usecase.NewVisitUsecase(visitRepo, breweryRepo)
+	visitUsecase := usecase.NewVisitUsecase(visitRepo, breweryRepo, userProfileRepo)
 	userProfileUsecase := usecase.NewUserProfileUsecase(userProfileRepo)
 
 	return &VisitController{
