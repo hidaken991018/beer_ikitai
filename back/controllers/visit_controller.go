@@ -49,8 +49,10 @@ func (c *VisitController) CheckIn() {
 		return
 	}
 
+	println("cognitoSub:", cognitoSub)
 	int_cognitoSub, err := strconv.Atoi(cognitoSub)
 	if err != nil {
+		println("err strconv cognitoSub:", err)
 		c.ErrorResponse(400, "Invalid user profile cognito sub", "INVALID_COGNITO_SUB")
 		return
 	}
