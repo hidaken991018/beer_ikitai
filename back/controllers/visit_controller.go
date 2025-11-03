@@ -65,7 +65,6 @@ func (c *VisitController) CheckIn() {
 		return
 	}
 
-	println("request :", request)
 	println("request.BreweryID :", request.BreweryID)
 
 	// GPS設定から許可範囲を取得
