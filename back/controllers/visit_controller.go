@@ -55,6 +55,8 @@ func (c *VisitController) CheckIn() {
 		c.ErrorResponse(400, "User profile not found", "PROFILE_NOT_FOUND")
 		return
 	}
+
+	println("userProfile :", userProfile)
 	println("userProfile ID:", userProfile.ID())
 
 	var request dto.CheckinRequest
