@@ -431,7 +431,7 @@ export function useBreweries() {
       try {
         dispatch(
           checkinStart({
-            breweryId: checkinData.breweryId,
+            breweryId: checkinData.brewery_id,
             userLocation: {
               latitude: checkinData.latitude,
               longitude: checkinData.longitude,

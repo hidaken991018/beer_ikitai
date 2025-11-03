@@ -67,7 +67,7 @@ export default function HomePage() {
 
     try {
       await checkin({
-        breweryId,
+        brewery_id: breweryId,
         latitude: userLocation.latitude,
         longitude: userLocation.longitude,
       });

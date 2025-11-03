@@ -202,7 +202,7 @@ export interface Visit {
  */
 export interface CheckinInput {
   /** チェックイン対象の醸造所ID */
-  breweryId: number;
+  brewery_id: number;
   /** ユーザーの現在位置（緯度） */
   latitude: number;
   /** ユーザーの現在位置（経度） */

@@ -104,7 +104,7 @@ export default function NearbyBreweriesPage() {
 
     try {
       await checkin({
-        breweryId,
+        brewery_id: breweryId,
         latitude: userLocation.latitude,
         longitude: userLocation.longitude,
       });
