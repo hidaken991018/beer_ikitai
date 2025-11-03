@@ -4,7 +4,6 @@ import (
 	"errors"
 	"mybeerlog/domain/entity"
 	"mybeerlog/domain/repository"
-	"time"
 )
 
 // visitUsecase 訪問ユースケースの実装
@@ -53,13 +52,14 @@ func (v *visitUsecase) CheckIn(userProfileID, breweryID int, lat, lng, maxDistan
 	}
 
 	// 重複チェックイン防止（1時間以内の同一醸造所チェックイン禁止）
-	recent, _, err := v.VisitRepo.GetByUserProfileAndBrewery(userProfileID, breweryID, 1, 0)
-	if err == nil && len(recent) > 0 {
-		lastVisit := recent[0]
-		if time.Since(lastVisit.VisitedAt()) < time.Hour {
-			return nil, errors.New("already checked in within the last hour")
-		}
-	}
+	// NOTE: やりたいことはわかるが`GetByUserProfileAndBrewery`の中身がわけわかめ
+	// recent, _, err := v.VisitRepo.GetByUserProfileAndBrewery(userProfileID, breweryID, 1, 0)
+	// if err == nil && len(recent) > 0 {
+	// 	lastVisit := recent[0]
+	// 	if time.Since(lastVisit.VisitedAt()) < time.Hour {
+	// 		return nil, errors.New("already checked in within the last hour")
+	// 	}
+	// }
 
 	// 訪問記録作成
 	visit, err := entity.NewVisit(userProfileID, breweryID)
