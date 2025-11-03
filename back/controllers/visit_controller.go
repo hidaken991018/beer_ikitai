@@ -56,6 +56,12 @@ func (c *VisitController) CheckIn() {
 		return
 	}
 
+	int_cognitoSub, err := strconv.Atoi(userProfile.CognitoSub())
+	if err != nil {
+		c.ErrorResponse(400, "Invalid user profile cognito sub", "INVALID_COGNITO_SUB")
+		return
+	}
+
 	var request dto.CheckinRequest
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &request); err != nil {
 		c.ErrorResponse(400, "Invalid request body", "INVALID_REQUEST")
@@ -69,7 +75,7 @@ func (c *VisitController) CheckIn() {
 	}
 
 	visit, err := c.VisitUsecase.CheckIn(
-		userProfile.ID(),
+		int_cognitoSub,
 		request.BreweryID,
 		request.Latitude,
 		request.Longitude,

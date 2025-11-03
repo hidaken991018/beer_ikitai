@@ -30,8 +30,11 @@ func NewVisitUsecase(visitRepo repository.VisitRepository, breweryRepo repositor
 
 // CheckIn 醸造所にチェックインする
 func (v *visitUsecase) CheckIn(userProfileID, breweryID int, lat, lng, maxDistance float64) (*entity.Visit, error) {
-	if userProfileID <= 0 || breweryID <= 0 {
-		return nil, errors.New("invalid user profile id or brewery id")
+	if userProfileID <= 0 {
+		return nil, errors.New("invalid user profile id")
+	}
+	if breweryID <= 0 {
+		return nil, errors.New("invalid brewery id")
 	}
 
 	// 醸造所情報取得
