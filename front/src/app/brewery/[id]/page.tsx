@@ -43,7 +43,7 @@ export default function BreweryDetailPage() {
 
   const brewery = breweryState?.currentBrewery;
   const visits = breweryState?.visits.filter(
-    visit => visit.breweryId === breweryId
+    visit => visit.brewery_id === breweryId
   );
 
   // Load brewery details and visits

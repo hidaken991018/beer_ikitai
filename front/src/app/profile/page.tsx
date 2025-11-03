@@ -73,14 +73,14 @@ export default function ProfilePage() {
   // Calculate user statistics
   const userStats = React.useMemo(() => {
     const totalVisits = breweryState?.visits?.length;
-    const uniqueBreweries = new Set(breweryState?.visits.map(v => v.breweryId))
+    const uniqueBreweries = new Set(breweryState?.visits.map(v => v.brewery_id))
       .size;
 
     // Calculate favorite brewery
     const breweryVisitCounts: Record<number, number> = {};
     breweryState?.visits.forEach(visit => {
-      breweryVisitCounts[visit.breweryId] =
-        (breweryVisitCounts[visit.breweryId] || 0) + 1;
+      breweryVisitCounts[visit.brewery_id] =
+        (breweryVisitCounts[visit.brewery_id] || 0) + 1;
     });
 
     const favoriteBreweryId = Object.entries(breweryVisitCounts).sort(

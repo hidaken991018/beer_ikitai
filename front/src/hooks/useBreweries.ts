@@ -406,6 +406,7 @@ export function useBreweries() {
         const response = await apiClientRef.current.get<
           ApiResponse<{ visits: Visit[] }>
         >('/visits', queryParams);
+
         dispatch(setVisits(response.data.visits || []));
       } catch (error) {
         const message =
@@ -445,12 +446,8 @@ export function useBreweries() {
           checkinData
         );
 
-        if (response.success) {
-          dispatch(checkinSuccess(response.visit));
-          return response.visit;
-        } else {
-          throw new Error('Checkin failed');
-        }
+        dispatch(checkinSuccess(response.visit));
+        return response.visit;
       } catch (error) {
         const message =
           error instanceof Error ? error.message : 'Checkin failed';

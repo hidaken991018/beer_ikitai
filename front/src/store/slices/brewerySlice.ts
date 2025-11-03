@@ -277,7 +277,7 @@ export const selectVisitsByBrewery = (state: { brewery: BreweryState }) => {
   const visitMap = new Map<number, Visit[]>();
 
   visits.forEach(visit => {
-    const breweryId = visit.breweryId;
+    const breweryId = visit.brewery_id;
     if (!visitMap.has(breweryId)) {
       visitMap.set(breweryId, []);
     }
@@ -294,6 +294,6 @@ export const selectUniqueBreweriesVisited = (state: {
   brewery: BreweryState;
 }) => {
   const visits = state.brewery.visits;
-  const uniqueBreweryIds = new Set(visits.map(visit => visit.breweryId));
+  const uniqueBreweryIds = new Set(visits.map(visit => visit.brewery_id));
   return uniqueBreweryIds.size;
 };

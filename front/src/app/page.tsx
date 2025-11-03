@@ -159,7 +159,7 @@ export default function HomePage() {
                 <CardContent className='p-6 text-center'>
                   <MapPin className='h-8 w-8 mx-auto mb-2 text-green-600' />
                   <h3 className='text-2xl font-bold'>
-                    {new Set(breweryState?.visits.map(v => v.breweryId)).size}
+                    {new Set(breweryState?.visits.map(v => v.brewery_id)).size}
                   </h3>
                   <p className='text-muted-foreground'>訪問した醸造所数</p>
                 </CardContent>
@@ -196,7 +196,7 @@ export default function HomePage() {
                       <div>
                         <h3 className='font-semibold'>
                           {visit.brewery?.name ||
-                            `醸造所 ID: ${visit.breweryId}`}
+                            `醸造所 ID: ${visit.brewery_id}`}
                         </h3>
                         <p className='text-sm text-muted-foreground'>
                           {new Date(visit.visitedAt).toLocaleString('ja-JP')}
@@ -205,7 +205,7 @@ export default function HomePage() {
                       <Button
                         variant='outline'
                         size='sm'
-                        onClick={() => handleViewDetails(visit.breweryId)}
+                        onClick={() => handleViewDetails(visit.brewery_id)}
                       >
                         詳細を見る
                       </Button>

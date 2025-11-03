@@ -178,7 +178,7 @@ export interface Visit {
   /** 訪問者のユーザーID */
   userProfileId: number;
   /** 訪問した醸造所のID */
-  breweryId: number;
+  brewery_id: number;
   /** 醸造所の詳細情報 (リレーションデータ、任意) */
   brewery?: Brewery;
   /** 訪問日時 (ISO 8601形式) */
@@ -229,8 +229,6 @@ export interface CheckinInput {
  * ```
  */
 export interface CheckinResponse {
-  /** チェックイン処理の成功/失敗 */
-  success: boolean;
   /** 作成された訪問記録（成功時のみ） */
   visit: Visit;
 }

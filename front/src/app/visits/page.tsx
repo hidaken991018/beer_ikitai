@@ -58,7 +58,7 @@ export default function VisitsPage() {
     if (searchQuery) {
       filtered = filtered.filter(visit => {
         const brewery = breweryState?.breweries.find(
-          b => b.id === visit.breweryId
+          b => b.id === visit.brewery_id
         );
         return (
           brewery?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -97,10 +97,10 @@ export default function VisitsPage() {
         );
       } else {
         const breweryA = breweryState?.breweries.find(
-          br => br.id === a.breweryId
+          br => br.id === a.brewery_id
         );
         const breweryB = breweryState?.breweries.find(
-          br => br.id === b.breweryId
+          br => br.id === b.brewery_id
         );
         return (breweryA?.name || '').localeCompare(breweryB?.name || '');
       }
@@ -119,8 +119,8 @@ export default function VisitsPage() {
   const visitStats = React.useMemo(() => {
     const breweryVisitCounts: Record<number, number> = {};
     breweryState?.visits.forEach(visit => {
-      breweryVisitCounts[visit.breweryId] =
-        (breweryVisitCounts[visit.breweryId] || 0) + 1;
+      breweryVisitCounts[visit.brewery_id] =
+        (breweryVisitCounts[visit.brewery_id] || 0) + 1;
     });
 
     const uniqueBreweries = Object.keys(breweryVisitCounts).length;
@@ -322,17 +322,17 @@ export default function VisitsPage() {
                     <div className='flex-1'>
                       <div className='flex items-start justify-between mb-2'>
                         <h3 className='text-lg font-semibold'>
-                          {getBreweryName(visit.breweryId)}
+                          {getBreweryName(visit.brewery_id)}
                         </h3>
                         <span className='text-sm text-muted-foreground'>
                           #{visit.id}
                         </span>
                       </div>
 
-                      {getBreweryAddress(visit.breweryId) && (
+                      {getBreweryAddress(visit.brewery_id) && (
                         <p className='text-sm text-muted-foreground mb-2 flex items-center'>
                           <MapPin className='h-4 w-4 mr-1' />
-                          {getBreweryAddress(visit.breweryId)}
+                          {getBreweryAddress(visit.brewery_id)}
                         </p>
                       )}
 
@@ -346,7 +346,7 @@ export default function VisitsPage() {
                       <Button
                         variant='outline'
                         size='sm'
-                        onClick={() => handleViewBrewery(visit.breweryId)}
+                        onClick={() => handleViewBrewery(visit.brewery_id)}
                       >
                         詳細を見る
                       </Button>
