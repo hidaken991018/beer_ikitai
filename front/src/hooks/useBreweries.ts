@@ -441,7 +441,7 @@ export function useBreweries() {
         );
 
         const response = await apiClientRef.current.post<CheckinResponse>(
-          '/visits/checkin',
+          '/checkin',
           checkinData
         );
 
