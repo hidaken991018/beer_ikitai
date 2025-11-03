@@ -493,7 +493,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /checkin:
+  /visits/checkin:
     post:
       tags:
         - Visit
@@ -531,7 +531,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /users/visits:
+  /visits:
     get:
       tags:
         - Visit
@@ -590,7 +590,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /users/visits/{visit_id}:
+  /visits/{visit_id}:
     get:
       tags:
         - Visit

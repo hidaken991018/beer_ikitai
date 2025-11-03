@@ -41,7 +41,7 @@ func NewVisitController() *VisitController {
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 401 {object} dto.ErrorResponse
 // @Failure 404 {object} dto.ErrorResponse
-// @router /checkin [post]
+// @router /visits/checkin [post]
 func (c *VisitController) CheckIn() {
 	cognitoSub, err := c.GetCognitoSub()
 	if err != nil {
