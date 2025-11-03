@@ -49,13 +49,13 @@ func (c *VisitController) CheckIn() {
 		return
 	}
 
-	println("cognitoSub:", cognitoSub)
-	int_cognitoSub, err := strconv.Atoi(cognitoSub)
+	// ユーザープロファイル取得
+	userProfile, err := c.UserProfileUsecase.GetProfile(cognitoSub)
 	if err != nil {
-		println("err strconv cognitoSub:", err)
-		c.ErrorResponse(400, "Invalid user profile cognito sub", "INVALID_COGNITO_SUB")
+		c.ErrorResponse(400, "User profile not found", "PROFILE_NOT_FOUND")
 		return
 	}
+	println("userProfile ID:", userProfile.ID())
 
 	var request dto.CheckinRequest
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &request); err != nil {
@@ -70,7 +70,7 @@ func (c *VisitController) CheckIn() {
 	}
 
 	visit, err := c.VisitUsecase.CheckIn(
-		int_cognitoSub,
+		userProfile.ID(),
 		request.BreweryID,
 		request.Latitude,
 		request.Longitude,
