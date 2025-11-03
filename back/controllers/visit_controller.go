@@ -94,7 +94,7 @@ func (c *VisitController) CheckIn() {
 		Message: "Check-in successful!",
 	}
 
-	c.Ctx.ResponseWriter.WriteHeader(201)
+	c.Ctx.ResponseWriter.WriteHeader(200)
 	c.JSONResponse(response)
 }
 

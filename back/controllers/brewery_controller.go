@@ -127,7 +127,7 @@ func (c *BreweryController) CreateBrewery() {
 	}
 
 	response := mapper.BreweryEntityToResponse(brewery)
-	c.Ctx.ResponseWriter.WriteHeader(201)
+	c.Ctx.ResponseWriter.WriteHeader(200)
 	c.JSONResponse(response)
 }
 
