@@ -49,14 +49,7 @@ func (c *VisitController) CheckIn() {
 		return
 	}
 
-	// ユーザープロファイル取得
-	userProfile, err := c.UserProfileUsecase.GetProfile(cognitoSub)
-	if err != nil {
-		c.ErrorResponse(400, "User profile not found", "PROFILE_NOT_FOUND")
-		return
-	}
-
-	int_cognitoSub, err := strconv.Atoi(userProfile.CognitoSub())
+	int_cognitoSub, err := strconv.Atoi(cognitoSub)
 	if err != nil {
 		c.ErrorResponse(400, "Invalid user profile cognito sub", "INVALID_COGNITO_SUB")
 		return
