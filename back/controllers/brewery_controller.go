@@ -90,7 +90,7 @@ func (c *BreweryController) GetBreweries() {
 // @Title Create Brewery
 // @Description Create new brewery (admin only)
 // @Param body body dto.BreweryRequest true "Brewery data"
-// @Success 201 {object} dto.BreweryResponse
+// @Success 200 {object} dto.BreweryResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 401 {object} dto.ErrorResponse
 // @Failure 403 {object} dto.ErrorResponse
@@ -127,7 +127,7 @@ func (c *BreweryController) CreateBrewery() {
 	}
 
 	response := mapper.BreweryEntityToResponse(brewery)
-	c.Ctx.ResponseWriter.WriteHeader(201)
+	c.Ctx.ResponseWriter.WriteHeader(200)
 	c.JSONResponse(response)
 }
 

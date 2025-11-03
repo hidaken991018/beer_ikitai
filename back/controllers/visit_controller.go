@@ -24,7 +24,7 @@ func NewVisitController() *VisitController {
 	breweryRepo := repository.NewBreweryRepository()
 	userProfileRepo := repository.NewUserProfileRepository()
 
-	visitUsecase := usecase.NewVisitUsecase(visitRepo, breweryRepo)
+	visitUsecase := usecase.NewVisitUsecase(visitRepo, breweryRepo, userProfileRepo)
 	userProfileUsecase := usecase.NewUserProfileUsecase(userProfileRepo)
 
 	return &VisitController{
@@ -37,7 +37,7 @@ func NewVisitController() *VisitController {
 // @Title Check In
 // @Description Check in to brewery using GPS
 // @Param body body dto.CheckinRequest true "Check-in data"
-// @Success 201 {object} dto.CheckinResponse
+// @Success 200 {object} dto.CheckinResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 401 {object} dto.ErrorResponse
 // @Failure 404 {object} dto.ErrorResponse
@@ -94,7 +94,7 @@ func (c *VisitController) CheckIn() {
 		Message: "Check-in successful!",
 	}
 
-	c.Ctx.ResponseWriter.WriteHeader(201)
+	c.Ctx.ResponseWriter.WriteHeader(200)
 	c.JSONResponse(response)
 }
 

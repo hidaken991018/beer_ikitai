@@ -69,9 +69,9 @@ func (b *UserProfileBuilder) WithUpdatedAt(updatedAt time.Time) *UserProfileBuil
 
 // Build UserProfileインスタンスを作成する
 func (b *UserProfileBuilder) Build() (*UserProfile, error) {
-	if err := b.userProfile.validate(); err != nil {
-		return nil, err
-	}
+	// if err := b.userProfile.validate(); err != nil {
+	// 	return nil, err
+	// }
 	return b.userProfile, nil
 }
 

@@ -10,6 +10,7 @@ import (
 
 // UserProfileRepository ユーザープロファイルのデータアクセスインターフェースを定義する
 type UserProfileRepository interface {
+	GetByID(id int) (*entity.UserProfile, error)
 	GetByCognitoSub(cognitoSub string) (*entity.UserProfile, error)
 	Create(userProfile *entity.UserProfile) (*entity.UserProfile, error)
 	Update(userProfile *entity.UserProfile) (*entity.UserProfile, error)
@@ -25,6 +26,17 @@ func NewUserProfileRepository() UserProfileRepository {
 	return &beegoUserProfileRepository{
 		orm: orm.NewOrm(),
 	}
+}
+
+// GetByID IDでユーザープロファイルを取得する
+func (r *beegoUserProfileRepository) GetByID(id int) (*entity.UserProfile, error) {
+	model := &models.UserProfile{}
+	err := r.orm.QueryTable("user_profile").Filter("id", id).One(model)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.modelToEntity(model)
 }
 
 // GetByCognitoSub Cognito SUBでユーザープロファイルを取得する

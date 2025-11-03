@@ -55,7 +55,7 @@ func (c *UserController) GetProfile() {
 // @Title Create User Profile
 // @Description Create new user profile
 // @Param body body dto.UserProfileRequest true "User profile data"
-// @Success 201 {object} dto.UserProfileResponse
+// @Success 200 {object} dto.UserProfileResponse
 // @Failure 400 {object} dto.ErrorResponse
 // @Failure 401 {object} dto.ErrorResponse
 // @Failure 409 {object} dto.ErrorResponse
