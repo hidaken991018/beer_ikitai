@@ -12,7 +12,6 @@ import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
-import { CheckinButton } from '@/components/brewery/CheckinButton';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +25,7 @@ import { useBreweries } from '@/hooks/useBreweries';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { ROUTES } from '@/lib/constants';
 
+import { CheckinButton } from '../_components/CheckinButton/CheckinButton';
 
 // Force client-side rendering for this page
 export const dynamic = 'force-dynamic';

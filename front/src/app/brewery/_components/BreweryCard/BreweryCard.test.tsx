@@ -7,7 +7,7 @@ import type { Brewery } from '@/types/brewery';
 import {
   BreweryCard,
   BreweryCardCompact,
-} from '../_components/BreweryCard';
+} from './BreweryCard';
 
 // Mock UI components
 jest.mock('@/components/ui/button', () => ({

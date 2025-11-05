@@ -22,7 +22,7 @@ import { ROUTES } from '@/lib/constants';
 import {
   BreweryCard,
   BreweryCardCompact,
-} from '../brewery/_components/BreweryCard';
+} from '../brewery/_components/BreweryCard/BreweryCard';
 
 type ViewMode = 'grid' | 'list';
 

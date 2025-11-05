@@ -20,7 +20,7 @@ import { useBreweries } from '@/hooks/useBreweries';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { ROUTES } from '@/lib/constants';
 
-import { BreweryCard } from '../_components/BreweryCard';
+import { BreweryCard } from '../_components/BreweryCard/BreweryCard';
 
 // Force client-side rendering for this page
 export const dynamic = 'force-dynamic';
