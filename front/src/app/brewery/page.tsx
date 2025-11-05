@@ -4,10 +4,7 @@ import { Search, Filter, MapPin } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 
-import {
-  BreweryCard,
-  BreweryCardCompact,
-} from '@/components/brewery/BreweryCard';
+
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +18,11 @@ import { Input } from '@/components/ui/input';
 import { useBreweries } from '@/hooks/useBreweries';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { ROUTES } from '@/lib/constants';
+
+import {
+  BreweryCard,
+  BreweryCardCompact,
+} from '../brewery/_components/BreweryCard';
 
 type ViewMode = 'grid' | 'list';
 

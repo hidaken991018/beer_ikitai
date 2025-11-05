@@ -4,7 +4,7 @@ import { MapPin, Navigation, RefreshCw, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 
-import { BreweryCard } from '@/components/brewery/BreweryCard';
+
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +19,8 @@ import { Label } from '@/components/ui/label';
 import { useBreweries } from '@/hooks/useBreweries';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { ROUTES } from '@/lib/constants';
+
+import { BreweryCard } from '../_components/BreweryCard';
 
 // Force client-side rendering for this page
 export const dynamic = 'force-dynamic';

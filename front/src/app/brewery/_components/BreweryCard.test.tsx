@@ -1,11 +1,13 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
 import '@testing-library/jest-dom';
+
+import type { Brewery } from '@/types/brewery';
+
 import {
   BreweryCard,
   BreweryCardCompact,
-} from '@/components/brewery/BreweryCard';
-import type { Brewery } from '@/types/brewery';
+} from '../_components/BreweryCard';
 
 // Mock UI components
 jest.mock('@/components/ui/button', () => ({
