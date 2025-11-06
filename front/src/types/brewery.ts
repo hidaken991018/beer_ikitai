@@ -470,7 +470,11 @@ export interface BreweryCardProps {
  */
 export interface CheckinButtonProps {
   /** チェックイン対象の醸造所 */
-  brewery: Brewery;
+  brewery: {
+    id: number;
+    latitude: number;
+    longitude: number;
+  };
   /** ユーザーの現在位置（任意、未提供時は位置取得を試行） */
   userLocation?: Coordinates;
   /** チェックイン実行時のコールバック（非同期処理） */

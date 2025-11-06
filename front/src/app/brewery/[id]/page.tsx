@@ -12,6 +12,7 @@ import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
+import { CheckInCard } from '@/app/brewery/[id]/_components/CheckInCard';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,8 +25,6 @@ import {
 import { useBreweries } from '@/hooks/useBreweries';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { ROUTES } from '@/lib/constants';
-
-import { CheckinButton } from '../_components/CheckinButton/CheckinButton';
 
 // Force client-side rendering for this page
 export const dynamic = 'force-dynamic';
@@ -336,22 +335,11 @@ export default function BreweryDetailPage() {
           {/* Action Panel */}
           <div className='space-y-6'>
             {/* Checkin Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>チェックイン</CardTitle>
-                <CardDescription>
-                  この醸造所にチェックインしましょう
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <CheckinButton
-                  brewery={brewery}
-                  userLocation={userLocation || undefined}
-                  onCheckin={handleCheckin}
-                />
-              </CardContent>
-            </Card>
-
+            <CheckInCard
+              brewery={brewery}
+              userLocation={userLocation}
+              onCheckin={handleCheckin}
+            />
             {/* Navigation */}
             <Card>
               <CardHeader>
