@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  ArrowLeft,
   MapPin,
   Clock,
   Star,
@@ -217,24 +216,11 @@ export default function BreweryDetailPage() {
     <AppLayout>
       <div className='max-w-4xl mx-auto'>
         {/* Header */}
-        <div className='flex items-center justify-between mb-6'>
-          <Button
-            variant='outline'
-            onClick={() => router.back()}
-            className='flex items-center'
-          >
-            <ArrowLeft className='h-4 w-4 mr-2' />
-            戻る
-          </Button>
-
-          <Button
-            variant='outline'
-            onClick={handleShare}
-            className='flex items-center'
-          >
-            <Share className='h-4 w-4 mr-2' />
-            共有
-          </Button>
+        <div className='mb-8'>
+          <h1 className='text-3xl font-bold mb-2'>醸造所詳細</h1>
+          <p className='text-muted-foreground'>
+            醸造所詳細を確認できます
+          </p>
         </div>
 
         {/* Main Content */}
@@ -357,44 +343,23 @@ export default function BreweryDetailPage() {
                   <Navigation className='h-4 w-4 mr-2' />
                   Google Mapsで開く
                 </Button>
-
-                <Button
-                  variant='outline'
-                  className='w-full'
-                  onClick={() => router.push(ROUTES.nearbyBreweries)}
-                >
-                  <MapPin className='h-4 w-4 mr-2' />
-                  近隣の醸造所を探す
-                </Button>
               </CardContent>
             </Card>
 
-            {/* Stats */}
+            {/* Share Section */}
             <Card>
               <CardHeader>
-                <CardTitle>統計情報</CardTitle>
+                <CardTitle>共有</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className='space-y-2 text-sm'>
-                  <div className='flex justify-between'>
-                    <span>醸造所ID:</span>
-                    <span className='font-mono'>{brewery.id}</span>
-                  </div>
-                  {authState.isAuthenticated && (
-                    <div className='flex justify-between'>
-                      <span>あなたの訪問回数:</span>
-                      <span className='font-semibold'>{visits.length}回</span>
-                    </div>
-                  )}
-                  {distance !== null && (
-                    <div className='flex justify-between'>
-                      <span>現在地からの距離:</span>
-                      <span className='font-semibold'>
-                        {formatDistance(distance)}
-                      </span>
-                    </div>
-                  )}
-                </div>
+              <CardContent className='space-y-3'>
+                <Button
+                  variant='outline'
+                  onClick={handleShare}
+                  className='w-full'
+                >
+                  <Share className='h-4 w-4 mr-2' />
+                  共有
+                </Button>
               </CardContent>
             </Card>
           </div>
