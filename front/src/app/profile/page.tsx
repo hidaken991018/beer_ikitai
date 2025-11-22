@@ -11,7 +11,8 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { AppLayout } from '@/components/layout/AppLayout';
+import { BottomNavigation } from '@/components/layout/BottomNavigation';
+import { MobileLayout } from '@/components/layout/MobileLayout';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -87,7 +88,7 @@ export default function ProfilePage() {
 
   if (breweryState?.isLoading) {
     return (
-      <AppLayout>
+      <MobileLayout showBottomNav>
         <div className='flex justify-center items-center py-12'>
           <div className='text-center'>
             <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4'></div>
@@ -96,25 +97,25 @@ export default function ProfilePage() {
             </p>
           </div>
         </div>
-      </AppLayout>
+        <BottomNavigation />
+      </MobileLayout>
     );
   }
 
   return (
-    <AppLayout>
-      <div className='max-w-4xl mx-auto'>
+    <MobileLayout showBottomNav>
+      <div className='p-4 pb-20'>
         {/* Header */}
-        <div className='mb-8'>
-          <h1 className='text-3xl font-bold mb-2'>プロフィール</h1>
-          <p className='text-muted-foreground'>
+        <div className='mb-6'>
+          <h1 className='text-2xl font-bold mb-2'>プロフィール</h1>
+          <p className='text-sm text-gray-600'>
             アカウント情報とあなたのビール体験の統計を確認できます
           </p>
         </div>
 
-        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-          {/* Profile Information */}
-          <div className='lg:col-span-2 space-y-6'>
-            {/* Basic Information */}
+        <div className='space-y-6'>
+          {/* Basic Information */}
+          <div>
             <Card>
               <CardHeader>
                 <div className='flex justify-between items-center'>
@@ -178,8 +179,8 @@ export default function ProfilePage() {
             </Card>
           </div>
 
-          {/* Sidebar */}
-          <div className='space-y-6'>
+          {/* Account Status & Actions */}
+          <div>
             {/* Account Status */}
             <Card>
               <CardHeader>
@@ -267,6 +268,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-    </AppLayout>
+      <BottomNavigation />
+    </MobileLayout>
   );
 }

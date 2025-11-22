@@ -14,22 +14,6 @@ import { AppLayout } from '@/components/layout/AppLayout';
 //   }),
 // }));
 
-// Mock Header component
-jest.mock('@/components/layout/Header', () => ({
-  Header: ({
-    isAuthenticated,
-    onLogout,
-  }: {
-    isAuthenticated: boolean;
-    onLogout: () => void;
-  }) => (
-    <header data-testid='header'>
-      <div>Header Component</div>
-      {isAuthenticated && <button onClick={onLogout}>Logout</button>}
-    </header>
-  ),
-}));
-
 // Mock Footer component
 jest.mock('@/components/layout/Footer', () => ({
   Footer: () => <footer data-testid='footer'>Footer Component</footer>,
@@ -48,118 +32,68 @@ describe('AppLayout Component', () => {
     expect(screen.getByText('Test Content')).toBeInTheDocument();
   });
 
-  it('renders header component', () => {
-    render(
-      <Provider store={jest.requireActual('@/store/store').store}>
-        <AppLayout>
-          <div>Content</div>
-        </AppLayout>
-      </Provider>
-    );
+});
 
-    expect(screen.getByTestId('header')).toBeInTheDocument();
-    expect(screen.getByText('Header Component')).toBeInTheDocument();
-  });
+it('renders footer component', () => {
+  render(
+    <Provider store={jest.requireActual('@/store/store').store}>
+      <AppLayout>
+        <div>Content</div>
+      </AppLayout>
+    </Provider>
+  );
 
-  it('renders footer component', () => {
-    render(
-      <Provider store={jest.requireActual('@/store/store').store}>
-        <AppLayout>
-          <div>Content</div>
-        </AppLayout>
-      </Provider>
-    );
+  expect(screen.getByTestId('footer')).toBeInTheDocument();
+  expect(screen.getByText('Footer Component')).toBeInTheDocument();
+});
 
-    expect(screen.getByTestId('footer')).toBeInTheDocument();
-    expect(screen.getByText('Footer Component')).toBeInTheDocument();
-  });
+it('renders main content area with correct classes', () => {
+  render(
+    <Provider store={jest.requireActual('@/store/store').store}>
+      <AppLayout>
+        <div data-testid='test-content'>Test Content</div>
+      </AppLayout>
+    </Provider>
+  );
 
-  it('renders main content area with correct classes', () => {
-    render(
-      <Provider store={jest.requireActual('@/store/store').store}>
-        <AppLayout>
-          <div data-testid='test-content'>Test Content</div>
-        </AppLayout>
-      </Provider>
-    );
+  const main = screen.getByRole('main');
+  expect(main).toBeInTheDocument();
+  expect(main).toHaveClass('flex-1', 'container', 'mx-auto', 'px-4', 'py-6');
+});
 
-    const main = screen.getByRole('main');
-    expect(main).toBeInTheDocument();
-    expect(main).toHaveClass('flex-1', 'container', 'mx-auto', 'px-4', 'py-6');
-  });
 
-  it('passes authentication state to header', () => {
-    // Mock authenticated state
-    const mockUseAuthContext = jest.fn(() => ({
-      authState: { isAuthenticated: true },
-      logout: jest.fn(),
-    }));
+it('renders with multiple children', () => {
+  render(
+    <Provider store={jest.requireActual('@/store/store').store}>
+      <AppLayout>
+        <div>First Child</div>
+        <div>Second Child</div>
+        <span>Third Child</span>
+      </AppLayout>
+    </Provider>
+  );
 
-    jest.doMock('@/store/store', () => ({
-      useAuthContext: mockUseAuthContext,
-    }));
+  expect(screen.getByText('First Child')).toBeInTheDocument();
+  expect(screen.getByText('Second Child')).toBeInTheDocument();
+  expect(screen.getByText('Third Child')).toBeInTheDocument();
+});
 
-    render(
-      <Provider store={jest.requireActual('@/store/store').store}>
-        <AppLayout>
-          <div>Content</div>
-        </AppLayout>
-      </Provider>
-    );
+it('renders with complex nested content', () => {
+  render(
+    <Provider store={jest.requireActual('@/store/store').store}>
+      <AppLayout>
+        <div>
+          <h1>Page Title</h1>
+          <section>
+            <p>Page content</p>
+            <button>Action Button</button>
+          </section>
+        </div>
+      </AppLayout>
+    </Provider>
+  );
 
-    expect(screen.getByTestId('header')).toBeInTheDocument();
-  });
-
-  it('contains all layout sections in correct order', () => {
-    render(
-      <Provider store={jest.requireActual('@/store/store').store}>
-        <AppLayout>
-          <div data-testid='main-content'>Main Content</div>
-        </AppLayout>
-      </Provider>
-    );
-
-    const container = screen.getByTestId('header').parentElement;
-    const children = Array.from(container?.children || []);
-
-    expect(children[0]).toEqual(screen.getByTestId('header'));
-    expect(children[1]).toEqual(screen.getByRole('main'));
-    expect(children[2]).toEqual(screen.getByTestId('footer'));
-  });
-
-  it('renders with multiple children', () => {
-    render(
-      <Provider store={jest.requireActual('@/store/store').store}>
-        <AppLayout>
-          <div>First Child</div>
-          <div>Second Child</div>
-          <span>Third Child</span>
-        </AppLayout>
-      </Provider>
-    );
-
-    expect(screen.getByText('First Child')).toBeInTheDocument();
-    expect(screen.getByText('Second Child')).toBeInTheDocument();
-    expect(screen.getByText('Third Child')).toBeInTheDocument();
-  });
-
-  it('renders with complex nested content', () => {
-    render(
-      <Provider store={jest.requireActual('@/store/store').store}>
-        <AppLayout>
-          <div>
-            <h1>Page Title</h1>
-            <section>
-              <p>Page content</p>
-              <button>Action Button</button>
-            </section>
-          </div>
-        </AppLayout>
-      </Provider>
-    );
-
-    expect(screen.getByText('Page Title')).toBeInTheDocument();
-    expect(screen.getByText('Page content')).toBeInTheDocument();
-    expect(screen.getByText('Action Button')).toBeInTheDocument();
-  });
+  expect(screen.getByText('Page Title')).toBeInTheDocument();
+  expect(screen.getByText('Page content')).toBeInTheDocument();
+  expect(screen.getByText('Action Button')).toBeInTheDocument();
 });

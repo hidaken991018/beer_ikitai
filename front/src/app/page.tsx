@@ -1,107 +1,50 @@
-'use client';
+import { MapPin, Calendar, History } from 'lucide-react';
 
-import { MapPin, Navigation } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import React, { useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { MobileLayout } from '@/components/layout/MobileLayout';
 
-import { AppLayout } from '@/components/layout/AppLayout';
-import { Button } from '@/components/ui/button';
-import { useBreweries } from '@/hooks/useBreweries';
-import { useGeolocation } from '@/hooks/useGeolocation';
-import { ROUTES, APP_CONFIG } from '@/lib/constants';
+import { AppIcon } from './_components/AppIcon';
+import { CTAButtons } from './_components/CTAButtons';
+import { FeatureCard } from './_components/FeatureCard';
 
-
-// Force client-side rendering for this page
-export const dynamic = 'force-dynamic';
-
-export default function HomePage() {
-  const router = useRouter();
-  const authState = useSelector((state: any) => state.auth);
-  const {
-    fetchBreweries,
-    fetchNearbyBreweries,
-    fetchVisits,
-  } = useBreweries();
-
-  const { position: userLocation, getCurrentPosition } = useGeolocation();
-
-  // Load initial data
-  useEffect(() => {
-    // Load recent breweries
-    fetchBreweries({ limit: 6 });
-
-    // Load user visits if authenticated
-    if (authState.isAuthenticated) {
-      fetchVisits({ limit: 5 });
-    }
-  }, [fetchBreweries, fetchVisits, authState.isAuthenticated]);
-
-  // Load nearby breweries when location is available
-  useEffect(() => {
-    if (userLocation) {
-      fetchNearbyBreweries(userLocation, { limit: 4 });
-    }
-  }, [userLocation, fetchNearbyBreweries]);
-
-  // Get user location on mount
-  useEffect(() => {
-    getCurrentPosition();
-  }, [getCurrentPosition]);
-
+export default function LandingPage() {
   return (
-    <AppLayout>
-      <div className='min-h-screen'>
-        {/* Hero Section */}
-        <section className='bg-gradient-to-br from-blue-50 to-indigo-100 py-16 -mx-4 -mt-6'>
-          <div className='container mx-auto px-4 text-center'>
-            <h1 className='text-4xl md:text-6xl font-bold text-gray-900 mb-4'>
-              {APP_CONFIG.name}
-            </h1>
-            <p className='text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto'>
-              GPSベースの醸造所チェックイン機能で、あなたのクラフトビール体験を記録しよう
-            </p>
+    <MobileLayout showBottomNav={false}>
+      <div className="min-h-screen bg-gradient-to-b from-orange-50 to-white flex flex-col items-center justify-center px-6 py-12">
+        {/* App Icon */}
+        <AppIcon />
 
-            <div className='flex flex-col sm:flex-row gap-4 justify-center'>
-              {authState.isAuthenticated ? (
-                <>
-                  <Button
-                    size='lg'
-                    onClick={() => router.push(ROUTES.nearbyBreweries)}
-                  >
-                    <Navigation className='h-5 w-5 mr-2' />
-                    近隣の醸造所を探す
-                  </Button>
-                  <Button
-                    variant='outline'
-                    size='lg'
-                    onClick={() => router.push(ROUTES.breweries)}
-                  >
-                    <MapPin className='h-5 w-5 mr-2' />
-                    すべての醸造所を見る
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    size='lg'
-                    onClick={() => router.push(ROUTES.register)}
-                  >
-                    無料で始める
-                  </Button>
-                  <Button
-                    variant='outline'
-                    size='lg'
-                    onClick={() => router.push(ROUTES.login)}
-                  >
-                    ログイン
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </section>
+        {/* Title */}
+        <h1 className="text-2xl font-bold text-gray-900 mb-2 text-center">
+          Tap Room Check-in
+        </h1>
+
+        {/* Subtitle */}
+        <p className="text-sm text-gray-600 mb-8 text-center max-w-[320px]">
+          クラフトビールのタップルームへの訪問を記録して、あなたのビール旅を楽しもう
+        </p>
+
+        {/* Feature Cards */}
+        <div className="w-full max-w-[360px] space-y-4 mb-8">
+          <FeatureCard
+            icon={MapPin}
+            title="近くのタップルームを発見"
+            description="地図上で醸造所を探索"
+          />
+          <FeatureCard
+            icon={Calendar}
+            title="訪問を記録"
+            description="100m以内でチェックイン可能"
+          />
+          <FeatureCard
+            icon={History}
+            title="履歴を振り返る"
+            description="訪問した醸造所を確認"
+          />
+        </div>
+
+        {/* CTA Buttons */}
+        <CTAButtons />
       </div>
-    </AppLayout>
+    </MobileLayout>
   );
 }

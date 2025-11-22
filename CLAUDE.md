@@ -58,11 +58,53 @@ AWS ベースのサーバーレスアプリケーションで、以下の構成�
     - API Gateway Cognito Authorizer 連携強化
     - セキュリティヘッダー設定（CORS設定はAPI Gatewayで実施）
     - 拡張ヘルスチェック（DB 接続・環境変数チェック）
-- **フロントエンド**: 基本的な HTML テンプレート（`front/index.html`）
+- **フロントエンド**: Next.js + React + TypeScript によるモバイルファーストSPA
+  - **モバイルファーストアーキテクチャ（2025年1月実装）**:
+    - MobileLayout: max-w-[448px]でモバイルサイズに制限、PC背景グレー表示
+    - BottomNavigation: Figmaデザイン準拠の3タブナビゲーション（マップ・履歴・プロフィール）
+    - 主要ページ: `/map`（マップ）、`/visits`（訪問履歴）、`/profile`（プロフィール）
+  - **Mapbox統合**: react-map-gl + mapbox-gl による地図表示、醸造所マーカー、チェックイン機能
+  - **Redux状態管理**: 認証・醸造所データの集中管理、型付きフック（useAppSelector/useAppDispatch）
+  - **shadcn/ui**: 統一されたUIコンポーネントライブラリ
 - **ツール**: 位置情報取得ツール（`tool/get_target_geo/`）
 - **ドキュメント**: 日本語での包括的な計画書（API 仕様、権限マトリックス含む）
 
 ## 開発コマンド
+
+### フロントエンド（Next.js）
+
+```bash
+# 依存関係のインストール
+cd front && npm install
+
+# 開発サーバー起動
+cd front && npm run dev
+
+# ビルド
+cd front && npm run build
+
+# TypeScript型チェック
+cd front && npm run type-check
+
+# ESLintチェック
+cd front && npm run lint
+
+# Jestテスト
+cd front && npm test
+
+# 品質チェック一括実行
+cd front && npm run check
+```
+
+**環境変数設定（.env.local）:**
+
+```bash
+# Mapbox設定（必須）
+NEXT_PUBLIC_MAPBOX_TOKEN=your_mapbox_token_here
+
+# API設定（オプション、デフォルト: http://localhost:8080）
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+```
 
 ### バックエンド（Go）
 
@@ -250,6 +292,26 @@ export APP_VERSION=development
 │       ├── middleware.go    # パニック復旧・ログ・セキュリティヘッダーミドルウェア
 │       └── test_auth.go     # 開発環境用認証
 ├── front/                   # Next.js フロントエンド（CSR + Amplify デプロイ）
+│   ├── src/
+│   │   ├── app/            # Next.js App Router ページ
+│   │   │   ├── page.tsx    # ランディングページ（Figmaデザイン準拠）
+│   │   │   ├── map/        # マップページ（Mapbox統合）
+│   │   │   ├── visits/     # 訪問履歴ページ
+│   │   │   ├── profile/    # プロフィールページ
+│   │   │   └── auth/       # 認証ページ（login, register, etc）
+│   │   ├── components/
+│   │   │   ├── layout/     # レイアウトコンポーネント
+│   │   │   │   ├── MobileLayout.tsx       # モバイルサイズコンテナ
+│   │   │   │   ├── BottomNavigation.tsx   # ボトムナビゲーション
+│   │   │   │   └── AppLayout.tsx          # レガシーレイアウト（認証ページ用）
+│   │   │   └── ui/         # shadcn/ui コンポーネント
+│   │   ├── store/          # Redux状態管理
+│   │   │   ├── store.ts    # ストア設定
+│   │   │   ├── hooks.ts    # 型付きフック（useAppSelector/useAppDispatch）
+│   │   │   └── slices/     # Redux Toolkit スライス
+│   │   ├── hooks/          # カスタムフック
+│   │   └── lib/            # ユーティリティ・定数
+│   └── .env.local          # 環境変数（Mapboxトークンなど）
 ├── docs/                    # プロジェクトドキュメント
 ├── infra/                   # AWS CloudFormation テンプレート
 └── tool/                    # 開発支援ツール
@@ -419,6 +481,186 @@ LOG_FORMAT=text
 
 この実装により、**商用リリース準備完了**状態を実現しています。
 
+## フロントエンド実装詳細
+
+### モバイルファーストアーキテクチャ（2025年1月実装）
+
+#### MobileLayout コンポーネント
+
+**ファイル:** `front/src/components/layout/MobileLayout.tsx`
+
+**機能:**
+- PC表示時は `max-w-[448px]` でモバイルサイズに制限
+- 中央配置 + 背景グレー表示でアプリ外を明示
+- ボトムナビゲーション対応の余白管理（`pb-[77px]`）
+
+**使用パターン:**
+```typescript
+<MobileLayout showBottomNav={true}>
+  <div className="p-4 pb-20">
+    {/* コンテンツ */}
+  </div>
+  <BottomNavigation />
+</MobileLayout>
+```
+
+#### BottomNavigation コンポーネント
+
+**ファイル:** `front/src/components/layout/BottomNavigation.tsx`
+
+**デザイン仕様:**
+- Figmaデザイン準拠（node-id=1:770）
+- 3タブ構成：マップ（Map）・履歴（History）・プロフィール（User）
+- アクティブ状態：オレンジ色（`#e17100`）
+- 非アクティブ状態：グレー（`#6a7282`）
+- 固定配置（`fixed bottom-0`）、高さ77px
+
+**表示対象:**
+- ✅ `/map` - マップページ
+- ✅ `/visits` - 訪問履歴ページ
+- ✅ `/profile` - プロフィールページ
+- ❌ `/` - ランディングページ
+- ❌ `/auth/*` - 認証ページ
+
+### Mapbox統合（2025年1月実装）
+
+**依存関係:**
+```json
+{
+  "react-map-gl": "^7.1.7",
+  "mapbox-gl": "^3.10.0",
+  "@types/mapbox-gl": "^3.4.1"
+}
+```
+
+**環境変数:**
+```bash
+# .env.local（必須）
+NEXT_PUBLIC_MAPBOX_TOKEN=pk.eyJ1...
+```
+
+**実装場所:** `front/src/app/map/page.tsx`
+
+**主要機能:**
+1. **地図表示**: Mapboxの街路地図スタイル、日本語ラベル対応
+2. **現在地表示**: Geolocation API、青色マーカー + 範囲サークル
+3. **醸造所マーカー**: カスタムビールアイコン、訪問済み/未訪問で色分け可能
+4. **Bottom Sheet**: 店舗情報カード（店名、住所、距離表示）
+5. **チェックイン機能**: 100m以内判定、認証状態確認
+6. **ナビゲーション**: 現在地ボタン、地図操作コントロール
+
+**実装パターン:**
+```typescript
+import Map, { Marker, NavigationControl, MapRef } from 'react-map-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+
+<Map
+  mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
+  mapStyle="mapbox://styles/mapbox/streets-v12"
+  // ...
+>
+  <NavigationControl position="top-left" />
+  <Marker longitude={lng} latitude={lat}>
+    {/* カスタムマーカー */}
+  </Marker>
+</Map>
+```
+
+### Redux型定義（2025年1月追加）
+
+**ファイル:** `front/src/store/hooks.ts`
+
+**型定義:**
+```typescript
+import type { store } from './store';
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
+
+export const useAppDispatch: () => AppDispatch = useDispatch;
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
+```
+
+**使用パターン:**
+
+**既存ページ（互換性重視）:**
+```typescript
+import { useSelector } from 'react-redux';
+const authState = useSelector((state: any) => state.auth);
+```
+
+**新規ページ（型安全推奨）:**
+```typescript
+import { useAppSelector } from '@/store/hooks';
+const authState = useAppSelector((state) => state.auth);
+```
+
+### 現在のページ構成（2025年1月更新）
+
+```
+/ (ランディング)
+├── デザイン: Figmaデザイン準拠（node-id=1:565）
+├── レイアウト: MobileLayout（ボトムナビなし）
+├── 機能: アプリ紹介、CTA（ログイン/ゲスト地図閲覧）
+└── ルート: ROUTES.home
+
+/auth/*（認証関連）
+├── /auth/login - ログインページ
+├── /auth/register - 新規登録ページ
+├── /auth/confirm-signup - メール確認ページ
+├── レイアウト: AppLayout（レガシー、ボトムナビなし）
+└── 認証: AWS Cognito連携
+
+/map（マップ画面）⭐ デフォルト画面
+├── レイアウト: MobileLayout + BottomNavigation
+├── 機能: Mapbox地図、醸造所マーカー、チェックイン
+├── 認証: ゲストOK（チェックインは要認証）
+└── ルート: ROUTES.map
+
+/visits（訪問履歴）
+├── レイアウト: MobileLayout + BottomNavigation
+├── 機能: 統計表示、検索・フィルター、訪問記録一覧
+├── 認証: 必須
+└── ルート: ROUTES.visits
+
+/profile（プロフィール）
+├── レイアウト: MobileLayout + BottomNavigation
+├── 機能: プロフィール編集、アカウント管理、ログアウト
+├── 認証: 必須
+└── ルート: ROUTES.profile
+```
+
+### 削除されたコンポーネント（2025年1月）
+
+**理由: モバイルファーストアーキテクチャへの移行**
+
+**削除されたファイル:**
+- `front/src/components/layout/Header.tsx` - ボトムナビゲーションに置き換え
+
+**削除されたルート:**
+- `/brewery` - 醸造所一覧（マップに統合）
+- `/brewery/[id]` - 醸造所詳細（マップに統合）
+- `/brewery/nearby` - 近隣醸造所（マップに統合）
+
+**プライベートフォルダ（保持）:**
+- `front/src/app/_brewery/*` - Next.js仕様により `_` で始まるフォルダはルーティング対象外
+- 保持理由: 将来的な再利用の可能性、コンポーネント参照用
+
+**ルーティング設定更新:**
+```typescript
+// front/src/lib/constants.ts
+export const ROUTES = {
+  home: '/',
+  login: '/auth/login',
+  register: '/auth/register',
+  profile: '/profile',
+  profileCreate: '/profile/create',
+  map: '/map',           // 新規追加
+  visits: '/visits',
+  // 削除: breweries, breweryDetail, nearbyBreweries
+} as const;
+```
+
 ## フロントエンドデプロイ
 
 ### AWS Amplify 手動デプロイ
@@ -428,15 +670,14 @@ LOG_FORMAT=text
 - **プラットフォーム**: AWS Amplify Hosting
 - **デプロイ**: 手動アップロード（GitHub ワークフロー経由）
 - **ビルド**: Next.js CSR アプリケーション
-
-```
+- **環境変数**: Amplifyコンソールで `NEXT_PUBLIC_MAPBOX_TOKEN` を設定
 
 #### 動的ルート対応
 
-- **CSR による実装**: `/brewery/[id]` 等の動的パスをクライアントサイドで処理
+- **CSR による実装**: クライアントサイドルーティング（Next.js App Router）
 - **useParams()**: URL パラメータの取得
-- **API コール**: 醸造所データを動的にフェッチ
-- **ブラウザルーティング**: Next.js App Router による履歴管理
+- **API コール**: バックエンドAPIからデータを動的にフェッチ
+- **ブラウザルーティング**: 履歴管理とSPA体験の提供
 
 #### GitHub Actions ワークフロー
 

@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
-import { AppLayout } from '@/components/layout/AppLayout';
+import { BottomNavigation } from '@/components/layout/BottomNavigation';
+import { MobileLayout } from '@/components/layout/MobileLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -163,8 +164,9 @@ export default function VisitsPage() {
     return brewery?.address;
   };
 
-  const handleViewBrewery = (breweryId: number) => {
-    router.push(ROUTES.breweryDetail(breweryId));
+  const handleViewBrewery = () => {
+    // Navigate to map page (brewery detail pages removed)
+    router.push(ROUTES.map);
   };
 
   if (!authState?.isAuthenticated) {
@@ -173,24 +175,24 @@ export default function VisitsPage() {
 
   if (breweryState?.isLoading) {
     return (
-      <AppLayout>
+      <MobileLayout showBottomNav>
         <div className='flex justify-center items-center py-12'>
           <div className='text-center'>
             <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4'></div>
             <p className='text-muted-foreground'>訪問履歴を読み込み中...</p>
           </div>
         </div>
-      </AppLayout>
+        <BottomNavigation />
+      </MobileLayout>
     );
   }
 
   return (
-    <AppLayout>
-      <div className='max-w-6xl mx-auto'>
-        Header
-        <div className='mb-8'>
-          <h1 className='text-3xl font-bold mb-2'>訪問履歴</h1>
-          <p className='text-muted-foreground'>
+    <MobileLayout showBottomNav>
+      <div className='p-4 pb-20'>
+        <div className='mb-6'>
+          <h1 className='text-2xl font-bold mb-2'>訪問履歴</h1>
+          <p className='text-sm text-gray-600'>
             あなたの醸造所チェックイン記録を確認できます
           </p>
         </div>
@@ -346,7 +348,7 @@ export default function VisitsPage() {
                       <Button
                         variant='outline'
                         size='sm'
-                        onClick={() => handleViewBrewery(visit.brewery_id)}
+                        onClick={() => handleViewBrewery()}
                       >
                         詳細を見る
                       </Button>
@@ -382,14 +384,15 @@ export default function VisitsPage() {
                     フィルターをクリア
                   </Button>
                 ) : null}
-                <Button onClick={() => router.push(ROUTES.breweries)}>
-                  醸造所を探す
+                <Button onClick={() => router.push(ROUTES.map)}>
+                  マップを見る
                 </Button>
               </div>
             </CardContent>
           </Card>
         )}
       </div>
-    </AppLayout>
+      <BottomNavigation />
+    </MobileLayout>
   );
 }

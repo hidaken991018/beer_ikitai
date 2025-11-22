@@ -11,7 +11,7 @@ import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
-import { CheckInCard } from '@/app/brewery/[id]/_components/CheckInCard';
+import { CheckInCard } from '@/app/_brewery/[id]/_components/CheckInCard';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import {
@@ -181,7 +181,7 @@ export default function BreweryDetailPage() {
               </Button>
               <Button
                 variant='outline'
-                onClick={() => router.push(ROUTES.breweries)}
+                onClick={() => router.push(ROUTES.home)}
               >
                 醸造所一覧に戻る
               </Button>
@@ -203,7 +203,7 @@ export default function BreweryDetailPage() {
             <p className='text-muted-foreground mb-4'>
               指定された醸造所は存在しないか、削除された可能性があります。
             </p>
-            <Button onClick={() => router.push(ROUTES.breweries)}>
+            <Button onClick={() => router.push(ROUTES.home)}>
               醸造所一覧に戻る
             </Button>
           </CardContent>

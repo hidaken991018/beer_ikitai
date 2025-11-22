@@ -117,8 +117,8 @@ export default function NearbyBreweriesPage() {
     }
   };
 
-  const handleViewDetails = (breweryId: number) => {
-    router.push(ROUTES.breweryDetail(breweryId));
+  const handleViewDetails = () => {
+    router.push(ROUTES.home);
   };
 
   const formatLocation = (lat: number, lng: number): string => {
@@ -316,7 +316,7 @@ export default function NearbyBreweriesPage() {
               </p>
               <Button
                 variant='outline'
-                onClick={() => router.push(ROUTES.breweries)}
+                onClick={() => router.push(ROUTES.home)}
               >
                 すべての醸造所を見る
               </Button>
@@ -344,7 +344,7 @@ export default function NearbyBreweriesPage() {
                     </Button>
                     <Button
                       variant='outline'
-                      onClick={() => router.push(ROUTES.breweries)}
+                      onClick={() => router.push(ROUTES.home)}
                     >
                       すべての醸造所を見る
                     </Button>
@@ -383,7 +383,7 @@ export default function NearbyBreweriesPage() {
                 </Button>
                 <Button
                   variant='outline'
-                  onClick={() => router.push(ROUTES.breweries)}
+                  onClick={() => router.push(ROUTES.home)}
                 >
                   すべての醸造所を見る
                 </Button>

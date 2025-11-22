@@ -22,7 +22,7 @@ import { ROUTES } from '@/lib/constants';
 import {
   BreweryCard,
   BreweryCardCompact,
-} from '../brewery/_components/BreweryCard/BreweryCard';
+} from '../_brewery/_components/BreweryCard/BreweryCard';
 
 type ViewMode = 'grid' | 'list';
 
@@ -111,8 +111,8 @@ export default function BreweryPage() {
     }
   };
 
-  const handleViewDetails = (breweryId: number) => {
-    router.push(ROUTES.breweryDetail(breweryId));
+  const handleViewDetails = () => {
+    router.push(ROUTES.home);
   };
 
   const filteredBreweries = breweryState?.breweries.filter(brewery => {
@@ -140,7 +140,7 @@ export default function BreweryPage() {
           <div className='flex space-x-2 mt-4 md:mt-0'>
             <Button
               variant='outline'
-              onClick={() => router.push(ROUTES.nearbyBreweries)}
+              onClick={() => router.push(ROUTES.home)}
             >
               <MapPin className='h-4 w-4 mr-2' />
               近隣の醸造所

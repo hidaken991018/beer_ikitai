@@ -214,9 +214,7 @@ export const ROUTES = {
   register: '/auth/register',
   profile: '/profile',
   profileCreate: '/profile/create',
-  breweries: '/brewery',
-  breweryDetail: (id: number) => `/brewery/${id}`,
-  nearbyBreweries: '/brewery/nearby',
+  map: '/map',
   visits: '/visits',
 } as const;
 

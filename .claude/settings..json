@@ -1,4 +1,10 @@
 {
+  "env": {
+    "GOPATH": "$HOME/go",
+    "PATH": "$HOME/go_local/go/bin:$PATH",
+    "BASH_DEFAULT_TIMEOUT_MS": "600000",
+    "BASH_MAX_TIMEOUT_MS": "1200000"
+  },
   "permissions": {
     "allow": [
       "Bash(go mod:*)",
@@ -24,14 +30,14 @@
       "Bash(npx:*)",
       "Bash(npm run lint)",
       "Bash(npm run type-check:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "mcp__figma__get_screenshot",
+      "WebFetch(domain:claude.com)",
+      "mcp__figma__get_design_context",
+      "WebFetch(domain:developers.figma.com)"
     ],
     "deny": []
   },
-  "env": {
-    "GOPATH": "$HOME/go",
-    "PATH": "$HOME/go_local/go/bin:$PATH",
-    "BASH_DEFAULT_TIMEOUT_MS": "600000",
-    "BASH_MAX_TIMEOUT_MS": "1200000"
-  }
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": ["figma"]
 }

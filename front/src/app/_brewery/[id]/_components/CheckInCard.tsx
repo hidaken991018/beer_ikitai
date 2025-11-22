@@ -1,4 +1,4 @@
-import { CheckinButton } from "@/app/brewery/_components/CheckinButton/CheckinButton"
+import { CheckinButton } from "@/app/_brewery/_components/CheckinButton/CheckinButton"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Coordinates } from "@/types/brewery";
 
