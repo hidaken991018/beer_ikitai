@@ -295,7 +295,20 @@ export APP_VERSION=development
 │   ├── src/
 │   │   ├── app/            # Next.js App Router ページ
 │   │   │   ├── page.tsx    # ランディングページ（Figmaデザイン準拠）
+│   │   │   ├── _components/  # ランディングページ固有コンポーネント
+│   │   │   │   ├── AppIcon.tsx        # アプリアイコン
+│   │   │   │   ├── FeatureCard.tsx    # 機能カード
+│   │   │   │   └── CTAButtons.tsx     # CTAボタン
 │   │   │   ├── map/        # マップページ（Mapbox統合）
+│   │   │   │   ├── page.tsx           # マップページメイン
+│   │   │   │   ├── _components/       # マップページ固有コンポーネント
+│   │   │   │   │   ├── LoadingScreen.tsx        # ローディング画面
+│   │   │   │   │   ├── CurrentLocationMarker.tsx # 現在地マーカー
+│   │   │   │   │   ├── TapRoomMarker.tsx        # 醸造所マーカー
+│   │   │   │   │   ├── LocateMeButton.tsx       # 現在地ボタン
+│   │   │   │   │   └── TapRoomBottomSheet.tsx   # 店舗情報カード
+│   │   │   │   └── _domain/           # マップページドメインロジック
+│   │   │   │       └── distance.ts    # 距離計算（純粋関数）
 │   │   │   ├── visits/     # 訪問履歴ページ
 │   │   │   ├── profile/    # プロフィールページ
 │   │   │   └── auth/       # 認証ページ（login, register, etc）
@@ -310,6 +323,7 @@ export APP_VERSION=development
 │   │   │   ├── hooks.ts    # 型付きフック（useAppSelector/useAppDispatch）
 │   │   │   └── slices/     # Redux Toolkit スライス
 │   │   ├── hooks/          # カスタムフック
+│   │   ├── types/          # 型定義（Brewery, Visit, etc）
 │   │   └── lib/            # ユーティリティ・定数
 │   └── .env.local          # 環境変数（Mapboxトークンなど）
 ├── docs/                    # プロジェクトドキュメント
@@ -483,6 +497,50 @@ LOG_FORMAT=text
 
 ## フロントエンド実装詳細
 
+### コンポーネントアーキテクチャ（2025年1月実装）
+
+#### コロケーション戦略
+
+**方針:**
+- ページ固有のコンポーネントは `_components` フォルダに配置
+- ドメインロジック（純粋関数）は `_domain` フォルダに配置
+- Next.js の `_` プレフィックスによりルーティング対象外
+- 共通コンポーネントは `components/` に配置
+
+**ランディングページのコンポーネント構成:**
+```
+front/src/app/
+├── page.tsx
+└── _components/
+    ├── AppIcon.tsx          # ビールアイコン
+    ├── FeatureCard.tsx      # 機能カード（再利用可能）
+    └── CTAButtons.tsx       # ログイン/ゲスト閲覧ボタン
+```
+
+**マップページのコンポーネント構成:**
+```
+front/src/app/map/
+├── page.tsx
+├── _components/
+│   ├── LoadingScreen.tsx           # 位置情報取得中画面
+│   ├── CurrentLocationMarker.tsx   # 現在地マーカー
+│   ├── TapRoomMarker.tsx           # 醸造所マーカー
+│   ├── LocateMeButton.tsx          # 現在地ボタン
+│   └── TapRoomBottomSheet.tsx      # 醸造所情報カード
+└── _domain/
+    └── distance.ts                  # 距離計算関数
+```
+
+**ドメインロジック（`_domain/distance.ts`）:**
+- `calculateDistance()`: Haversine公式による2点間距離計算（メートル単位）
+- `formatDistance()`: 距離の人間可読フォーマット（"500m" or "1.2km"）
+
+**コロケーションのメリット:**
+- ページ固有の関心事を1箇所に集約
+- ファイル検索・メンテナンスが容易
+- 不要なコンポーネントの特定が簡単
+- ページ削除時にコンポーネントも一緒に削除可能
+
 ### モバイルファーストアーキテクチャ（2025年1月実装）
 
 #### MobileLayout コンポーネント
@@ -524,47 +582,16 @@ LOG_FORMAT=text
 
 ### Mapbox統合（2025年1月実装）
 
-**依存関係:**
-```json
-{
-  "react-map-gl": "^7.1.7",
-  "mapbox-gl": "^3.10.0",
-  "@types/mapbox-gl": "^3.4.1"
-}
-```
-
-**環境変数:**
-```bash
-# .env.local（必須）
-NEXT_PUBLIC_MAPBOX_TOKEN=pk.eyJ1...
-```
-
 **実装場所:** `front/src/app/map/page.tsx`
+**依存関係:** react-map-gl, mapbox-gl
+**環境変数:** `.env.local`に`NEXT_PUBLIC_MAPBOX_TOKEN`必須
 
-**主要機能:**
-1. **地図表示**: Mapboxの街路地図スタイル、日本語ラベル対応
-2. **現在地表示**: Geolocation API、青色マーカー + 範囲サークル
-3. **醸造所マーカー**: カスタムビールアイコン、訪問済み/未訪問で色分け可能
-4. **Bottom Sheet**: 店舗情報カード（店名、住所、距離表示）
-5. **チェックイン機能**: 100m以内判定、認証状態確認
-6. **ナビゲーション**: 現在地ボタン、地図操作コントロール
+**主要機能:** 地図表示、現在地追跡（Geolocation API）、醸造所マーカー、チェックイン（100m判定）、Bottom Sheet
 
-**実装パターン:**
-```typescript
-import Map, { Marker, NavigationControl, MapRef } from 'react-map-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
-
-<Map
-  mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-  mapStyle="mapbox://styles/mapbox/streets-v12"
-  // ...
->
-  <NavigationControl position="top-left" />
-  <Marker longitude={lng} latitude={lat}>
-    {/* カスタムマーカー */}
-  </Marker>
-</Map>
-```
+**API統合:** `useBreweries`フック経由で`/breweries/nearby`を呼び出し（10km圏内、最大50件）
+**データフロー:** 位置情報取得 → API呼び出し → Redux状態更新（`breweryState.nearbyBreweries`） → UI描画
+**型定義:** `front/src/types/brewery.ts`（Brewery, BreweryWithDistance）、`front/src/types/visit.ts`（CheckinInput）参照
+**ドメインロジック:** `map/_domain/distance.ts`にHaversine公式実装（`calculateDistance()`, `formatDistance()`）
 
 ### Redux型定義（2025年1月追加）
 
@@ -660,6 +687,70 @@ export const ROUTES = {
   // 削除: breweries, breweryDetail, nearbyBreweries
 } as const;
 ```
+
+## フロントエンド設計方針（2025年1月追加）
+
+### コロケーション戦略
+
+**採用理由:**
+- ページ固有のコンポーネントをページディレクトリ内に配置することで、関連コードの近接性を保つ
+- `_components`フォルダは Next.js により自動的にルーティング対象外となる
+- コンポーネントの依存関係が明確になり、不要なグローバルコンポーネントの削減
+- ページ削除時に関連コンポーネントも一緒に削除できる保守性
+
+**適用ルール:**
+- ページ専用のUIコンポーネントは `_components/` に配置
+- ページ固有のドメインロジック（純粋関数）は `_domain/` に配置
+- 複数ページで共有するコンポーネントは `src/components/` に配置
+- 全体で共有する型定義は `src/types/` に配置
+
+### ドメインロジック分離の原則
+
+**純粋関数の分離:**
+- ビジネスロジックや計算処理は純粋関数として `_domain/` に切り出す
+- React フックや状態に依存しない計算ロジックを分離することでテスタビリティを向上
+- 例: 距離計算（Haversine formula）を `map/_domain/distance.ts` に分離
+
+**メリット:**
+- 単体テストが容易（モックやコンポーネントマウント不要）
+- 他のページやコンポーネントでの再利用が可能
+- ロジックの変更がUIコンポーネントに影響しない
+
+### 型安全性の徹底
+
+**TypeScript活用:**
+- 全コンポーネントで厳密な型定義を適用
+- `useAppSelector` / `useAppDispatch` で Redux の型安全性を確保
+- API レスポンスの型定義を `src/types/` で一元管理
+- `any` 型の使用を最小限に抑える
+
+**型定義の配置:**
+```typescript
+// src/types/brewery.ts - 醸造所関連の型
+// src/types/visit.ts - 訪問記録関連の型
+// src/types/user.ts - ユーザー関連の型
+```
+
+### コンポーネント設計のベストプラクティス
+
+**単一責任の原則:**
+- 各コンポーネントは単一の責任を持つ
+- 例: `TapRoomMarker`（マーカー表示）、`TapRoomBottomSheet`（店舗情報表示）を分離
+
+**Props の明示:**
+- すべてのコンポーネントで Props インターフェースを定義
+- オプショナルなプロパティには `?` を使用
+- デフォルト値を適切に設定
+
+**状態管理の階層化:**
+1. **ローカル状態**: `useState` でコンポーネント内完結
+2. **ページレベル状態**: 親コンポーネントで管理、Props で子に渡す
+3. **アプリケーション状態**: Redux で管理（認証、醸造所データなど）
+
+**コンポーネント粒度:**
+- 中程度の粒度を基本とする（機能単位）
+- 過度な細分化を避け、理解しやすさを優先
+- 再利用性が見込まれる場合のみ分離を検討
 
 ## フロントエンドデプロイ
 
