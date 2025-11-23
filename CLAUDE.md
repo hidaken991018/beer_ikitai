@@ -133,72 +133,22 @@ cd back && make docker-run
 cd back && make docker-stop
 ```
 
-### インフラ
-
-#### バックエンドインフラ環境別デプロイ
+### インフラ（CloudFormation）
 
 ```bash
-# 開発環境のデプロイ
+# デプロイ（環境別にパラメータを調整）
 aws cloudformation deploy \
   --template-file infra/beerlog_template.yml \
-  --stack-name beerlog-dev-stack \
-  --parameter-overrides Environment=dev \
+  --stack-name beerlog-{env}-stack \
+  --parameter-overrides Environment={env} \
   --capabilities CAPABILITY_NAMED_IAM
 
-# ステージング環境のデプロイ
-aws cloudformation deploy \
-  --template-file infra/beerlog_template.yml \
-  --stack-name beerlog-staging-stack \
-  --parameter-overrides Environment=staging DBInstanceClass=db.t3.small \
-  --capabilities CAPABILITY_NAMED_IAM
-
-# 本番環境のデプロイ
-aws cloudformation deploy \
-  --template-file infra/beerlog_template.yml \
-  --stack-name beerlog-prod-stack \
-  --parameter-overrides Environment=prod DBInstanceClass=db.t3.medium \
-  --capabilities CAPABILITY_NAMED_IAM
-
-# カスタムパラメータでのデプロイ例
-aws cloudformation deploy \
-  --template-file infra/beerlog_template.yml \
-  --stack-name beerlog-custom-stack \
-  --parameter-overrides \
-    Environment=staging \
-    DBInstanceClass=db.t3.small \
-    LambdaDeploymentBucket=my-custom-bucket \
-    LambdaCodeKey=my-lambda-code.zip \
-  --capabilities CAPABILITY_NAMED_IAM
-```
-
-#### バックエンド Lambda コードのデプロイ準備
-
-```bash
-# デプロイ用のLambdaコードパッケージ化
+# Lambdaコードパッケージ化とアップロード
 cd back && zip -r ../lambda-deployment.zip . && cd ..
-
-# S3バケットにアップロード（環境別）
 aws s3 cp lambda-deployment.zip s3://beerlog-app-back/lambda-deployment.zip
 
-# 特定環境用のコードアップロード
-aws s3 cp lambda-deployment.zip s3://my-custom-bucket/my-lambda-code.zip
-```
-
-#### スタック管理
-
-```bash
-# スタック一覧表示
-aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE
-
-# 特定スタックの詳細表示
+# スタック管理
 aws cloudformation describe-stacks --stack-name beerlog-dev-stack
-
-# スタックの出力値取得
-aws cloudformation describe-stacks \
-  --stack-name beerlog-dev-stack \
-  --query 'Stacks[0].Outputs'
-
-# スタック削除
 aws cloudformation delete-stack --stack-name beerlog-dev-stack
 ```
 
@@ -223,47 +173,9 @@ aws cloudformation delete-stack --stack-name beerlog-dev-stack
 
 ### 環境設定
 
-#### 本番環境（Lambda）
+**本番環境（Lambda）**: `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME`, `DB_PORT`, `DB_SSLMODE`, `LOG_LEVEL`, `LOG_FORMAT`, `APP_VERSION`, `ALLOWED_ORIGINS`
 
-Lambda 関数は以下の環境変数を期待：
-
-**データベース設定:**
-
-- `DB_HOST`: RDS エンドポイント
-- `DB_USER`: データベースユーザー名（Secrets Manager から）
-- `DB_PASS`: データベースパスワード（Secrets Manager から）
-- `DB_NAME`: データベース名
-- `DB_PORT`: データベースポート（デフォルト: 5432）
-- `DB_SSLMODE`: SSL モード（本番: require, 開発: disable）
-
-**ログ設定:**
-
-- `LOG_LEVEL`: ログレベル（debug, info, warn, error, fatal）
-- `LOG_FORMAT`: ログフォーマット（json, text）
-
-**アプリケーション設定:**
-
-- `APP_VERSION`: アプリケーションバージョン
-- `ALLOWED_ORIGINS`: 許可するオリジンのカンマ区切りリスト
-
-#### 開発環境（Docker）
-
-Docker 環境では `back/docker-compose.yml` で PostgreSQL コンテナが自動構成されます。
-設定は `back/conf/app.conf` で管理されています。
-
-**開発用環境変数例:**
-
-```bash
-# ログ設定
-export LOG_LEVEL=debug
-export LOG_FORMAT=text
-
-# CORS設定はAPI Gatewayで実施（バックエンドでは削除済み）
-# ローカル開発ではNext.jsプロキシでCORS問題を回避
-
-# アプリケーション情報
-export APP_VERSION=development
-```
+**開発環境（Docker）**: `back/docker-compose.yml`でPostgreSQLコンテナ自動構成、`back/conf/app.conf`で管理
 
 ### 重要なファイル依存関係
 
@@ -392,108 +304,30 @@ cd back && make test    # テスト実行
 
 これらのチェックが全て通過した場合のみ、変更を完了とする。
 
-## 商用リリース対応実装詳細
+## 商用リリース対応（2025年1月）
 
 ### 認証・セキュリティ
-
-#### Cognito 認証フロー
-
-```go
-// BaseController内での認証取得
-func (c *BaseController) GetCognitoSub() (string, error) {
-    // API Gateway Cognito Authorizerが設定するヘッダーから取得
-    headers := []string{
-        "X-Cognito-Sub",                    // Cognito Authorizer
-        "X-Amzn-Cognito-Sub",              // AWS Lambda Proxy統合
-        "X-Amz-User-Sub",                  // カスタムヘッダー
-        "X-User-Sub",                      // カスタムヘッダー
-    }
-}
-```
-
-#### セキュリティヘッダー
-
-- X-Content-Type-Options: nosniff
-- X-Frame-Options: DENY
-- X-XSS-Protection: 1; mode=block
-- Strict-Transport-Security（HTTPS 環境のみ）
+- **Cognito認証**: API Gateway Authorizer経由で`X-Cognito-Sub`等のヘッダーから取得
+- **セキュリティヘッダー**: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection設定済み
+- **開発環境**: `utils/test_auth.go`でテストトークン認証をシミュレート
 
 ### ログ・モニタリング
-
-#### 構造化ログ設定
-
-```bash
-# 本番環境（JSON形式）
-LOG_LEVEL=info
-LOG_FORMAT=json
-
-# 開発環境（テキスト形式）
-LOG_LEVEL=debug
-LOG_FORMAT=text
-```
-
-#### リクエスト追跡
-
-- 自動生成されるリクエスト ID
-- エラーレスポンスの統一化
+- **構造化ログ**: logrusによるJSON/テキスト出力（`LOG_LEVEL`, `LOG_FORMAT`環境変数で制御）
+- **リクエスト追跡**: 自動生成されるリクエストID、統一エラーレスポンス構造
+- **ヘルスチェック**: DB接続状態、環境変数、アプリバージョン確認
 
 ### エラーハンドリング
+- **統一レスポンス**: error, code, message, details, request_id, timestamp
+- **エラーコード**: UNAUTHORIZED, VALIDATION_FAILED, NOT_FOUND, INTERNAL_SERVER_ERROR
 
-#### 統一エラーレスポンス
+### CORS設定
+- **本番・ステージング**: API Gatewayで制御（CloudFormation設定済み）
+- **ローカル開発**: Next.jsプロキシ（`/api/*` → `http://localhost:8080/*`）
 
-```json
-{
-  "error": "ユーザー向けメッセージ",
-  "code": "ERROR_CODE",
-  "message": "内部エラー詳細（開発時のみ）",
-  "details": { "field": "validation info" },
-  "request_id": "req_123456789",
-  "timestamp": "2025-01-27T10:00:00Z"
-}
-```
-
-#### エラーコード体系
-
-- UNAUTHORIZED: 認証エラー
-- VALIDATION_FAILED: 入力検証エラー
-- NOT_FOUND: リソース不存在
-- INTERNAL_SERVER_ERROR: システムエラー
-
-### 運用・監視
-
-#### ヘルスチェック拡張
-
-- データベース接続状態確認
-- 必要環境変数の存在確認
-- アプリケーションバージョン情報
-- ステータス別 HTTP コード返却
-
-#### CORS 設定
-
-**本番・ステージング環境：**
-- API Gateway で CORS を制御（CloudFormation テンプレートで設定済み）
-- バックエンドソフトウェアでは CORS ミドルウェアを削除済み
-
-**ローカル開発環境：**
-- Next.js プロキシ機能で CORS 問題を回避
-- `/api/*` → `http://localhost:8080/*` への自動プロキシ設定
-- `front/next.config.ts` で設定済み
-
-### 開発支援
-
-#### テスト認証機能
-
-開発環境では`utils/test_auth.go`によりテストトークンで認証をシミュレート
-
-#### ミドルウェア階層
-
+### ミドルウェア階層
 1. パニック復旧（最優先）
 2. リクエストログ
 3. セキュリティヘッダー
-
-**注：** CORS ミドルウェアは削除済み（API Gateway で制御）
-
-この実装により、**商用リリース準備完了**状態を実現しています。
 
 ## フロントエンド実装詳細
 
@@ -501,126 +335,27 @@ LOG_FORMAT=text
 
 #### コロケーション戦略
 
-**方針:**
-- ページ固有のコンポーネントは `_components` フォルダに配置
-- ドメインロジック（純粋関数）は `_domain` フォルダに配置
-- Next.js の `_` プレフィックスによりルーティング対象外
-- 共通コンポーネントは `components/` に配置
-
-**ランディングページのコンポーネント構成:**
-```
-front/src/app/
-├── page.tsx
-└── _components/
-    ├── AppIcon.tsx          # ビールアイコン
-    ├── FeatureCard.tsx      # 機能カード（再利用可能）
-    └── CTAButtons.tsx       # ログイン/ゲスト閲覧ボタン
-```
-
-**マップページのコンポーネント構成:**
-```
-front/src/app/map/
-├── page.tsx
-├── _components/
-│   ├── LoadingScreen.tsx           # 位置情報取得中画面
-│   ├── CurrentLocationMarker.tsx   # 現在地マーカー
-│   ├── TapRoomMarker.tsx           # 醸造所マーカー
-│   ├── LocateMeButton.tsx          # 現在地ボタン
-│   └── TapRoomBottomSheet.tsx      # 醸造所情報カード
-└── _domain/
-    └── distance.ts                  # 距離計算関数
-```
-
-**ドメインロジック（`_domain/distance.ts`）:**
-- `calculateDistance()`: Haversine公式による2点間距離計算（メートル単位）
-- `formatDistance()`: 距離の人間可読フォーマット（"500m" or "1.2km"）
-
-**コロケーションのメリット:**
-- ページ固有の関心事を1箇所に集約
-- ファイル検索・メンテナンスが容易
-- 不要なコンポーネントの特定が簡単
-- ページ削除時にコンポーネントも一緒に削除可能
+ページ固有のコンポーネントは `_components/` に、ドメインロジック（純粋関数）は `_domain/` に配置。Next.jsの `_` プレフィックスによりルーティング対象外。共通コンポーネントは `components/` に配置。詳細は「プロジェクト構造」セクションを参照。
 
 ### モバイルファーストアーキテクチャ（2025年1月実装）
 
-#### MobileLayout コンポーネント
+**MobileLayout**: `max-w-[448px]`でモバイルサイズ制限、中央配置、余白管理（`pb-[77px]`）
 
-**ファイル:** `front/src/components/layout/MobileLayout.tsx`
-
-**機能:**
-- PC表示時は `max-w-[448px]` でモバイルサイズに制限
-- 中央配置 + 背景グレー表示でアプリ外を明示
-- ボトムナビゲーション対応の余白管理（`pb-[77px]`）
-
-**使用パターン:**
-```typescript
-<MobileLayout showBottomNav={true}>
-  <div className="p-4 pb-20">
-    {/* コンテンツ */}
-  </div>
-  <BottomNavigation />
-</MobileLayout>
-```
-
-#### BottomNavigation コンポーネント
-
-**ファイル:** `front/src/components/layout/BottomNavigation.tsx`
-
-**デザイン仕様:**
-- Figmaデザイン準拠（node-id=1:770）
-- 3タブ構成：マップ（Map）・履歴（History）・プロフィール（User）
-- アクティブ状態：オレンジ色（`#e17100`）
-- 非アクティブ状態：グレー（`#6a7282`）
-- 固定配置（`fixed bottom-0`）、高さ77px
-
-**表示対象:**
-- ✅ `/map` - マップページ
-- ✅ `/visits` - 訪問履歴ページ
-- ✅ `/profile` - プロフィールページ
-- ❌ `/` - ランディングページ
-- ❌ `/auth/*` - 認証ページ
+**BottomNavigation**: Figmaデザイン準拠（node-id=1:770）、3タブ構成（マップ・履歴・プロフィール）、固定配置（高さ77px）。表示対象: `/map`, `/visits`, `/profile`
 
 ### Mapbox統合（2025年1月実装）
 
-**実装場所:** `front/src/app/map/page.tsx`
-**依存関係:** react-map-gl, mapbox-gl
-**環境変数:** `.env.local`に`NEXT_PUBLIC_MAPBOX_TOKEN`必須
+**実装**: `front/src/app/map/page.tsx`、依存: react-map-gl, mapbox-gl、環境変数: `NEXT_PUBLIC_MAPBOX_TOKEN`
 
-**主要機能:** 地図表示、現在地追跡（Geolocation API）、醸造所マーカー、チェックイン（100m判定）、Bottom Sheet
+**機能**: 地図表示、現在地追跡、醸造所マーカー、チェックイン（100m判定）、Bottom Sheet
 
-**API統合:** `useBreweries`フック経由で`/breweries/nearby`を呼び出し（10km圏内、最大50件）
-**データフロー:** 位置情報取得 → API呼び出し → Redux状態更新（`breweryState.nearbyBreweries`） → UI描画
-**型定義:** `front/src/types/brewery.ts`（Brewery, BreweryWithDistance）、`front/src/types/visit.ts`（CheckinInput）参照
-**ドメインロジック:** `map/_domain/distance.ts`にHaversine公式実装（`calculateDistance()`, `formatDistance()`）
+**データフロー**: 位置情報取得 → `/breweries/nearby` API呼び出し → Redux状態更新 → UI描画
 
-### Redux型定義（2025年1月追加）
+**ドメインロジック**: `map/_domain/distance.ts`でHaversine公式実装
 
-**ファイル:** `front/src/store/hooks.ts`
+### Redux状態管理
 
-**型定義:**
-```typescript
-import type { store } from './store';
-
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
-
-export const useAppDispatch: () => AppDispatch = useDispatch;
-export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
-```
-
-**使用パターン:**
-
-**既存ページ（互換性重視）:**
-```typescript
-import { useSelector } from 'react-redux';
-const authState = useSelector((state: any) => state.auth);
-```
-
-**新規ページ（型安全推奨）:**
-```typescript
-import { useAppSelector } from '@/store/hooks';
-const authState = useAppSelector((state) => state.auth);
-```
+**型安全フック**: `useAppDispatch`, `useAppSelector`（`front/src/store/hooks.ts`）で型安全性を確保
 
 ### 現在のページ構成（2025年1月更新）
 
@@ -655,37 +390,6 @@ const authState = useAppSelector((state) => state.auth);
 ├── 機能: プロフィール編集、アカウント管理、ログアウト
 ├── 認証: 必須
 └── ルート: ROUTES.profile
-```
-
-### 削除されたコンポーネント（2025年1月）
-
-**理由: モバイルファーストアーキテクチャへの移行**
-
-**削除されたファイル:**
-- `front/src/components/layout/Header.tsx` - ボトムナビゲーションに置き換え
-
-**削除されたルート:**
-- `/brewery` - 醸造所一覧（マップに統合）
-- `/brewery/[id]` - 醸造所詳細（マップに統合）
-- `/brewery/nearby` - 近隣醸造所（マップに統合）
-
-**プライベートフォルダ（保持）:**
-- `front/src/app/_brewery/*` - Next.js仕様により `_` で始まるフォルダはルーティング対象外
-- 保持理由: 将来的な再利用の可能性、コンポーネント参照用
-
-**ルーティング設定更新:**
-```typescript
-// front/src/lib/constants.ts
-export const ROUTES = {
-  home: '/',
-  login: '/auth/login',
-  register: '/auth/register',
-  profile: '/profile',
-  profileCreate: '/profile/create',
-  map: '/map',           // 新規追加
-  visits: '/visits',
-  // 削除: breweries, breweryDetail, nearbyBreweries
-} as const;
 ```
 
 ## フロントエンド設計方針（2025年1月追加）
