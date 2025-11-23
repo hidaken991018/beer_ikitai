@@ -14,12 +14,12 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
 import { AppLayout } from '@/components/layout/AppLayout';
-import { ProfileCreateForm } from '@/components/profile/ProfileCreateForm';
 import { createUserProfile } from '@/lib/api/userProfile';
 import { ROUTES, ERROR_MESSAGES } from '@/lib/constants';
 import type { ProfileCreateFormData } from '@/lib/validations/profile';
 import { UserProfileInput } from '@/types/api';
 
+import { ProfileCreateForm } from '../_components/ProfileCreateForm';
 
 // Force client-side rendering for this page
 export const dynamic = 'force-dynamic';
