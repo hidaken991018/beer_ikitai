@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
 
 import { BottomNavigation } from '@/components/layout/BottomNavigation';
 import { MobileLayout } from '@/components/layout/MobileLayout';
@@ -26,7 +25,8 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { useBreweries } from '@/hooks/useBreweries';
 import { ROUTES } from '@/lib/constants';
-import { AuthState } from '@/types/auth';
+import { useAppSelector } from '@/store/hooks';
+import { selectAuth } from '@/store/slices/authSlice';
 
 // Force client-side rendering for this page
 export const dynamic = 'force-dynamic';
@@ -34,7 +34,7 @@ export const dynamic = 'force-dynamic';
 export default function ProfilePage() {
   const router = useRouter();
   const { logout } = useAuth()
-  const authState: AuthState = useSelector((state: any) => state.auth);
+  const authState = useAppSelector(selectAuth);
   const { breweryState, fetchVisits, fetchBreweries } = useBreweries();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -68,7 +68,6 @@ export default function ProfilePage() {
 
   const handleSaveProfile = async () => {
     // TODO: Implement profile update API call
-    console.log('Profile update:', { displayName, email });
     setIsEditing(false);
     // In a real implementation, you would call an API to update the user profile
   };

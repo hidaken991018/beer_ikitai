@@ -11,12 +11,13 @@
 
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
 
 import { AppLayout } from '@/components/layout/AppLayout';
 import { createUserProfile } from '@/lib/api/userProfile';
 import { ROUTES, ERROR_MESSAGES } from '@/lib/constants';
 import type { ProfileCreateFormData } from '@/lib/validations/profile';
+import { useAppSelector } from '@/store/hooks';
+import { selectAuth } from '@/store/slices/authSlice';
 import { UserProfileInput } from '@/types/api';
 
 import { ProfileCreateForm } from '../_components/ProfileCreateForm';
@@ -33,7 +34,7 @@ export const dynamic = 'force-dynamic';
  */
 export default function ProfileCreatePage() {
   const router = useRouter();
-  const { authState } = useSelector((state: any) => state.auth);
+  const authState = useAppSelector(selectAuth);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

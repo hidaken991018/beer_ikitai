@@ -18,7 +18,6 @@ const amplifyConfig: AmplifyConfig = {
 export function configureAmplify() {
   try {
     Amplify.configure(amplifyConfig);
-    console.log('Amplify configured successfully');
   } catch (error) {
     console.error('Failed to configure Amplify:', error);
     throw error;

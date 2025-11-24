@@ -3,7 +3,6 @@
 import { Calendar, MapPin, Search, Filter, Clock, Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
 
 import { BottomNavigation } from '@/components/layout/BottomNavigation';
 import { MobileLayout } from '@/components/layout/MobileLayout';
@@ -19,7 +18,8 @@ import {
 } from '@/components/ui/select';
 import { useBreweries } from '@/hooks/useBreweries';
 import { ROUTES } from '@/lib/constants';
-import { AuthState } from '@/types/auth';
+import { useAppSelector } from '@/store/hooks';
+import { selectAuth } from '@/store/slices/authSlice';
 
 // Force client-side rendering for this page
 export const dynamic = 'force-dynamic';
@@ -27,7 +27,7 @@ export const fetchCache = 'force-no-store';
 
 export default function VisitsPage() {
   const router = useRouter();
-  const authState: AuthState = useSelector((state: any) => state.auth);
+  const authState = useAppSelector(selectAuth);
   const { breweryState, fetchVisits, fetchBreweries } = useBreweries();
 
   const [searchQuery, setSearchQuery] = useState('');

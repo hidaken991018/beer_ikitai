@@ -3,11 +3,12 @@
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import Map, { NavigationControl, MapRef } from 'react-map-gl';
-import { useSelector } from 'react-redux';
 
 import { BottomNavigation } from '@/components/layout/BottomNavigation';
 import { MobileLayout } from '@/components/layout/MobileLayout';
 import { useBreweries } from '@/hooks/useBreweries';
+import { useAppSelector } from '@/store/hooks';
+import { selectIsAuthenticated } from '@/store/slices/authSlice';
 import { Brewery } from '@/types/brewery';
 
 import { CurrentLocationMarker } from './_components/CurrentLocationMarker';
@@ -22,8 +23,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 export default function MapPage() {
   const router = useRouter();
   const mapRef = useRef<MapRef>(null);
-  const authState = useSelector((state: any) => state.auth);
-  const { isAuthenticated } = authState;
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const { breweryState, fetchNearbyBreweries, checkin, fetchVisits } =
     useBreweries();
   const [userLocation, setUserLocation] = useState<{

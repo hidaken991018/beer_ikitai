@@ -105,7 +105,6 @@ export class ApiClient {
    * @internal
    */
   private async makeRequest<T>(config: RequestConfig): Promise<T> {
-    console.log('Full URL:', this.config.baseUrl);
     const url = new URL(
       `${this.config.baseUrl.replace(/\/+$/, '')}/${config.url.replace(/^\/+/, '')}`
     );

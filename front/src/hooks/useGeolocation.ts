@@ -12,6 +12,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { GEOLOCATION_CONFIG, ERROR_MESSAGES } from '@/lib/constants';
+import { calculateDistanceFromCoords } from '@/lib/domain/distance';
 import type { Coordinates, GeolocationPosition } from '@/types/brewery';
 
 /**
@@ -294,51 +295,15 @@ export function useGeolocation(options?: UseGeolocationOptions) {
 /**
  * 2点間の距離を計算するユーティリティ関数
  *
- * @description Haversine公式を使用して、緯度・経度から地球上の2点間の
- * 直線距離をキロメートル単位で計算します。
+ * @description lib/domain/distance.ts の calculateDistanceFromCoords をエクスポート。
+ * 後方互換性のために残されています。
  *
+ * @deprecated lib/domain/distance から直接インポートすることを推奨します
  * @param coord1 - 起点の座標（緯度・経度）
  * @param coord2 - 終点の座標（緯度・経度）
  * @returns 距離（キロメートル、小数点以下3桁で丸め）
- *
- * @example
- * ```typescript
- * const tokyo = { latitude: 35.6762, longitude: 139.6503 };
- * const osaka = { latitude: 34.6937, longitude: 135.5023 };
- *
- * const distance = calculateDistance(tokyo, osaka);
- * console.log(distance); // 約403.43 (キロメートル)
- *
- * // 醸造所からの距離を計算
- * const breweryLocation = { latitude: 35.6462, longitude: 139.7103 };
- * const userLocation = { latitude: 35.6465, longitude: 139.7100 };
- * const distanceToBrewery = calculateDistance(userLocation, breweryLocation);
- *
- * if (distanceToBrewery < 0.1) { // 100m以内
- *   console.log('チェックイン可能な距離です');
- * }
- * ```
  */
-export function calculateDistance(
-  coord1: Coordinates,
-  coord2: Coordinates
-): number {
-  const R = 6371; // Earth's radius in kilometers
-  const dLat = (coord2.latitude - coord1.latitude) * (Math.PI / 180);
-  const dLon = (coord2.longitude - coord1.longitude) * (Math.PI / 180);
-
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(coord1.latitude * (Math.PI / 180)) *
-      Math.cos(coord2.latitude * (Math.PI / 180)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c;
-
-  return Math.round(distance * 1000) / 1000; // Round to 3 decimal places
-}
+export const calculateDistance = calculateDistanceFromCoords;
 
 /**
  * ユーザーがチェックイン可能な範囲内にいるかどうかを判定する関数

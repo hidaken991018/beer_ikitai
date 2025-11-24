@@ -384,7 +384,8 @@ export interface ConfirmSignUpResponse {
   /** 確認完了フラグ */
   isSignUpComplete: boolean;
   /** 次のステップ（AWS Amplifyの型に準拠） */
-  nextStep: any; //disable-line @typescript-eslint/no-explicit-any
+  //disable-line @typescript-eslint/no-explicit-any
+  nextStep: any;
 }
 
 /**

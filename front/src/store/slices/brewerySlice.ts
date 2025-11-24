@@ -4,7 +4,6 @@ import type {
   Brewery,
   BreweryWithDistance,
   Visit,
-  CheckinAttempt,
 } from '@/types/brewery';
 
 interface BreweryState {
@@ -174,10 +173,9 @@ const brewerySlice = createSlice({
     },
 
     // Checkin operation
-    checkinStart: (state, action: PayloadAction<CheckinAttempt>) => {
+    checkinStart: (state) => {
       state.isLoading = true;
       state.error = null;
-      console.log('Checkin started:', action);
     },
 
     checkinSuccess: (state, action: PayloadAction<Visit>) => {

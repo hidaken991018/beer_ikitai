@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -17,12 +16,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { ROUTES } from '@/lib/constants';
+import { useAppSelector } from '@/store/hooks';
+import { selectAuth } from '@/store/slices/authSlice';
 import type { ConfirmSignUpInput } from '@/types/auth';
 
 export default function ConfirmSignupPage() {
   const searchParams = useSearchParams();
   const { confirmSignUp } = useAuth();
-  const authState = useSelector((state: any) => state.auth);
+  const authState = useAppSelector(selectAuth);
 
   const [formData, setFormData] = useState<ConfirmSignUpInput>({
     email: '',

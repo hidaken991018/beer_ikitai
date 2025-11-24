@@ -12,8 +12,8 @@
 import { useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { calculateDistance } from '@/hooks/useGeolocation';
 import { apiClient } from '@/lib/api/client';
+import { calculateDistanceFromCoords } from '@/lib/domain/distance';
 import {
   setLoading,
   setError,
@@ -185,7 +185,7 @@ export function useBreweries() {
           response.data.breweries
             .map((brewery: Brewery) => ({
               ...brewery,
-              distance: calculateDistance(userLocation, {
+              distance: calculateDistanceFromCoords(userLocation, {
                 latitude: brewery.latitude,
                 longitude: brewery.longitude,
               }),
@@ -225,7 +225,6 @@ export function useBreweries() {
         const response = await apiClientRef.current.get<ApiResponse<Brewery>>(
           `/breweries/${id}`
         );
-        console.log('Fetched brewery:', response.data);
         dispatch(setCurrentBrewery(response.data));
       } catch (error) {
         const message =
@@ -363,7 +362,7 @@ export function useBreweries() {
           const breweriesWithDistance: BreweryWithDistance[] =
             response.data.map((brewery: Brewery) => ({
               ...brewery,
-              distance: calculateDistance(filter.location!, {
+              distance: calculateDistanceFromCoords(filter.location!, {
                 latitude: brewery.latitude,
                 longitude: brewery.longitude,
               }),
@@ -430,16 +429,7 @@ export function useBreweries() {
   const checkin = useCallback(
     async (checkinData: CheckinInput) => {
       try {
-        dispatch(
-          checkinStart({
-            breweryId: checkinData.brewery_id,
-            userLocation: {
-              latitude: checkinData.latitude,
-              longitude: checkinData.longitude,
-            },
-            timestamp: Date.now(),
-          })
-        );
+        dispatch(checkinStart());
 
         const response = await apiClientRef.current.post<CheckinResponse>(
           '/checkin',
@@ -476,7 +466,7 @@ export function useBreweries() {
         );
 
       if (brewery) {
-        const distance = calculateDistance(userLocation, {
+        const distance = calculateDistanceFromCoords(userLocation, {
           latitude: brewery.latitude,
           longitude: brewery.longitude,
         });
